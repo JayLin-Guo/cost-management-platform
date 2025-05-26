@@ -111,7 +111,7 @@ export default function useMockData() {
       flowType: 'main',
       isVisible: true,
       isVirtual: true,
-      stateInfo: '接收审核文件',
+      stateInfo: '历时35天',
       from: 'node2', // 从自己开始
       to: 'node3', // 连接到时间间隔节点
       // 附加信息
@@ -167,7 +167,7 @@ export default function useMockData() {
       flowType: 'main',
       isVisible: true,
       isVirtual: true,
-      stateInfo: '接收一审文件',
+      stateInfo: '0天',
       from: 'node5', // 从自己开始
       to: 'node6', // 连接到王五的驳回节点
       // 附加信息
