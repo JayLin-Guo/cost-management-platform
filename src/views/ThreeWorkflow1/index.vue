@@ -6,8 +6,22 @@
     <!-- CSS2D渲染器容器 - 用于HTML标签 -->
     <div ref="cssContainer" class="css-container"></div>
 
+    <!-- 视角控制按钮 -->
+    <div class="view-controls">
+      <button @click="changeView('default')" class="view-btn">默认视角</button>
+      <button @click="changeView('top')" class="view-btn">顶视图</button>
+      <button @click="changeView('side')" class="view-btn">侧视图</button>
+      <button @click="changeView('front')" class="view-btn">正视图</button>
+    </div>
+
+    <!-- 信息面板切换按钮 -->
+    <div class="info-toggle" @click="toggleInfoPanel">
+      <i :class="['info-icon', showInfoPanel ? 'icon-hide' : 'icon-show']"></i>
+      <span>{{ showInfoPanel ? '隐藏信息' : '显示信息' }}</span>
+    </div>
+
     <!-- 信息面板 -->
-    <div class="info-panel">
+    <div class="info-panel" :class="{ 'info-panel-hidden': !showInfoPanel }">
       <h3>工作流程图信息</h3>
       <div class="info-content">
         <div class="info-item">
@@ -19,8 +33,20 @@
           <span class="info-value">{{ timePointCount }}</span>
         </div>
         <div class="info-item">
-          <span class="info-label">记录总数:</span>
-          <span class="info-value">{{ recordCount }}</span>
+          <span class="info-label">节点总数:</span>
+          <span class="info-value">{{ nodeCount }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">实际节点数:</span>
+          <span class="info-value">{{ actualNodeCount }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">虚拟节点数:</span>
+          <span class="info-value">{{ virtualNodeCount }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">连接线数量:</span>
+          <span class="info-value">{{ connectionCount }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">主流程数:</span>
@@ -38,6 +64,10 @@
           <span class="info-label">驳回数量:</span>
           <span class="info-value">{{ rejectCount }}</span>
         </div>
+        <div class="info-item">
+          <span class="info-label">等待数量:</span>
+          <span class="info-value">{{ pendingCount }}</span>
+        </div>
       </div>
 
       <div class="color-legend">
@@ -52,6 +82,14 @@
         <div class="legend-item">
           <div class="color-box" style="background-color: #ffc107;"></div>
           <span>重试流程</span>
+        </div>
+        <div class="legend-item">
+          <div class="color-box" style="background-color: #9e9e9e;"></div>
+          <span>等待中</span>
+        </div>
+        <div class="legend-item">
+          <div class="color-box" style="background-color: rgba(255, 255, 255, 0.7); border: 1px dashed #9e9e9e;"></div>
+          <span>虚拟节点</span>
         </div>
       </div>
 
@@ -73,18 +111,25 @@ import useThreeWorkflow1 from './useThreeWorkflow1'
 // 场景信息
 const reviewerCount = ref(0)
 const timePointCount = ref(0)
-const recordCount = ref(0)
 const mainFlowCount = ref(0)
 const retryFlowCount = ref(0)
 const passCount = ref(0)
 const rejectCount = ref(0)
+const nodeCount = ref(0)
+const actualNodeCount = ref(0)
+const virtualNodeCount = ref(0)
+const connectionCount = ref(0)
+const pendingCount = ref(0)
+
+// 控制信息面板显示/隐藏
+const showInfoPanel = ref(false)
 
 // DOM引用
 const threeContainer = ref(null)
 const cssContainer = ref(null)
 
 // 使用Three.js工作流
-const { initialize, cleanup, getSceneInfo } = useThreeWorkflow1()
+const { initialize, cleanup, getSceneInfo, changeViewpoint } = useThreeWorkflow1()
 
 // 组件挂载时初始化3D场景
 onMounted(() => {
@@ -96,7 +141,11 @@ onMounted(() => {
     const sceneInfo = getSceneInfo()
     reviewerCount.value = sceneInfo.reviewerCount
     timePointCount.value = sceneInfo.timePointCount
-    recordCount.value = sceneInfo.recordCount
+    nodeCount.value = sceneInfo.nodeCount
+    actualNodeCount.value = sceneInfo.actualNodeCount
+    virtualNodeCount.value = sceneInfo.virtualNodeCount
+    connectionCount.value = sceneInfo.connectionCount
+    pendingCount.value = sceneInfo.pendingCount
 
     // 使用类型断言，因为我们知道完整的场景信息包含这些属性
     if ('mainFlowCount' in sceneInfo) {
@@ -107,6 +156,16 @@ onMounted(() => {
     }
   }
 })
+
+// 视角切换函数
+const changeView = (viewType: 'default' | 'top' | 'side' | 'front') => {
+  changeViewpoint(viewType)
+}
+
+// 切换信息面板显示/隐藏
+const toggleInfoPanel = () => {
+  showInfoPanel.value = !showInfoPanel.value
+}
 
 // 组件卸载时清理资源
 onUnmounted(() => {
@@ -137,9 +196,101 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-.info-panel {
+.view-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 100;
+}
+
+.view-btn {
+  background: rgba(30, 60, 100, 0.8);
+  color: white;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-family: 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.view-btn:hover {
+  background: rgba(40, 80, 130, 0.9);
+  border-color: rgba(0, 255, 255, 0.6);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.info-toggle {
   position: absolute;
   top: 20px;
+  left: 20px;
+  background: rgba(30, 60, 100, 0.8);
+  color: white;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-family: 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-toggle:hover {
+  background: rgba(40, 80, 130, 0.9);
+  border-color: rgba(0, 255, 255, 0.6);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.info-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  position: relative;
+}
+
+.icon-show::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 0;
+  width: 16px;
+  height: 2px;
+  background-color: white;
+}
+
+.icon-show::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 7px;
+  width: 2px;
+  height: 16px;
+  background-color: white;
+}
+
+.icon-hide::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 0;
+  width: 16px;
+  height: 2px;
+  background-color: white;
+}
+
+.info-panel {
+  position: absolute;
+  top: 70px;
   left: 20px;
   background: rgba(10, 20, 40, 0.85);
   border: 1px solid rgba(0, 255, 255, 0.3);
@@ -151,6 +302,13 @@ onUnmounted(() => {
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 100;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.info-panel-hidden {
+  transform: translateX(-120%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .info-panel h3 {
@@ -241,11 +399,16 @@ onUnmounted(() => {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .info-panel {
-    top: 10px;
+    top: 70px;
     left: 10px;
     right: 10px;
     min-width: auto;
     padding: 15px;
+  }
+  
+  .info-toggle {
+    top: 10px;
+    left: 10px;
   }
 }
 </style>
