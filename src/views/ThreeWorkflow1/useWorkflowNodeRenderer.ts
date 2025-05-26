@@ -365,12 +365,14 @@ export default class WorkflowNodeRenderer {
    * @param toNode 目标节点
    * @param status 连接状态
    * @param flowType 流程类型
+   * @param sourceNodeData 源节点数据，用于获取状态信息
    */
   private createConnection(
     fromNode: THREE.Mesh,
     toNode: THREE.Mesh,
     status: string,
     flowType: FlowType,
+    sourceNodeData: WorkflowNode,
   ): void {
     // 获取节点位置
     const startPosition = new THREE.Vector3().copy(fromNode.position)
@@ -388,8 +390,13 @@ export default class WorkflowNodeRenderer {
     // 如果两个节点在同一行且不太远，直接连接
     const isShortConnection =
       Math.abs(endPosition.x - startPosition.x) < this.config.cellWidth * 1.5
+
+    // 计算线条中点位置，用于放置标签
+    let midPoint: THREE.Vector3
+
     if (isShortConnection) {
       points.push(endPosition)
+      midPoint = new THREE.Vector3().lerpVectors(startPosition, endPosition, 0.5)
     } else {
       // 对于较长的连接，添加中间点创建曲线
       // 计算中间点，使线条有弧度
@@ -397,8 +404,16 @@ export default class WorkflowNodeRenderer {
       const midY = Math.max(startPosition.y, endPosition.y) + 40 // 向上弯曲
       const midZ = (startPosition.z + endPosition.z) / 2
 
-      points.push(new THREE.Vector3(midX, midY, midZ))
+      const midControlPoint = new THREE.Vector3(midX, midY, midZ)
+      points.push(midControlPoint)
       points.push(endPosition)
+
+      // 中点位置调整为曲线上的点，稍微靠近控制点
+      midPoint = new THREE.Vector3().lerpVectors(
+        new THREE.Vector3().lerpVectors(startPosition, midControlPoint, 0.5),
+        midControlPoint,
+        0.3,
+      )
     }
 
     // 创建曲线
@@ -434,6 +449,100 @@ export default class WorkflowNodeRenderer {
 
     // 创建箭头指示方向
     this.createArrow(endPosition, direction, color)
+
+    // 添加连接线标签
+    this.createConnectionLabel(midPoint, sourceNodeData, status)
+  }
+
+  /**
+   * 创建连接线标签
+   * @param position 标签位置
+   * @param nodeData 节点数据
+   * @param status 连接状态
+   */
+  private createConnectionLabel(
+    position: THREE.Vector3,
+    nodeData: WorkflowNode,
+    status: string,
+  ): void {
+    // 决定显示什么内容
+    let labelText = ''
+
+    // 尝试从节点属性中获取可能的标签信息
+    // 优先使用状态信息
+    if (nodeData.stateInfo) {
+      // 检查是否是时间间隔相关的状态信息
+      if (nodeData.stateInfo.includes('历时') || nodeData.stateInfo.includes('天')) {
+        // 突出显示时间间隔，使用完整的状态信息
+        labelText = nodeData.stateInfo
+      }
+      // 一般状态信息
+      else {
+        labelText = nodeData.stateInfo
+      }
+    }
+    // 否则显示状态信息
+    else {
+      switch (status) {
+        case 'pass':
+          labelText = '通过'
+          break
+        case 'reject':
+          labelText = '驳回'
+          break
+        case 'pending':
+          labelText = '审核中'
+          break
+      }
+    }
+
+    // 如果有标签文本，创建CSS2D标签
+    if (labelText) {
+      const labelDiv = document.createElement('div')
+      labelDiv.className = 'connection-label'
+
+      // 根据标签内容设置不同的样式
+      let backgroundColor = 'rgba(0, 0, 0, 0.7)' // 默认黑色背景
+      let textColor = 'white' // 默认白色文字
+
+      // 根据状态信息设置不同的颜色
+      if (labelText === '通过' || labelText.includes('提交')) {
+        backgroundColor = 'rgba(76, 175, 80, 0.8)' // 绿色背景
+      } else if (labelText === '驳回' || labelText.includes('待修改')) {
+        backgroundColor = 'rgba(244, 67, 54, 0.8)' // 红色背景
+      } else if (labelText.includes('历时') || labelText.includes('天')) {
+        backgroundColor = 'rgba(255, 152, 0, 0.8)' // 橙色背景
+        textColor = 'rgba(0, 0, 0, 0.9)' // 黑色文字
+      } else if (labelText.includes('接收') || labelText.includes('审核中')) {
+        backgroundColor = 'rgba(158, 158, 158, 0.8)' // 灰色背景
+      }
+
+      labelDiv.style.cssText = `
+        background: ${backgroundColor};
+        color: ${textColor};
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-family: 'Microsoft YaHei', sans-serif;
+        font-size: 12px;
+        font-weight: ${labelText.includes('历时') ? 'bold' : 'normal'};
+        text-align: center;
+        white-space: nowrap;
+        pointer-events: none;
+        user-select: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      `
+      labelDiv.textContent = labelText
+
+      const label = new CSS2DObject(labelDiv)
+
+      // 设置标签位置，稍微上移一点
+      const labelPosition = position.clone()
+      labelPosition.y += 10 // 向上偏移，避免与线重叠
+      label.position.copy(labelPosition)
+
+      // 添加到场景
+      this.nodeGroup.add(label)
+    }
   }
 
   /**
@@ -534,7 +643,7 @@ export default class WorkflowNodeRenderer {
         const fromNode = this.nodesMap.get(fromId)
         if (fromNode) {
           console.log(`创建连接线: ${fromId} -> ${toId}`)
-          this.createConnection(fromMesh, toMesh, fromNode.status, fromNode.flowType)
+          this.createConnection(fromMesh, toMesh, fromNode.status, fromNode.flowType, fromNode)
         }
       }
     }
