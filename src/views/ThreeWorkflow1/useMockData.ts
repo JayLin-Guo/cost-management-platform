@@ -113,29 +113,29 @@ export default function useMockData() {
       isVirtual: true,
       stateInfo: '历时35天',
       from: 'node2', // 从自己开始
-      to: 'node3', // 连接到时间间隔节点
+      to: 'node4', // 连接到时间间隔节点
       // 附加信息
       documentId: 'doc-2023-001',
       documentVersion: 'v1.0',
     },
     // 3. 时间间隔节点 - 6月5日至7月8日
-    {
-      id: 'node3',
-      reviewerId: 'reviewer2', // 李四（一直在审核中）
-      timePointId: 'timeInterval1', // 时间间隔
-      title: '控制价\n审核中',
-      type: 'virtual',
-      status: 'pending',
-      flowType: 'main',
-      isVisible: true,
-      isVirtual: true,
-      stateInfo: '历时35天',
-      from: 'node3', // 从自己开始
-      to: 'node4', // 连接到李四的审核完成节点
-      // 附加信息
-      documentId: 'doc-2023-001',
-      documentVersion: 'v1.0',
-    },
+    // {
+    //   id: 'node3',
+    //   reviewerId: 'reviewer2', // 李四（一直在审核中）
+    //   timePointId: 'timeInterval1', // 时间间隔
+    //   title: '控制价\n审核中',
+    //   type: 'virtual',
+    //   status: 'pending',
+    //   flowType: 'main',
+    //   isVisible: true,
+    //   isVirtual: true,
+    //   stateInfo: '历时35天',
+    //   from: 'node3', // 从自己开始
+    //   to: 'node4', // 连接到李四的审核完成节点
+    //   // 附加信息
+    //   documentId: 'doc-2023-001',
+    //   documentVersion: 'v1.0',
+    // },
     // 4. 李四的一审完成节点 - 7月9日
     {
       id: 'node4',

@@ -5,99 +5,8 @@ import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRe
 import useMockData from './useMockData'
 import type { WorkflowNode, Reviewer } from './useMockData'
 import WorkflowNodeRenderer from './useWorkflowNodeRenderer'
-
-// 场景配置接口
-interface SceneConfig {
-  container: HTMLElement
-  cssContainer: HTMLElement
-}
-
-// 默认配置
-const DEFAULT_CONFIG = {
-  backgroundColor: 0x0c1e3a, // 深蓝色背景
-  cellWidth: 200, // 每个单元格宽度
-  cellHeight: 50, // 单元格高度
-  timelineHeight: 40, // 时间轴高度
-  reviewerColumnWidth: 200, // 审核人员列宽度(第一列)
-  fileUploadColumnWidth: 200, // 未上传文件列宽度(第二列)
-  leftOffset: 400, // 左侧偏移，等于reviewerColumnWidth + fileUploadColumnWidth
-  reviewAreaDepth: 400, // 审核区域深度
-  timelineBarColor: 0x1a3a7a, // 时间轴长方体颜色
-  reviewRowHeight: 100, // 审核区域行高
-  nodeSpacing: 80, // 同一单元格内节点之间的间距
-}
-
-/**
- * 解析日期字符串为日期对象
- * @param dateStr 格式为 "YYYY-MM-DD" 的日期字符串
- */
-function parseDate(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number)
-  return new Date(year, month - 1, day)
-}
-
-/**
- * 格式化日期对象为字符串
- * @param date 日期对象
- * @returns 格式为 "YYYY-MM-DD" 的日期字符串
- */
-function formatDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-/**
- * 计算两个日期之间的间隔期间
- * @param startDateStr 开始日期字符串
- * @param endDateStr 结束日期字符串
- * @returns 格式化的间隔期间字符串
- */
-function calculateDateInterval(startDateStr: string, endDateStr: string): string {
-  // 解析日期
-  const startDate = parseDate(startDateStr)
-  const endDate = parseDate(endDateStr)
-
-  // 如果开始日期和结束日期相同，返回单一日期
-  if (startDateStr === endDateStr) {
-    return startDateStr
-  }
-
-  // 计算开始日期的后一天
-  const nextDay = new Date(startDate)
-  nextDay.setDate(nextDay.getDate() + 1)
-
-  // 计算结束日期的前一天
-  const prevDay = new Date(endDate)
-  prevDay.setDate(prevDay.getDate() - 1)
-
-  // 如果开始日期的后一天超过了结束日期的前一天，则返回原始区间
-  if (nextDay > prevDay) {
-    return `${startDateStr}-${endDateStr}`
-  }
-
-  return `${formatDate(nextDay)}-${formatDate(prevDay)}`
-}
-
-/**
- * 生成所有操作之间的时间间隔点
- * @returns 时间点数组，包括操作时间和间隔时间
- */
-function generateTimeIntervals(
-  timePoints: any[],
-): { date: string; label: string; isInterval: boolean }[] {
-  if (!timePoints || timePoints.length === 0) {
-    return []
-  }
-
-  // 直接从时间点数据转换
-  return timePoints.map((tp) => ({
-    date: tp.isInterval ? tp.id : tp.date,
-    label: tp.label,
-    isInterval: tp.isInterval || false,
-  }))
-}
+import { DEFAULT_CONFIG, COLORS, FONT_HEADER, FONT_CELL } from './config'
+import type { SceneConfig, TimeInterval } from './types'
 
 /**
  * 工作流程图场景类
@@ -120,7 +29,7 @@ class WorkflowScene {
 
   // 数据相关
   private mockData = useMockData()
-  private timeIntervals: { date: string; label: string; isInterval: boolean }[] = []
+  private timeIntervals: TimeInterval[] = []
   private timePoints = this.mockData.timePoints.value
   private reviewers = this.mockData.reviewers.value
   private workflowNodes = this.mockData.workflowNodes.value
@@ -168,6 +77,7 @@ class WorkflowScene {
         nodeSpacing: DEFAULT_CONFIG.nodeSpacing,
         reviewerColumnWidth: DEFAULT_CONFIG.reviewerColumnWidth,
         fileUploadColumnWidth: DEFAULT_CONFIG.fileUploadColumnWidth,
+        timelineDepth: DEFAULT_CONFIG.timelineDepth,
       },
       this.timeIntervals,
       this.mockData.getReviewer.bind(this.mockData),
@@ -180,12 +90,7 @@ class WorkflowScene {
   /**
    * 将时间点转换为时间间隔
    */
-  private convertTimePointsToIntervals(): {
-    date: string
-    label: string
-    isInterval: boolean
-    id: string
-  }[] {
+  private convertTimePointsToIntervals(): TimeInterval[] {
     console.log('原始timePoints数据:', this.timePoints)
 
     // 转换并保留原始timePoint.id
@@ -296,15 +201,34 @@ class WorkflowScene {
    * 设置灯光
    */
   private setupLights(): void {
-    // 环境光
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.6)
+    // 环境光 - 使用略带蓝色的环境光，与深蓝色背景协调
+    const ambientLight = new THREE.AmbientLight(0x1a2a50, 0.4)
     this.scene.add(ambientLight)
 
-    // 方向光
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
-    directionalLight.position.set(500, 500, 200)
-    directionalLight.castShadow = true
-    this.scene.add(directionalLight)
+    // 主方向光 - 从右上方照射，使用冷白光
+    const mainLight = new THREE.DirectionalLight(0xd0d8ff, 0.6) // 带蓝色调的白光
+    mainLight.position.set(500, 500, 200)
+    mainLight.castShadow = true
+    
+    // 配置阴影参数，提高阴影质量
+    mainLight.shadow.mapSize.width = 1024
+    mainLight.shadow.mapSize.height = 1024
+    mainLight.shadow.camera.near = 0.5
+    mainLight.shadow.camera.far = 2000
+    
+    this.scene.add(mainLight)
+
+    // 额外的方向光 - 专门照射时间轴中部
+    const timelineLight = new THREE.DirectionalLight(0xa0c0ff, 0.35) // 更蓝的光源，增强金属感
+    timelineLight.position.set(-300, 200, 100) // 从左侧照射
+    timelineLight.castShadow = false // 不产生阴影，只用于照亮
+    this.scene.add(timelineLight)
+    
+    // 添加柔和的补光，减少暗部过暗
+    const fillLight = new THREE.DirectionalLight(0x304070, 0.2) // 深蓝色补光，保持色调一致
+    fillLight.position.set(0, 100, 500) // 从前方照射
+    fillLight.castShadow = false
+    this.scene.add(fillLight)
   }
 
   /**
@@ -336,43 +260,85 @@ class WorkflowScene {
    * 创建时间轴长方体
    */
   private createTimelineBar(width: number): void {
-    // 创建时间轴长方体几何体
+    // 创建时间轴长方体几何体 - 注意timelineHeight控制3D长方体的物理高度(Y轴厚度)
     const timelineGeometry = new THREE.BoxGeometry(
       width,
       DEFAULT_CONFIG.timelineHeight,
-      DEFAULT_CONFIG.reviewRowHeight,
+      DEFAULT_CONFIG.timelineDepth, // 使用独立的时间轴深度参数
     )
 
-    // 创建时间轴贴图
+    // 创建时间轴贴图 - 贴图的高度由cellHeight决定
     const timelineTexture = this.createTimelineTexture()
+    
+    // 提高贴图的清晰度
+    timelineTexture.anisotropy = 16  // 增加各向异性过滤
+    timelineTexture.minFilter = THREE.LinearFilter
+    timelineTexture.magFilter = THREE.LinearFilter
+    
+    // 创建简单的环境贴图 - 使用立方体纹理
+    const envMap = this.createSimpleEnvMap()
 
     // 创建材质数组 - 为每个面指定不同材质
     const materials = [
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshPhysicalMaterial({
         color: DEFAULT_CONFIG.timelineBarColor,
-        metalness: 0.7,
-        roughness: 0.3,
+        metalness: 0.8,  // 增加金属感
+        roughness: 0.2,  // 降低粗糙度，使表面更光滑
+        clearcoat: 0.3,  // 增加清漆层厚度
+        clearcoatRoughness: 0.1,
+        reflectivity: 0.7,  // 增加反射度
+        envMap: envMap,
+        envMapIntensity: 1.0, // 环境贴图强度
       }), // 右
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshPhysicalMaterial({
         color: DEFAULT_CONFIG.timelineBarColor,
-        metalness: 0.7,
-        roughness: 0.3,
+        metalness: 0.8,
+        roughness: 0.2,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.1,
+        reflectivity: 0.7,
+        envMap: envMap,
+        envMapIntensity: 1.0,
       }), // 左
-      new THREE.MeshStandardMaterial({ map: timelineTexture, roughness: 0.3, metalness: 0.6 }), // 顶部 - 使用贴图
-      new THREE.MeshStandardMaterial({
-        color: DEFAULT_CONFIG.timelineBarColor,
+      new THREE.MeshPhysicalMaterial({ 
+        map: timelineTexture, 
+        roughness: 0.15,  // 顶部更光滑
         metalness: 0.7,
-        roughness: 0.3,
+        clearcoat: 0.5,   // 顶部使用更厚的清漆层
+        clearcoatRoughness: 0.05,
+        reflectivity: 0.8,
+        envMap: envMap,
+        envMapIntensity: 1.2, // 顶部反射更强
+      }), // 顶部 - 使用贴图
+      new THREE.MeshPhysicalMaterial({
+        color: DEFAULT_CONFIG.timelineBarColor,
+        metalness: 0.8,
+        roughness: 0.2,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.1,
+        reflectivity: 0.7,
+        envMap: envMap,
+        envMapIntensity: 1.0,
       }), // 底
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshPhysicalMaterial({
         color: DEFAULT_CONFIG.timelineBarColor,
-        metalness: 0.7,
-        roughness: 0.3,
+        metalness: 0.8,
+        roughness: 0.2,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.1,
+        reflectivity: 0.7,
+        envMap: envMap,
+        envMapIntensity: 1.0,
       }), // 前
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshPhysicalMaterial({
         color: DEFAULT_CONFIG.timelineBarColor,
-        metalness: 0.7,
-        roughness: 0.3,
+        metalness: 0.8,
+        roughness: 0.2,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.1,
+        reflectivity: 0.7,
+        envMap: envMap,
+        envMapIntensity: 1.0,
       }), // 后
     ]
 
@@ -383,7 +349,7 @@ class WorkflowScene {
     this.timelineBar.position.set(
       width / 2, // X轴居中
       DEFAULT_CONFIG.timelineHeight / 2, // Y轴上浮一半高度
-      DEFAULT_CONFIG.reviewRowHeight / 2, // Z轴对应第一行中心
+      DEFAULT_CONFIG.timelineDepth / 2, // Z轴位置调整为深度的一半
     )
 
     this.timelineBar.castShadow = true
@@ -427,7 +393,7 @@ class WorkflowScene {
     this.reviewArea.position.set(
       width / 2, // X轴居中
       -1, // Y轴略微下沉1个单位，避免Z-fighting
-      adjustedDepth / 2 + DEFAULT_CONFIG.reviewRowHeight, // Z轴居中，向后偏移一个行高，避免与时间轴重叠
+      adjustedDepth / 2 + DEFAULT_CONFIG.timelineDepth, // Z轴居中，向后偏移时间轴的深度，避免与时间轴重叠
     )
 
     this.reviewArea.receiveShadow = true
@@ -451,8 +417,8 @@ class WorkflowScene {
     const dividerX = DEFAULT_CONFIG.leftOffset
 
     const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(dividerX, 0, DEFAULT_CONFIG.reviewRowHeight), // 从时间轴底部开始
-      new THREE.Vector3(dividerX, 0, depth + DEFAULT_CONFIG.reviewRowHeight),
+      new THREE.Vector3(dividerX, 0, DEFAULT_CONFIG.timelineDepth), // 从时间轴底部开始
+      new THREE.Vector3(dividerX, 0, depth + DEFAULT_CONFIG.timelineDepth),
     ])
 
     const dividerLine = new THREE.Line(lineGeometry, lineMaterial)
@@ -469,11 +435,11 @@ class WorkflowScene {
       const y = 5
 
       // 计算Z位置 - 所有行都使用相同的高度，并且从时间轴底部开始
-      // 行高的一半 + 已经过的行数 * 行高 + 时间轴高度
+      // 行高的一半 + 已经过的行数 * 行高 + 时间轴深度
       const z =
         DEFAULT_CONFIG.reviewRowHeight / 2 +
         index * DEFAULT_CONFIG.reviewRowHeight +
-        DEFAULT_CONFIG.reviewRowHeight
+        DEFAULT_CONFIG.timelineDepth
 
       // 创建审核人标签
       const labelDiv = document.createElement('div')
@@ -528,72 +494,96 @@ class WorkflowScene {
 
   /**
    * 创建时间轴贴图
+   * 该方法生成一个Canvas纹理，用于时间轴3D长方体的顶面
+   * Canvas高度由cellHeight决定，宽度由时间间隔数量和leftOffset共同决定
    */
   private createTimelineTexture(): THREE.Texture {
-    // 创建画布
+    // 创建画布 - 使用更高的分辨率来提高清晰度
     const canvas = document.createElement('canvas')
     const totalWidth =
       this.timeIntervals.length * DEFAULT_CONFIG.cellWidth + DEFAULT_CONFIG.leftOffset
-    const canvasHeight = DEFAULT_CONFIG.cellHeight
-
-    canvas.width = totalWidth
-    canvas.height = canvasHeight
-
+    const canvasHeight = DEFAULT_CONFIG.cellHeight // 控制时间轴贴图的视觉高度
+    
+    // 提高画布分辨率，使文字更清晰
+    const pixelRatio = 2  // 使用2倍像素密度
+    canvas.width = totalWidth * pixelRatio
+    canvas.height = canvasHeight * pixelRatio
+    
     const ctx = canvas.getContext('2d')
 
     if (!ctx) {
       return new THREE.Texture()
     }
+    
+    // 缩放绘图上下文以匹配像素比
+    ctx.scale(pixelRatio, pixelRatio)
 
-    // 绘制背景
+    // 绘制背景 - 深蓝色渐变背景
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height)
-    gradient.addColorStop(0, '#2c4470')
-    gradient.addColorStop(1, '#1e3055')
+    gradient.addColorStop(0, '#2a3551')
+    gradient.addColorStop(1, '#1e2a45')
     ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillRect(0, 0, totalWidth, canvasHeight)
 
-    // 绘制顶部亮线
-    ctx.strokeStyle = '#3a9adf'
+    // 绘制顶部亮线 - 增强边界视觉效果
+    ctx.strokeStyle = COLORS.timelineBorder
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(0, 0)
-    ctx.lineTo(canvas.width, 0)
+    ctx.lineTo(totalWidth, 0)
     ctx.stroke()
 
-    // 绘制底部分隔线
-    ctx.strokeStyle = '#3a9adf'
+    // 绘制底部分隔线 - 与审核区域的分界线
+    ctx.strokeStyle = COLORS.timelineBorder
     ctx.lineWidth = 1
     ctx.beginPath()
-    ctx.moveTo(0, canvas.height)
-    ctx.lineTo(canvas.width, canvas.height)
+    ctx.moveTo(0, canvasHeight)
+    ctx.lineTo(totalWidth, canvasHeight)
     ctx.stroke()
 
-    // 绘制第一列和第二列的分隔线
-    ctx.strokeStyle = '#3a9adf'
+    // 绘制第一列和第二列的分隔线 - 区分审核人员、文件状态和时间点区域
+    ctx.strokeStyle = COLORS.timelineBorder
     ctx.lineWidth = 1.5
 
-    // 第一列与第二列的分隔线
+    // 第一列与第二列的分隔线 - 审核人员与文件状态的分界
     ctx.beginPath()
     ctx.moveTo(DEFAULT_CONFIG.reviewerColumnWidth, 0)
-    ctx.lineTo(DEFAULT_CONFIG.reviewerColumnWidth, canvas.height)
+    ctx.lineTo(DEFAULT_CONFIG.reviewerColumnWidth, canvasHeight)
     ctx.stroke()
 
-    // 第二列与时间点区域的分隔线
+    // 第二列与时间点区域的分隔线 - 固定列与时间点区域的分界
     ctx.beginPath()
     ctx.moveTo(DEFAULT_CONFIG.leftOffset, 0)
-    ctx.lineTo(DEFAULT_CONFIG.leftOffset, canvas.height)
+    ctx.lineTo(DEFAULT_CONFIG.leftOffset, canvasHeight)
     ctx.stroke()
 
-    // 绘制左侧区域标题
-    ctx.font = 'bold 18px Microsoft YaHei'
-    ctx.fillStyle = '#ffffff'
+    // 绘制左侧区域标题 - 使用更清晰的字体渲染
+    ctx.font = FONT_HEADER
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-
-    // 第一列标题
+    
+    // 应用字体平滑和抗锯齿
+    ctx.shadowBlur = 0
+    ctx.shadowColor = COLORS.timelineShadow
+    
+    // 第一列标题 - "审核人员"文本
+    // 先绘制阴影效果，增强文字可读性
+    ctx.fillStyle = COLORS.timelineShadow
+    ctx.fillText('审核人员', DEFAULT_CONFIG.reviewerColumnWidth / 2 + 1, canvasHeight / 2 + 1)
+    // 再绘制文字本体
+    ctx.fillStyle = COLORS.timelineText
     ctx.fillText('审核人员', DEFAULT_CONFIG.reviewerColumnWidth / 2, canvasHeight / 2)
 
-    // 第二列标题
+    // 第二列标题 - "文件状态"文本
+    // 先绘制阴影效果，增强文字可读性
+    ctx.fillStyle = COLORS.timelineShadow
+    ctx.fillText(
+      '文件状态',
+      DEFAULT_CONFIG.reviewerColumnWidth + DEFAULT_CONFIG.fileUploadColumnWidth / 2 + 1,
+      canvasHeight / 2 + 1,
+    )
+    // 再绘制文字本体
+    ctx.fillStyle = COLORS.timelineText
     ctx.fillText(
       '文件状态',
       DEFAULT_CONFIG.reviewerColumnWidth + DEFAULT_CONFIG.fileUploadColumnWidth / 2,
@@ -603,41 +593,59 @@ class WorkflowScene {
     // 使用timeIntervals作为日期数据源
     const timeIntervals = this.timeIntervals
 
-    // 绘制日期单元格
+    // 绘制日期单元格 - 每个时间点对应一个单元格
     for (let i = 0; i < timeIntervals.length; i++) {
       const x = DEFAULT_CONFIG.leftOffset + i * DEFAULT_CONFIG.cellWidth
       const timeInterval = timeIntervals[i]
       const cellWidth = DEFAULT_CONFIG.cellWidth
 
-      // 为交替的单元格使用不同的背景色
-      // 间隔期间使用灰色背景
+      // 为交替的单元格使用不同的背景色，增强视觉区分度
+      // 间隔期间使用灰色背景，非间隔期间使用交替的深浅蓝色
       const cellColor = timeInterval.isInterval
-        ? 'rgba(120, 120, 120, 0.3)'
+        ? COLORS.timelineCellBg.interval
         : i % 2 === 0
-          ? 'rgba(40, 80, 160, 0.3)'
-          : 'rgba(30, 60, 120, 0.3)'
+          ? COLORS.timelineCellBg.even
+          : COLORS.timelineCellBg.odd
 
       ctx.fillStyle = cellColor
       ctx.fillRect(x, 0, cellWidth, canvasHeight)
 
-      // 绘制单元格边框
-      ctx.strokeStyle = '#1a5ad1'
+      // 添加金属质感效果 - 顶部渐变高光，增强3D立体感
+      const metalGradient = ctx.createLinearGradient(x, 0, x, canvasHeight * 0.3)
+      metalGradient.addColorStop(0, 'rgba(255, 255, 255, 0.15)')
+      metalGradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+      ctx.fillStyle = metalGradient
+      ctx.fillRect(x, 0, cellWidth, canvasHeight * 0.3)
+
+      // 绘制单元格边框 - 增强单元格之间的视觉分隔
+      ctx.strokeStyle = COLORS.timelineBorder
       ctx.lineWidth = 1
       ctx.strokeRect(x, 0, cellWidth, canvasHeight)
 
       const cellCenterX = x + cellWidth / 2
 
-      // 绘制日期文本 (居中显示)
-      ctx.font = 'bold 14px Microsoft YaHei'
-      ctx.fillStyle = timeInterval.isInterval ? '#cccccc' : '#ffffff'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
+      // 绘制日期文本 (居中显示) - 使用更清晰的字体渲染
+      ctx.font = FONT_CELL
+      
+      // 先绘制阴影，增强文字可读性
+      ctx.fillStyle = COLORS.timelineShadow
+      ctx.fillText(timeInterval.label, cellCenterX + 1, canvasHeight / 2 + 1)
+      
+      // 再绘制文字本体，间隔期间使用灰色文本，非间隔期间使用白色文本
+      ctx.fillStyle = timeInterval.isInterval ? '#cccccc' : COLORS.timelineText
       ctx.fillText(timeInterval.label, cellCenterX, canvasHeight / 2)
     }
 
-    // 创建纹理
+    // 创建纹理并设置优化参数
     const texture = new THREE.CanvasTexture(canvas)
     texture.needsUpdate = true
+    
+    // 设置更好的纹理过滤，提高文字清晰度
+    texture.minFilter = THREE.LinearFilter
+    texture.magFilter = THREE.LinearFilter
+    
+    // 增加各向异性过滤，提高斜视角下的清晰度
+    texture.anisotropy = 16
 
     return texture
   }
@@ -646,7 +654,7 @@ class WorkflowScene {
    * 获取时间间隔的真实X位置
    */
   private getTimeIntervalPosition(
-    timeInterval: { date: string; label: string; isInterval: boolean },
+    timeInterval: TimeInterval,
     index: number,
   ): number {
     return DEFAULT_CONFIG.leftOffset + index * DEFAULT_CONFIG.cellWidth
@@ -666,11 +674,11 @@ class WorkflowScene {
     let linePositions: number[] = []
 
     // 第一行的顶部边界（从时间轴底部开始）
-    linePositions.push(DEFAULT_CONFIG.reviewRowHeight)
+    linePositions.push(DEFAULT_CONFIG.timelineDepth)
 
     // 审核人行的分隔线
     for (let i = 0; i < this.reviewers.length; i++) {
-      linePositions.push(DEFAULT_CONFIG.reviewRowHeight + (i + 1) * DEFAULT_CONFIG.reviewRowHeight)
+      linePositions.push(DEFAULT_CONFIG.timelineDepth + (i + 1) * DEFAULT_CONFIG.reviewRowHeight)
     }
 
     // 绘制水平线
@@ -687,19 +695,19 @@ class WorkflowScene {
     // 垂直网格线
     // 绘制第一列和第二列之间的分隔线
     const verticalLine1 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(DEFAULT_CONFIG.reviewerColumnWidth, 0, DEFAULT_CONFIG.reviewRowHeight),
+      new THREE.Vector3(DEFAULT_CONFIG.reviewerColumnWidth, 0, DEFAULT_CONFIG.timelineDepth),
       new THREE.Vector3(
         DEFAULT_CONFIG.reviewerColumnWidth,
         0,
-        depth + DEFAULT_CONFIG.reviewRowHeight,
+        depth + DEFAULT_CONFIG.timelineDepth,
       ),
     ])
     this.scene.add(new THREE.Line(verticalLine1, gridMaterial))
 
     // 绘制第二列和时间区域之间的分隔线
     const verticalLine2 = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(DEFAULT_CONFIG.leftOffset, 0, DEFAULT_CONFIG.reviewRowHeight),
-      new THREE.Vector3(DEFAULT_CONFIG.leftOffset, 0, depth + DEFAULT_CONFIG.reviewRowHeight),
+      new THREE.Vector3(DEFAULT_CONFIG.leftOffset, 0, DEFAULT_CONFIG.timelineDepth),
+      new THREE.Vector3(DEFAULT_CONFIG.leftOffset, 0, depth + DEFAULT_CONFIG.timelineDepth),
     ])
     this.scene.add(new THREE.Line(verticalLine2, gridMaterial))
 
@@ -708,8 +716,8 @@ class WorkflowScene {
       const x = DEFAULT_CONFIG.leftOffset + i * DEFAULT_CONFIG.cellWidth
 
       const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x, 0, DEFAULT_CONFIG.reviewRowHeight), // 从时间轴底部开始
-        new THREE.Vector3(x, 0, depth + DEFAULT_CONFIG.reviewRowHeight),
+        new THREE.Vector3(x, 0, DEFAULT_CONFIG.timelineDepth), // 从时间轴底部开始
+        new THREE.Vector3(x, 0, depth + DEFAULT_CONFIG.timelineDepth),
       ])
 
       const line = new THREE.Line(lineGeometry, gridMaterial)
@@ -910,6 +918,49 @@ class WorkflowScene {
     if (this.config.cssContainer.contains(this.cssRenderer.domElement)) {
       this.config.cssContainer.removeChild(this.cssRenderer.domElement)
     }
+  }
+
+  /**
+   * 创建简单的环境贴图
+   * 用于增强金属材质的反射效果
+   */
+  private createSimpleEnvMap(): THREE.Texture {
+    // 创建一个简单的渐变环境贴图
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      return new THREE.Texture();
+    }
+    
+    // 创建渐变背景 - 使用0x14204e作为基础颜色
+    const gradient = ctx.createLinearGradient(0, 0, 0, size);
+    gradient.addColorStop(0, '#14204e'); // 深蓝色顶部
+    gradient.addColorStop(0.5, '#1a2a5c'); // 中间过渡色（稍微亮一点）
+    gradient.addColorStop(1, '#0e1838'); // 底部（稍微暗一点）
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+    
+    // 添加一些亮点模拟光源，但亮度降低以匹配深蓝色主题
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.beginPath();
+    ctx.arc(size * 0.8, size * 0.2, size * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.beginPath();
+    ctx.arc(size * 0.1, size * 0.1, size * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 创建纹理
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    
+    return texture;
   }
 }
 

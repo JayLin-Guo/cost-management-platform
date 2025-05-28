@@ -1,38 +1,8 @@
 import * as THREE from 'three'
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
 import type { WorkflowNode, WorkflowConnection, NodeType, FlowType } from './useMockData'
-
-// 节点渲染配置
-interface NodeRenderConfig {
-  width: number
-  height: number
-  depth: number
-  y: number
-  opacity: number
-  metalness: number
-  roughness: number
-  labelOffsetY: number
-}
-
-// 连接线渲染配置
-interface ConnectionRenderConfig {
-  lineWidth: number
-  dashSize?: number
-  gapSize?: number
-  arrowSize: number
-  arrowLength: number
-  labelOffsetY: number
-}
-
-// 场景配置
-interface SceneConfig {
-  cellWidth: number
-  reviewRowHeight: number
-  leftOffset: number
-  nodeSpacing?: number
-  reviewerColumnWidth?: number
-  fileUploadColumnWidth?: number
-}
+import { NODE_CONFIGS, CONNECTION_CONFIGS, COLORS, FIXED_NODE_WIDTH, FIXED_NODE_HEIGHT, FIXED_NODE_DEPTH } from './config'
+import type { NodeRenderConfig, ConnectionRenderConfig, NodeRendererConfig, TimeInterval } from './types'
 
 /**
  * 工作流节点渲染器
@@ -41,85 +11,18 @@ interface SceneConfig {
 export default class WorkflowNodeRenderer {
   private scene: THREE.Scene
   private nodeGroup: THREE.Group
-  private config: SceneConfig
-  private timeIntervals: { date: string; label: string; isInterval: boolean; id?: string }[]
+  private config: NodeRendererConfig
+  private timeIntervals: TimeInterval[]
   private nodesMap: Map<string, WorkflowNode> = new Map() // 存储节点ID到节点对象的映射
 
   // 节点配置
-  private nodeConfigs: Record<NodeType, NodeRenderConfig> = {
-    start: {
-      width: 32,
-      height: 32,
-      depth: 32,
-      y: 16,
-      opacity: 1.0,
-      metalness: 0.3,
-      roughness: 0.5,
-      labelOffsetY: 32,
-    },
-    virtual: {
-      width: 32,
-      height: 32,
-      depth: 32,
-      y: 16,
-      opacity: 0.6,
-      metalness: 0.5,
-      roughness: 0.6,
-      labelOffsetY: 32,
-    },
-    actual: {
-      width: 32,
-      height: 32,
-      depth: 32,
-      y: 16,
-      opacity: 1.0,
-      metalness: 0.3,
-      roughness: 0.5,
-      labelOffsetY: 32,
-    },
-    end: {
-      width: 32,
-      height: 32,
-      depth: 32,
-      y: 16,
-      opacity: 1.0,
-      metalness: 0.3,
-      roughness: 0.5,
-      labelOffsetY: 32,
-    },
-  }
+  private nodeConfigs: Record<NodeType, NodeRenderConfig> = NODE_CONFIGS
 
   // 连接线配置
-  private connectionConfigs: Record<'solid' | 'dashed', ConnectionRenderConfig> = {
-    solid: {
-      lineWidth: 2,
-      arrowSize: 5,
-      arrowLength: 10,
-      labelOffsetY: 15,
-    },
-    dashed: {
-      lineWidth: 2,
-      dashSize: 3,
-      gapSize: 2,
-      arrowSize: 5,
-      arrowLength: 10,
-      labelOffsetY: 15,
-    },
-  }
+  private connectionConfigs: Record<'solid' | 'dashed', ConnectionRenderConfig> = CONNECTION_CONFIGS
 
   // 颜色配置
-  private colorConfigs = {
-    main: {
-      pass: 0x4caf50, // 绿色
-      reject: 0xf44336, // 红色
-      pending: 0x9e9e9e, // 灰色
-    },
-    retry: {
-      pass: 0xffc107, // 黄色
-      reject: 0xf44336, // 红色
-      pending: 0x9e9e9e, // 灰色
-    },
-  }
+  private colorConfigs = COLORS.nodeColors
 
   /**
    * 构造函数
@@ -132,8 +35,8 @@ export default class WorkflowNodeRenderer {
   constructor(
     scene: THREE.Scene,
     nodeGroup: THREE.Group,
-    config: SceneConfig,
-    timeIntervals: { date: string; label: string; isInterval: boolean; id?: string }[],
+    config: NodeRendererConfig,
+    timeIntervals: TimeInterval[],
     private getReviewer: (reviewerId: string) => any,
   ) {
     this.scene = scene
@@ -168,7 +71,7 @@ export default class WorkflowNodeRenderer {
    * @returns X坐标位置
    */
   private getTimeIntervalPosition(
-    timeInterval: { date: string; label: string; isInterval: boolean; id?: string },
+    timeInterval: TimeInterval,
     index: number,
   ): number {
     console.log(`计算时间间隔位置: 索引=${index}, id=${timeInterval.id}, date=${timeInterval.date}`)
@@ -286,11 +189,120 @@ export default class WorkflowNodeRenderer {
    * @returns Z坐标位置
    */
   private getNodeZ(reviewerPosition: number): number {
+    // 使用timelineDepth替代reviewRowHeight作为基准点
+    // 如果没有提供timelineDepth，则回退到使用reviewRowHeight
+    const baseZ = this.config.timelineDepth || this.config.reviewRowHeight;
+    
     return (
       this.config.reviewRowHeight / 2 +
       reviewerPosition * this.config.reviewRowHeight +
-      this.config.reviewRowHeight
+      baseZ
     )
+  }
+
+  /**
+   * 在节点上创建文本标签
+   * @param node 节点数据
+   * @param nodeMesh 节点网格对象
+   * @returns CSS2D对象
+   */
+  private createNodeLabel(node: WorkflowNode, nodeMesh: THREE.Mesh): CSS2DObject[] {
+    const labels: CSS2DObject[] = []
+    
+    // 创建主标签容器（显示在节点顶面）
+    const mainLabelDiv = document.createElement('div')
+    mainLabelDiv.className = 'node-main-label'
+    
+    // 设置主标签样式 - 直接在节点上显示文本，不使用背景色
+    mainLabelDiv.style.cssText = `
+      width: ${FIXED_NODE_WIDTH - 10}px;
+      padding: 4px;
+      color: white;
+      font-family: 'Microsoft YaHei', sans-serif;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      pointer-events: none;
+      user-select: none;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    `
+    
+    // 设置主标签文本内容
+    mainLabelDiv.textContent = node.title || `节点${node.id}`
+    
+    // 创建主标签CSS2D对象
+    const mainLabel = new CSS2DObject(mainLabelDiv)
+    
+    // 调整主标签位置，放在节点中心
+    mainLabel.position.set(0, 0, 0)
+    
+    // 将主标签添加为节点的子对象
+    nodeMesh.add(mainLabel)
+    labels.push(mainLabel)
+    
+    // 如果节点有状态信息，在节点底部添加状态标签
+    if (node.stateInfo || node.status) {
+      const statusLabelDiv = document.createElement('div')
+      statusLabelDiv.className = 'node-status-label'
+      
+      // 设置状态标签样式
+      let textColor = 'white'
+      
+      // 根据节点状态设置不同的颜色
+      if (node.status === 'pass') {
+        textColor = '#4caf50' // 绿色文字
+      } else if (node.status === 'reject') {
+        textColor = '#f44336' // 红色文字
+      } else if (node.status === 'pending') {
+        textColor = '#ffc107' // 黄色文字
+      }
+      
+      statusLabelDiv.style.cssText = `
+        width: ${FIXED_NODE_WIDTH - 10}px;
+        padding: 2px;
+        color: ${textColor};
+        font-family: 'Microsoft YaHei', sans-serif;
+        font-size: 12px;
+        font-weight: normal;
+        text-align: center;
+        pointer-events: none;
+        user-select: none;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+      `
+      
+      // 设置状态标签文本内容
+      statusLabelDiv.textContent = node.stateInfo || this.getStatusText(node.status)
+      
+      // 创建状态标签CSS2D对象
+      const statusLabel = new CSS2DObject(statusLabelDiv)
+      
+      // 调整状态标签位置，放在节点底部
+      statusLabel.position.set(0, -FIXED_NODE_HEIGHT / 3, 0)
+      
+      // 将状态标签添加为节点的子对象
+      nodeMesh.add(statusLabel)
+      labels.push(statusLabel)
+    }
+    
+    return labels
+  }
+  
+  /**
+   * 获取状态文本
+   * @param status 状态代码
+   * @returns 状态文本
+   */
+  private getStatusText(status: string): string {
+    switch (status) {
+      case 'pass':
+        return '已通过'
+      case 'reject':
+        return '已驳回'
+      case 'pending':
+        return '审核中'
+      default:
+        return status
+    }
   }
 
   /**
@@ -310,17 +322,19 @@ export default class WorkflowNodeRenderer {
     const startX = this.getNodeX(node.timePointId, node.id)
     console.log(`节点起始 X 坐标=${startX} (基于时间点ID=${node.timePointId})`)
 
-    // 固定节点尺寸为32*32的正方体
-    const size = 32
-    console.log(`节点尺寸=${size}`)
+    // 使用固定节点尺寸常量
+    const width = FIXED_NODE_WIDTH
+    const height = FIXED_NODE_HEIGHT
+    const depth = FIXED_NODE_DEPTH
+    console.log(`节点尺寸: 宽=${width}, 高=${height}, 深=${depth}`)
 
     // 计算节点的Z位置（对应审核人）
     const z = this.getNodeZ(reviewerPosition)
     console.log(`节点 Z 坐标=${z} (基于审核人位置=${reviewerPosition})`)
 
-    // 创建立方体几何体
-    const nodeGeometry = new THREE.BoxGeometry(size, size, size)
-    console.log(`创建立方体几何体 - 尺寸=${size}`)
+    // 创建节点几何体
+    const nodeGeometry = new THREE.BoxGeometry(width, height, depth)
+    console.log(`创建节点几何体 - 尺寸: ${width}x${height}x${depth}`)
 
     // 获取节点颜色
     const nodeColor = this.getColor(node.flowType, node.status)
@@ -328,31 +342,37 @@ export default class WorkflowNodeRenderer {
       `节点颜色=0x${nodeColor.toString(16)} (基于流程类型=${node.flowType}, 状态=${node.status})`,
     )
 
-    // 创建节点材质
-    const nodeMaterial = new THREE.MeshStandardMaterial({
+    // 创建节点材质 - 使用更加简洁的单一材质
+    const material = new THREE.MeshStandardMaterial({
       color: nodeColor,
-      metalness: nodeConfig.metalness,
-      roughness: nodeConfig.roughness,
+      metalness: 0.1, // 降低金属度，减少反光
+      roughness: 0.7, // 增加粗糙度，使表面更加哑光
       transparent: true,
-      opacity: node.isVirtual ? 0.6 : nodeConfig.opacity,
+      opacity: node.isVirtual ? 0.6 : 1.0,
+      flatShading: true, // 平面着色，使表面更平整
     })
 
     // 创建节点网格
-    const nodeMesh = new THREE.Mesh(nodeGeometry, nodeMaterial)
+    const nodeMesh = new THREE.Mesh(nodeGeometry, material)
 
     // 设置节点位置
     nodeMesh.position.set(
       startX,
-      size / 2, // Y轴高度为尺寸的一半
+      height / 2, // Y轴高度为高度的一半
       z,
     )
-    console.log(`最终节点位置: X=${startX}, Y=${size / 2}, Z=${z}`)
+    console.log(`最终节点位置: X=${startX}, Y=${height / 2}, Z=${z}`)
 
     // 设置节点的用户数据（用于点击交互）
     nodeMesh.userData = {
       type: 'workflowNode',
       nodeId: node.id,
       nodeData: node,
+    }
+    
+    // 添加节点文本标签
+    if (node.title) {
+      this.createNodeLabel(node, nodeMesh)
     }
 
     console.log(`节点网格创建完成: ID=${node.id}`)
@@ -380,8 +400,33 @@ export default class WorkflowNodeRenderer {
 
     // 调整起点和终点，使线从节点边缘开始和结束，而不是从中心
     const direction = new THREE.Vector3().subVectors(endPosition, startPosition).normalize()
-    startPosition.add(direction.clone().multiplyScalar(16)) // 16是节点半径
-    endPosition.sub(direction.clone().multiplyScalar(16))
+    
+    // 根据连接方向选择合适的节点尺寸
+    // 计算主要移动方向（X、Y或Z）
+    const absX = Math.abs(direction.x)
+    const absY = Math.abs(direction.y)
+    const absZ = Math.abs(direction.z)
+    
+    let offsetDistance
+    // 如果主要是X方向的移动
+    if (absX > absZ && absX > absY) {
+      offsetDistance = FIXED_NODE_WIDTH / 2
+    }
+    // 如果主要是Z方向的移动
+    else if (absZ > absX && absZ > absY) {
+      offsetDistance = FIXED_NODE_DEPTH / 2
+    }
+    // 如果主要是Y方向的移动或者是混合方向
+    else {
+      // 使用宽度和深度的平均值作为对角线移动的偏移量
+      offsetDistance = Math.min(FIXED_NODE_WIDTH, FIXED_NODE_DEPTH) / 2
+    }
+    
+    // 增加一点额外的偏移，确保连接线从节点边缘开始和结束
+    offsetDistance += 5
+    
+    startPosition.add(direction.clone().multiplyScalar(offsetDistance))
+    endPosition.sub(direction.clone().multiplyScalar(offsetDistance))
 
     // 创建连接线几何体
     const points: THREE.Vector3[] = []
@@ -401,7 +446,7 @@ export default class WorkflowNodeRenderer {
       // 对于较长的连接，添加中间点创建曲线
       // 计算中间点，使线条有弧度
       const midX = (startPosition.x + endPosition.x) / 2
-      const midY = Math.max(startPosition.y, endPosition.y) + 40 // 向上弯曲
+      const midY = Math.max(startPosition.y, endPosition.y) + 60 // 增加弧度高度，适应更高的节点
       const midZ = (startPosition.z + endPosition.z) / 2
 
       const midControlPoint = new THREE.Vector3(midX, midY, midZ)
@@ -436,7 +481,7 @@ export default class WorkflowNodeRenderer {
     // 创建线材质
     const material = new THREE.LineBasicMaterial({
       color: color,
-      linewidth: 2,
+      linewidth: 3, // 增加线宽，使连接线更明显
       transparent: true,
       opacity: 0.8,
     })
@@ -552,8 +597,8 @@ export default class WorkflowNodeRenderer {
    * @param color 颜色
    */
   private createArrow(position: THREE.Vector3, direction: THREE.Vector3, color: number): void {
-    // 创建一个小圆锥作为箭头
-    const arrowGeometry = new THREE.ConeGeometry(5, 10, 8)
+    // 创建一个圆锥作为箭头，增大尺寸
+    const arrowGeometry = new THREE.ConeGeometry(8, 16, 8)
     const arrowMaterial = new THREE.MeshBasicMaterial({ color: color })
     const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial)
 
@@ -572,83 +617,125 @@ export default class WorkflowNodeRenderer {
   }
 
   /**
-   * 创建工作流节点和连接线
-   * @param nodes 节点数组
+   * 处理节点点击事件
+   * @param event 鼠标事件
+   * @param nodeId 节点ID
+   * @param nodeData 节点数据
+   */
+  public handleNodeClick(event: MouseEvent, nodeId: string, nodeData: WorkflowNode): void {
+    console.log(`节点被点击: ID=${nodeId}, 标题=${nodeData.title}`, nodeData)
+    
+    // 触发自定义事件，通知外部组件节点被点击
+    const clickEvent = new CustomEvent('workflow-node-click', {
+      detail: {
+        nodeId,
+        nodeData,
+        originalEvent: event,
+      },
+    })
+    document.dispatchEvent(clickEvent)
+    
+    // 这里可以添加其他点击效果，例如高亮显示节点
+    // 可以在将来实现
+  }
+
+  /**
+   * 创建所有节点和连接
+   * @param nodes 节点数据数组
    */
   public createNodesAndConnections(nodes: WorkflowNode[]): void {
-    // 清空节点映射
+    console.log(`开始创建${nodes.length}个节点和连接`)
+
+    // 清除之前的节点和连接
+    this.nodeGroup.clear()
     this.nodesMap.clear()
 
-    // 创建用于存储THREE.Mesh节点对象的映射
-    const nodeMeshMap = new Map<string, THREE.Mesh>()
-
-    // 创建实际渲染节点的ID集合
+    // 记录已渲染的节点ID
     const renderedNodeIds = new Set<string>()
 
-    console.log('开始创建节点，总节点数量:', nodes.length)
-
-    // 第一阶段：创建所有节点
-    nodes.forEach((node) => {
-      // 检查节点是否可见，以及是否在时间间隔内
-      const isTimeIntervalNode = this.isTimeInterval(node.timePointId)
-
-      // 不渲染时间间隔内的节点
-      if (node.isVisible && !isTimeIntervalNode) {
-        // 获取审核人
-        const reviewer = this.getReviewer(node.reviewerId)
-        if (!reviewer) {
-          console.warn(`找不到审核人: ${node.reviewerId}，节点ID: ${node.id}`)
-          return
-        }
-
-        console.log(`创建节点 ID: ${node.id}, 标题: ${node.title}`)
-        console.log(`  审核人: ${reviewer.name}, 位置: ${reviewer.position}`)
-        console.log(`  时间点: ${node.timePointId}, 虚拟节点: ${node.isVirtual}`)
-
-        // 创建节点网格
-        const nodeMesh = this.createNodeMesh(node, reviewer.position)
-        this.nodeGroup.add(nodeMesh)
-
-        console.log(
-          `  节点位置: X=${nodeMesh.position.x}, Y=${nodeMesh.position.y}, Z=${nodeMesh.position.z}`,
-        )
-
-        // 记录实际渲染的节点ID
-        renderedNodeIds.add(node.id)
-
-        // 存储节点到映射中
-        this.nodesMap.set(node.id, node)
-        nodeMeshMap.set(node.id, nodeMesh)
-      } else {
-        const reason = !node.isVisible ? '节点不可见' : '节点位于时间间隔内'
-        console.log(`跳过节点 ID: ${node.id}, 原因: ${reason}`)
+    // 第一步：创建所有节点
+    for (const node of nodes) {
+      // 检查节点是否在时间间隔中，如果是则跳过
+      if (this.isTimeInterval(node.timePointId)) {
+        console.log(`跳过节点 ${node.id}：位于时间间隔 ${node.timePointId} 中`)
+        continue
       }
-    })
+      
+      // 查找审核人位置
+      const reviewer = this.getReviewer(node.reviewerId)
+      if (!reviewer) {
+        console.warn(`未找到审核人: ID=${node.reviewerId}, 节点=${node.id}`)
+        continue
+      }
 
-    console.log('节点创建完成，总创建节点数量:', this.nodesMap.size)
+      const reviewerPosition = reviewer.position
+      console.log(
+        `为节点${node.id}找到审核人${node.reviewerId}，位置=${reviewerPosition}`,
+      )
 
-    // 第二阶段：创建连接线
-    console.log('开始创建连接线...')
+      // 创建节点网格
+      const nodeMesh = this.createNodeMesh(node, reviewerPosition)
 
-    // 创建连接映射，处理跨越时间间隔的连接
-    const connectionMap = this.buildConnectionMap(nodes, renderedNodeIds)
+      // 添加到场景
+      this.nodeGroup.add(nodeMesh)
 
-    // 遍历连接映射创建连接线
-    for (const [fromId, toId] of connectionMap.entries()) {
-      const fromMesh = nodeMeshMap.get(fromId)
-      const toMesh = nodeMeshMap.get(toId)
-
-      if (fromMesh && toMesh) {
-        // 获取源节点数据，用于确定连接线的状态和类型
-        const fromNode = this.nodesMap.get(fromId)
-        if (fromNode) {
-          console.log(`创建连接线: ${fromId} -> ${toId}`)
-          this.createConnection(fromMesh, toMesh, fromNode.status, fromNode.flowType, fromNode)
-        }
+      // 存储节点引用
+      this.nodesMap.set(node.id, node)
+      renderedNodeIds.add(node.id)
+      
+      // 为节点添加点击事件监听器
+      nodeMesh.userData.onClick = (event: MouseEvent) => {
+        this.handleNodeClick(event, node.id, node)
       }
     }
 
-    console.log('连接线创建完成')
+    console.log(`已创建${renderedNodeIds.size}个节点`)
+
+    // 第二步：构建连接映射
+    const connectionMap = this.buildConnectionMap(nodes, renderedNodeIds)
+
+    // 第三步：创建连接线
+    for (const [fromNodeId, toNodeId] of connectionMap.entries()) {
+      // 获取源节点和目标节点
+      const fromNode = this.nodesMap.get(fromNodeId)
+      const toNode = this.nodesMap.get(toNodeId)
+
+      if (!fromNode || !toNode) {
+        console.warn(`无法创建连接: 找不到节点 ${fromNodeId} -> ${toNodeId}`)
+        continue
+      }
+
+      // 查找场景中的节点网格
+      const fromMesh = this.nodeGroup.children.find(
+        (child) => child.userData?.nodeId === fromNodeId,
+      ) as THREE.Mesh
+      const toMesh = this.nodeGroup.children.find(
+        (child) => child.userData?.nodeId === toNodeId,
+      ) as THREE.Mesh
+
+      if (!fromMesh || !toMesh) {
+        console.warn(`无法创建连接: 找不到节点网格 ${fromNodeId} -> ${toNodeId}`)
+        continue
+      }
+
+      // 获取源节点的状态和流程类型
+      const sourceNodeData = this.nodesMap.get(fromNodeId)
+      if (!sourceNodeData) {
+        console.warn(`无法创建连接: 找不到源节点数据 ${fromNodeId}`)
+        continue
+      }
+
+      // 创建连接线
+      this.createConnection(
+        fromMesh,
+        toMesh,
+        sourceNodeData.status,
+        sourceNodeData.flowType,
+        sourceNodeData,
+      )
+    }
+
+    console.log('节点和连接创建完成')
   }
 
   /**

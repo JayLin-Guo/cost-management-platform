@@ -179,7 +179,7 @@ onUnmounted(() => {
   height: 100vh;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+  background: #1a2d7a;
 }
 
 .three-container {
