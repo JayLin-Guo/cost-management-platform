@@ -168,24 +168,40 @@ class WorkflowScene {
    */
   private setupControls(): void {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-    this.controls.enableDamping = true
-    this.controls.dampingFactor = 0.05
-    this.controls.minDistance = 200
-    this.controls.maxDistance = 2000
-    this.controls.maxPolarAngle = Math.PI / 2 - 0.1 // 限制不要完全水平视角
-    this.controls.minPolarAngle = 0.1 // 限制不要完全垂直视角
-    this.controls.enablePan = true
-    this.controls.enableZoom = true
-    this.controls.enableRotate = true
-
-    // 设置初始目标点为场景中心
+    
+    // 计算场景尺寸
     const sceneWidth =
       this.timeIntervals.length * DEFAULT_CONFIG.cellWidth + DEFAULT_CONFIG.leftOffset
     const totalRows = this.reviewers.length
     const sceneDepth = totalRows * DEFAULT_CONFIG.reviewRowHeight
-    this.controls.target.set(sceneWidth / 2, 0, sceneDepth / 2)
-
-    // 设置初始视角
+    
+    // 设置目标点为场景中心
+    const targetX = sceneWidth / 2
+    const targetY = 0
+    const targetZ = sceneDepth / 2 + DEFAULT_CONFIG.timelineDepth / 2
+    this.controls.target.set(targetX, targetY, targetZ)
+    
+    // 禁用左键旋转，但保留右键平移功能
+    this.controls.enableRotate = false  // 禁用旋转
+    this.controls.mouseButtons = {
+      LEFT: THREE.MOUSE.PAN,  // 左键平移
+      MIDDLE: THREE.MOUSE.DOLLY,  // 中键缩放
+      RIGHT: THREE.MOUSE.PAN  // 右键平移
+    }
+    
+    // 限制平移范围
+    this.controls.enableDamping = true
+    this.controls.dampingFactor = 0.1
+    this.controls.minDistance = 200
+    this.controls.maxDistance = 1000
+    
+    // 启用缩放
+    this.controls.enableZoom = true
+    
+    // 设置为顶视图
+    this.camera.position.set(targetX, 800, targetZ)
+    
+    // 更新控制器
     this.controls.update()
   }
 
@@ -201,34 +217,61 @@ class WorkflowScene {
    * 设置灯光
    */
   private setupLights(): void {
+    // 计算场景尺寸用于灯光定位
+    const sceneWidth =
+      this.timeIntervals.length * DEFAULT_CONFIG.cellWidth + DEFAULT_CONFIG.leftOffset
+    const totalRows = this.reviewers.length
+    const sceneDepth = totalRows * DEFAULT_CONFIG.reviewRowHeight
+
+    // 场景中心点坐标
+    const centerX = sceneWidth / 2
+    const centerY = 0
+    const centerZ = sceneDepth / 2 + DEFAULT_CONFIG.timelineDepth / 2
+
     // 环境光 - 使用略带蓝色的环境光，与深蓝色背景协调
-    const ambientLight = new THREE.AmbientLight(0x1a2a50, 0.4)
+    const ambientLight = new THREE.AmbientLight(0x1a2a50, 0.5)
     this.scene.add(ambientLight)
 
-    // 主方向光 - 从右上方照射，使用冷白光
-    const mainLight = new THREE.DirectionalLight(0xd0d8ff, 0.6) // 带蓝色调的白光
-    mainLight.position.set(500, 500, 200)
+    // 主方向光 - 从右上角照射到时间轴和场景中心
+    const mainLight = new THREE.DirectionalLight(0xd0d8ff, 0.8) // 增强亮度
+    mainLight.position.set(centerX + 500, 600, centerZ - 300) // 右上角位置
+    mainLight.target.position.set(centerX, 0, centerZ) // 照射目标为场景中心
     mainLight.castShadow = true
     
     // 配置阴影参数，提高阴影质量
-    mainLight.shadow.mapSize.width = 1024
-    mainLight.shadow.mapSize.height = 1024
+    mainLight.shadow.mapSize.width = 2048 // 增加阴影分辨率
+    mainLight.shadow.mapSize.height = 2048
     mainLight.shadow.camera.near = 0.5
     mainLight.shadow.camera.far = 2000
+    mainLight.shadow.camera.left = -1000
+    mainLight.shadow.camera.right = 1000
+    mainLight.shadow.camera.top = 1000
+    mainLight.shadow.camera.bottom = -1000
     
     this.scene.add(mainLight)
+    this.scene.add(mainLight.target) // 必须将target添加到场景中
 
-    // 额外的方向光 - 专门照射时间轴中部
-    const timelineLight = new THREE.DirectionalLight(0xa0c0ff, 0.35) // 更蓝的光源，增强金属感
-    timelineLight.position.set(-300, 200, 100) // 从左侧照射
-    timelineLight.castShadow = false // 不产生阴影，只用于照亮
-    this.scene.add(timelineLight)
+    // 专门照射时间轴的聚光灯
+    const timelineSpotlight = new THREE.SpotLight(0xa0c0ff, 0.6)
+    timelineSpotlight.position.set(centerX, 400, DEFAULT_CONFIG.timelineDepth / 2)
+    timelineSpotlight.target.position.set(centerX, 0, DEFAULT_CONFIG.timelineDepth / 2) // 直接对准时间轴
+    timelineSpotlight.angle = Math.PI / 6 // 较窄的光束
+    timelineSpotlight.penumbra = 0.2 // 柔和的边缘
+    timelineSpotlight.decay = 1.5
+    timelineSpotlight.distance = 1000
+    timelineSpotlight.castShadow = true
+    
+    this.scene.add(timelineSpotlight)
+    this.scene.add(timelineSpotlight.target)
     
     // 添加柔和的补光，减少暗部过暗
-    const fillLight = new THREE.DirectionalLight(0x304070, 0.2) // 深蓝色补光，保持色调一致
-    fillLight.position.set(0, 100, 500) // 从前方照射
+    const fillLight = new THREE.DirectionalLight(0x304070, 0.3) // 增强补光
+    fillLight.position.set(centerX - 300, 200, centerZ + 500) // 从左前方照射
+    fillLight.target.position.set(centerX, 0, centerZ) // 照射目标为场景中心
     fillLight.castShadow = false
+    
     this.scene.add(fillLight)
+    this.scene.add(fillLight.target)
   }
 
   /**
@@ -962,13 +1005,46 @@ class WorkflowScene {
     
     return texture;
   }
+
+  /**
+   * 获取节点渲染器实例
+   */
+  getNodeRenderer(): WorkflowNodeRenderer {
+    return this.nodeRenderer
+  }
+
+  /**
+   * 切换视角
+   * @param viewType 视角类型
+   */
+  changeViewpoint(viewType: 'default' | 'top' | 'side' | 'front'): void {
+    // 获取场景尺寸
+    const sceneWidth = this.getSceneWidth()
+    const sceneDepth = this.getSceneDepth()
+
+    // 设置目标点为场景中心
+    const targetX = sceneWidth / 2
+    const targetY = 0
+    const targetZ = sceneDepth / 2
+
+    this.controls.target.set(targetX, targetY, targetZ)
+
+    // 强制使用顶视图，忽略传入的视角类型
+    this.camera.position.set(targetX, 800, targetZ)
+    
+    // 禁用旋转，只允许平移
+    this.controls.enableRotate = false
+
+    // 更新控制器
+    this.controls.update()
+  }
 }
 
 /**
  * 工作流程图Hook
  */
 export default function useThreeWorkflow1() {
-  const workflowScene = shallowRef<WorkflowScene>()
+  const workflowScene = shallowRef<WorkflowScene | null>(null)
 
   /**
    * 初始化场景
@@ -986,6 +1062,7 @@ export default function useThreeWorkflow1() {
   const cleanup = () => {
     if (workflowScene.value) {
       workflowScene.value.dispose()
+      workflowScene.value = null
     }
   }
 
@@ -993,64 +1070,27 @@ export default function useThreeWorkflow1() {
    * 获取场景信息
    */
   const getSceneInfo = () => {
-    if (!workflowScene.value) {
-      return { reviewerCount: 0, timePointCount: 0, nodeCount: 0 }
+    if (workflowScene.value) {
+      return workflowScene.value.getSceneInfo()
     }
-    return workflowScene.value.getSceneInfo()
+    return { reviewerCount: 0, timePointCount: 0, nodeCount: 0 }
   }
 
   /**
    * 切换视角
-   * @param viewType 视角类型：默认、顶视图、侧视图、正视图
+   * @param viewType 视角类型
    */
   const changeViewpoint = (viewType: 'default' | 'top' | 'side' | 'front') => {
-    if (!workflowScene.value) return
-
-    // 获取场景尺寸
-    const sceneInfo = workflowScene.value.getSceneInfo()
-    const scene = workflowScene.value.getScene()
-
-    if (!scene) return
-
-    // 计算场景尺寸
-    const sceneWidth = workflowScene.value.getSceneWidth()
-    const sceneDepth = workflowScene.value.getSceneDepth()
-
-    // 获取相机和控制器
-    const camera = workflowScene.value.getCamera()
-    const controls = workflowScene.value.getControls()
-
-    if (!camera || !controls) return
-
-    // 设置目标点为场景中心
-    const targetX = sceneWidth / 2
-    const targetY = 0
-    const targetZ = sceneDepth / 2
-
-    controls.target.set(targetX, targetY, targetZ)
-
-    // 根据视角类型设置相机位置
-    switch (viewType) {
-      case 'default':
-        // 从侧前方45度角观察
-        camera.position.set(targetX - 300, 300, sceneDepth + 500)
-        break
-      case 'top':
-        // 从正上方观察
-        camera.position.set(targetX, 800, targetZ)
-        break
-      case 'side':
-        // 从侧面观察
-        camera.position.set(targetX - 800, 200, targetZ)
-        break
-      case 'front':
-        // 从正面观察
-        camera.position.set(targetX, 200, sceneDepth + 800)
-        break
+    if (workflowScene.value) {
+      workflowScene.value.changeViewpoint(viewType)
     }
+  }
 
-    // 更新控制器
-    controls.update()
+  const getNodeRenderer = () => {
+    if (workflowScene.value) {
+      return workflowScene.value.getNodeRenderer()
+    }
+    return null
   }
 
   return {
@@ -1058,5 +1098,6 @@ export default function useThreeWorkflow1() {
     cleanup,
     getSceneInfo,
     changeViewpoint,
+    getNodeRenderer,
   }
 }

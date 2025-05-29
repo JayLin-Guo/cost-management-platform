@@ -6,7 +6,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('../views/Home.vue'),
+    component: () => import('../views/ThreeWorkflow1/index.vue'),
     meta: {
       title: '首页概览',
       keepAlive: true,
