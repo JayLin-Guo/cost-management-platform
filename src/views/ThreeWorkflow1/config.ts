@@ -136,7 +136,7 @@ export const CONNECTION_CONFIGS: Record<'solid' | 'dashed', ConnectionRenderConf
 export const ANIMATION_CONFIG: AnimationConfig = {
   // 瞬移节点动画
   teleport: {
-    interval: 1.5, // 瞬移间隔(秒)
+    interval: 3, // 瞬移间隔(秒)
     nodeHeight: FIXED_NODE_HEIGHT + 2, // 瞬移节点悬浮高度
     distance: 5, // 每次瞬移的步长
     floatSpeed: 0.002, // 悬浮效果速度

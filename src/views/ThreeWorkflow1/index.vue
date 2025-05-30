@@ -3,6 +3,13 @@
     <!-- 添加项目头部 -->
     <ProjectHeader />
     
+    <!-- 添加控制按钮 -->
+    <div class="controls-panel">
+      <button class="control-btn" @click="toggleRotationLimits">
+        {{ isRotationLimited ? '开启自由视角' : '锁定视角' }}
+      </button>
+    </div>
+    
     <!-- 信息展示区域 -->
     <div class="info-panel">
       <div class="info-panel-bg"></div>
@@ -46,26 +53,16 @@
           <svg class="section-icon" viewBox="0 0 24 24">
             <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M6,20H15L18,20V12L14,16L12,14L6,20M8,9A2,2 0 0,0 6,11A2,2 0 0,0 8,13A2,2 0 0,0 10,11A2,2 0 0,0 8,9Z" />
           </svg>
-          <span>项目信息</span>
+          <span>任务信息</span>
         </div>
         <div class="section-content">
           <div class="info-grid">
+      
             <div class="info-item">
-              <span class="info-label">项目编号:</span>
-              <span class="info-value">{{ projectInfo.code }}</span>
+              <span class="info-label">任务计划结束还剩</span>
+              <span class="info-value status-active"> 3天</span>
             </div>
-            <div class="info-item">
-              <span class="info-label">开始日期:</span>
-              <span class="info-value">{{ projectInfo.startDate }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">当前阶段:</span>
-              <span class="info-value status-active">施工中</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">完成度:</span>
-              <span class="info-value">65%</span>
-            </div>
+         
           </div>
         </div>
       </div>
@@ -76,25 +73,17 @@
 
     <!-- CSS2D渲染器容器 - 用于HTML标签 -->
     <div ref="cssContainer" class="css-container"></div>
-
-    <!-- 视角控制按钮 -->
-    <!-- <div class="view-controls">
-      <button @click="changeView('default')" class="view-btn">默认视角</button>
-      <button @click="changeView('top')" class="view-btn">顶视图</button>
-      <button @click="changeView('side')" class="view-btn">侧视图</button>
-      <button @click="changeView('front')" class="view-btn">正视图</button>
-    </div> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import useThreeWorkflow1 from './useThreeWorkflow1'
-import ProjectHeader from '../../components/ProjectHeader.vue'
+import ProjectHeader from '@/components/ProjectHeader.vue'
 
 // DOM引用
-const threeContainer = ref(null)
-const cssContainer = ref(null)
+const threeContainer = ref<HTMLElement | null>(null)
+const cssContainer = ref<HTMLElement | null>(null)
 
 // 项目信息
 const projectInfo = reactive({
@@ -136,28 +125,39 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
-// 使用Three.js工作流
-const { initialize, cleanup, changeViewpoint } = useThreeWorkflow1()
+// 创建Three.js工作流渲染器
+const workflow = useThreeWorkflow1()
+
+// 旋转限制状态
+const isRotationLimited = ref(true)
+
+// 切换旋转限制
+function toggleRotationLimits() {
+  isRotationLimited.value = workflow.toggleRotationLimits()
+}
+
+// 切换视图视角
+function changeView(viewType: 'default' | 'top' | 'side' | 'front') {
+  workflow.changeViewpoint(viewType)
+}
 
 // 组件挂载时初始化3D场景
 onMounted(() => {
   if (threeContainer.value && cssContainer.value) {
     // 初始化场景
-    initialize(threeContainer.value, cssContainer.value)
+    workflow.initialize(threeContainer.value, cssContainer.value)
+    
+    // 初始化状态
+    isRotationLimited.value = workflow.getRotationLimitState()
   }
   
   // 添加全局点击事件监听器
   document.addEventListener('click', handleClickOutside)
 })
 
-// 视角切换函数
-const changeView = (viewType: 'default' | 'top' | 'side' | 'front') => {
-  changeViewpoint(viewType)
-}
-
 // 组件卸载时清理资源
 onUnmounted(() => {
-  cleanup()
+  workflow.cleanup()
   document.removeEventListener('click', handleClickOutside)
 })
 </script>
@@ -450,5 +450,35 @@ onUnmounted(() => {
     padding: 6px 12px;
     font-size: 12px;
   }
+}
+
+/* 控制面板样式 */
+.controls-panel {
+  position: absolute;
+  top: 90px;
+  right: 20px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.control-btn {
+  background: rgba(40, 60, 100, 0.7);
+  color: white;
+  border: 1px solid rgba(100, 150, 255, 0.5);
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+  background: rgba(60, 90, 150, 0.8);
+  border-color: rgba(120, 180, 255, 0.8);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 </style>

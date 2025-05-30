@@ -133,14 +133,14 @@ export interface AnimationConfig {
 export interface ColorConfig {
   background: number
   timelineBar: number
-  timelineText: string  // 时间轴文字颜色
+  timelineText: string // 时间轴文字颜色
   timelineShadow: string // 时间轴文字阴影颜色
   timelineBorder: string // 时间轴边框颜色
   timelineHeaderBg: string // 时间轴标题背景色
   timelineCellBg: {
-    interval: string    // 间隔单元格背景色
-    even: string        // 偶数单元格背景色
-    odd: string         // 奇数单元格背景色
+    interval: string // 间隔单元格背景色
+    even: string // 偶数单元格背景色
+    odd: string // 奇数单元格背景色
   }
   nodeColors: {
     main: {
@@ -155,4 +155,69 @@ export interface ColorConfig {
     }
   }
   animation: AnimationColorConfig // 动画颜色配置
-} 
+}
+
+// 节点状态
+export type NodeStatus = 'pending' | 'pass' | 'reject' | 'end'
+/**
+ * 工作流节点数据结构
+ * 用于表示工作流中的各个节点及其关系
+ */
+export interface WorkflowNode {
+  /**
+   * 节点唯一标识符
+   * 用于在系统中唯一标识一个节点，通常格式为"nodeX"，其中X为数字
+   */
+  id: string
+
+  /**
+   * 审核人ID
+   * 关联到审核人数据，用于确定节点在Z轴上的位置
+   * 对应reviewer数组中的某个审核人
+   */
+  reviewerId: string
+
+  /**
+   * 时间点ID
+   * 关联到时间轴上的时间点，用于确定节点在X轴上的位置
+   * 对应timePoints数组中的某个时间点
+   */
+  timePointId: string
+
+  /**
+   * 节点标题
+   * 显示在节点上的主要文本信息
+   * 通常包含文档名称和阶段信息
+   */
+  title: string
+
+  /**
+   * 节点状态
+   * pass: 已通过审核的节点
+   * pending: 待审核的节点
+   * reject: 被驳回的节点
+   * end: 结束状态的节点
+   */
+  status: NodeStatus
+
+  /**
+   * 状态信息文本
+   * 显示在连接线上的文本，用于描述节点之间的关系或状态
+   * 例如："提交一审"、"已通过"、"驳回"、"历时35天"等
+   */
+  stateInfo: string
+
+  /**
+   * 连接起始节点ID
+   * 表示当前节点的连接从哪个节点开始
+   * 通常是节点自身的ID，用于构建连接关系
+   */
+  from?: string
+
+  /**
+   * 连接目标节点ID
+   * 表示当前节点连接到哪个节点
+   * 用于构建节点之间的连接关系和流程走向
+   */
+  to?: string
+}

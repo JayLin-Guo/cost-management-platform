@@ -3,10 +3,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
 import useMockData from './useMockData'
-import type { WorkflowNode, Reviewer } from './useMockData'
 import WorkflowNodeRenderer from './useWorkflowNodeRenderer'
 import { DEFAULT_CONFIG, COLORS, FONT_HEADER, FONT_CELL } from './config'
-import type { SceneConfig, TimeInterval } from './types'
+import type { SceneConfig, TimeInterval, WorkflowNode } from './types'
 
 /**
  * 工作流程图场景类
@@ -42,6 +41,9 @@ class WorkflowScene {
   private mouse: THREE.Vector2
   private boundMouseClick: (event: MouseEvent) => void
   private boundWindowResize: () => void
+
+  // 添加一个属性来跟踪旋转限制状态
+  private isRotationLimited: boolean = true
 
   constructor(config: SceneConfig) {
     this.config = config
@@ -181,17 +183,24 @@ class WorkflowScene {
     const targetZ = sceneDepth / 2 + DEFAULT_CONFIG.timelineDepth / 2
     this.controls.target.set(targetX, targetY, targetZ)
     
-    // 禁用左键旋转，但保留右键平移功能
-    this.controls.enableRotate = false  // 禁用旋转
+    // 启用旋转，但仅限上下翻转（垂直旋转）
+    this.controls.enableRotate = true
+    
+    // 设置鼠标按键功能
     this.controls.mouseButtons = {
-      LEFT: THREE.MOUSE.PAN,  // 左键平移
-      MIDDLE: THREE.MOUSE.DOLLY,  // 中键缩放
-      RIGHT: THREE.MOUSE.PAN  // 右键平移
+      LEFT: THREE.MOUSE.ROTATE,  // 左键旋转
+      MIDDLE: THREE.MOUSE.DOLLY, // 中键缩放
+      RIGHT: THREE.MOUSE.PAN     // 右键平移
     }
     
-    // 限制平移范围
+    // 应用旋转限制（默认状态）
+    this.applyRotationLimits(this.isRotationLimited)
+    
+    // 启用阻尼效果，使旋转更平滑
     this.controls.enableDamping = true
     this.controls.dampingFactor = 0.1
+    
+    // 设置缩放限制
     this.controls.minDistance = 200
     this.controls.maxDistance = 1000
     
@@ -203,6 +212,62 @@ class WorkflowScene {
     
     // 更新控制器
     this.controls.update()
+  }
+
+  /**
+   * 应用或取消旋转限制
+   * @param limited 是否限制旋转
+   */
+  private applyRotationLimits(limited: boolean): void {
+    if (limited) {
+      // 限制旋转范围 - 仅允许垂直旋转（围绕X轴），不允许水平旋转（围绕Y轴）
+      this.controls.minPolarAngle = Math.PI * 0.1  // 最小仰角约10度，防止看到底部
+      this.controls.maxPolarAngle = Math.PI * 0.5  // 最大仰角90度，俯视图
+      
+      // 禁用水平旋转
+      this.controls.minAzimuthAngle = 0  // 锁定水平旋转角度
+      this.controls.maxAzimuthAngle = 0
+    } else {
+      // 放开旋转限制
+      this.controls.minPolarAngle = 0        // 允许完全俯视
+      this.controls.maxPolarAngle = Math.PI  // 允许完全仰视
+      
+      // 允许水平旋转
+      this.controls.minAzimuthAngle = -Infinity
+      this.controls.maxAzimuthAngle = Infinity
+    }
+    
+    // 更新控制器
+    this.controls.update()
+  }
+
+  /**
+   * 切换旋转限制状态
+   * @returns 当前旋转限制状态
+   */
+  public toggleRotationLimits(): boolean {
+    this.isRotationLimited = !this.isRotationLimited
+    this.applyRotationLimits(this.isRotationLimited)
+    return this.isRotationLimited
+  }
+
+  /**
+   * 设置旋转限制状态
+   * @param limited 是否限制旋转
+   */
+  public setRotationLimits(limited: boolean): void {
+    if (this.isRotationLimited !== limited) {
+      this.isRotationLimited = limited
+      this.applyRotationLimits(this.isRotationLimited)
+    }
+  }
+
+  /**
+   * 获取当前旋转限制状态
+   * @returns 当前旋转限制状态
+   */
+  public getRotationLimitState(): boolean {
+    return this.isRotationLimited
   }
 
   /**
@@ -892,13 +957,10 @@ class WorkflowScene {
       reviewerCount: this.reviewers.length,
       timePointCount: this.timePoints.length,
       nodeCount: this.workflowNodes.length,
-      mainFlowCount: this.workflowNodes.filter((n) => n.flowType === 'main').length,
-      retryFlowCount: this.workflowNodes.filter((n) => n.flowType === 'retry').length,
       passCount: this.workflowNodes.filter((n) => n.status === 'pass').length,
       rejectCount: this.workflowNodes.filter((n) => n.status === 'reject').length,
       pendingCount: this.workflowNodes.filter((n) => n.status === 'pending').length,
-      virtualNodeCount: this.workflowNodes.filter((n) => n.type === 'virtual').length,
-      actualNodeCount: this.workflowNodes.filter((n) => n.type === 'actual').length,
+  
     }
   }
 
@@ -1093,11 +1155,46 @@ export default function useThreeWorkflow1() {
     return null
   }
 
+  /**
+   * 切换旋转限制
+   * @returns 切换后的限制状态，true表示有限制，false表示无限制
+   */
+  const toggleRotationLimits = (): boolean => {
+    if (workflowScene.value) {
+      return workflowScene.value.toggleRotationLimits()
+    }
+    return true
+  }
+
+  /**
+   * 设置旋转限制状态
+   * @param limited 是否限制旋转
+   */
+  const setRotationLimits = (limited: boolean): void => {
+    if (workflowScene.value) {
+      workflowScene.value.setRotationLimits(limited)
+    }
+  }
+
+  /**
+   * 获取当前旋转限制状态
+   * @returns 当前旋转限制状态，true表示有限制，false表示无限制
+   */
+  const getRotationLimitState = (): boolean => {
+    if (workflowScene.value) {
+      return workflowScene.value.getRotationLimitState()
+    }
+    return true
+  }
+
   return {
     initialize,
     cleanup,
     getSceneInfo,
     changeViewpoint,
     getNodeRenderer,
+    toggleRotationLimits,    // 添加切换旋转限制的方法
+    setRotationLimits,       // 添加设置旋转限制的方法
+    getRotationLimitState,   // 添加获取旋转限制状态的方法
   }
 }

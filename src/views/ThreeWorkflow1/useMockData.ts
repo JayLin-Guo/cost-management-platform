@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import type { WorkflowNode, NodeStatus } from './types'
 
 // 审核人接口
 export interface Reviewer {
@@ -17,12 +18,6 @@ export interface TimePoint {
   isInterval?: boolean // 是否是间隔区间
 }
 
-// 节点类型
-export type NodeType = 'start' | 'virtual' | 'actual' | 'end'
-
-// 节点状态
-export type NodeStatus = 'pending' | 'pass' | 'reject'
-
 // 流程类型
 export type FlowType = 'main' | 'retry'
 
@@ -38,28 +33,6 @@ export interface WorkflowConnection {
   flowType: FlowType // 流程类型
   type: ConnectionType // 连接线类型：实线或虚线
   label?: string // 连接线标签
-}
-
-// 工作流节点
-export interface WorkflowNode {
-  id: string // 节点唯一标识
-  reviewerId: string // 审核人ID
-  timePointId: string // 关联时间点ID
-  title: string // 节点标题
-  type: NodeType // 节点类型
-  status: NodeStatus // 节点状态
-  flowType: FlowType // 流程类型
-  isVisible: boolean // 是否可见
-  isVirtual: boolean // 是否是虚拟节点
-  stateInfo: string // 状态信息（审核状态或时间信息）
-  // 连接信息
-  from?: string // 上游节点ID
-  to?: string // 下游节点ID
-  // 附加信息
-  documentId?: string // 文档ID
-  documentVersion?: string // 文档版本
-  comments?: string // 注释
-  priority?: 'low' | 'normal' | 'high' | 'urgent' // 优先级
 }
 
 export default function useMockData() {
@@ -92,19 +65,10 @@ export default function useMockData() {
       reviewerId: 'reviewer1', // 张三
       timePointId: 'timePoint1', // 6月4日
       title: '控制价\n初步成果文件',
-      type: 'start',
       status: 'pass',
-      flowType: 'main',
-      isVisible: true,
-      isVirtual: false,
       stateInfo: '提交一审',
       from: 'node1', // 从自身开始
       to: 'node2', // 连接到李四节点
-      // 附加信息
-      documentId: 'doc-2023-001',
-      documentVersion: 'v1.0',
-      comments: '请进行初步审核',
-      priority: 'normal',
     },
     // 2. 李四的一审接收节点 - 6月4日
     {
@@ -112,37 +76,21 @@ export default function useMockData() {
       reviewerId: 'reviewer2', // 李四（一审审核员）
       timePointId: 'timePoint1', // 6月4日（同一天接收）
       title: '控制价\n一审送审文件',
-      type: 'virtual',
       status: 'pending',
-      flowType: 'main',
-      isVisible: true,
-      isVirtual: true,
       stateInfo: '历时35天',
       from: 'node2', // 从自己开始
       to: 'node4', // 连接到时间间隔节点
-      // 附加信息
-      documentId: 'doc-2023-001',
-      documentVersion: 'v1.0',
     },
     // 4. 李四的一审完成节点 - 7月9日
     {
       id: 'node4',
       reviewerId: 'reviewer2', // 李四
       timePointId: 'timePoint2', // 7月9日
-      title: '控制价\n一审送审文件',
-      type: 'actual',
+      title: '控制价\n一审结果文件',
       status: 'pass',
-      flowType: 'main',
-      isVisible: true,
-      isVirtual: false,
       stateInfo: '提交二审',
       from: 'node4', // 从自己开始
       to: 'node5', // 连接到王五的接收节点
-      // 附加信息
-      documentId: 'doc-2023-001',
-      documentVersion: 'v1.1',
-      comments: '已完成一审，请进行二审',
-      priority: 'normal',
     },
     // 5. 王五的接收节点 - 7月9日
     {
@@ -150,131 +98,83 @@ export default function useMockData() {
       reviewerId: 'reviewer3', // 王五
       timePointId: 'timePoint2', // 7月9日（同一天接收）
       title: '控制价\n二审送审文件',
-      type: 'virtual',
       status: 'pending',
-      flowType: 'main',
-      isVisible: true,
-      isVirtual: true,
       stateInfo: '0天',
       from: 'node5', // 从自己开始
       to: 'node6', // 连接到王五的驳回节点
-      // 附加信息
-      documentId: 'doc-2023-001',
-      documentVersion: 'v1.1',
     },
     // 6. 王五的驳回节点 - 7月9日
     {
       id: 'node6',
       reviewerId: 'reviewer3', // 王五
       timePointId: 'timePoint2', // 7月9日
-      title: '控制价\n二审结果文件',
-      type: 'actual',
+      title: '控制价\n二审送审文件',
       status: 'reject',
-      flowType: 'main',
-      isVisible: true,
-      isVirtual: false,
       stateInfo: '驳回',
       from: 'node6', // 从自己开始
       to: 'node7', // 连接到张三的最终节点
-      // 附加信息
-      documentId: 'doc-2023-001',
-      documentVersion: 'v1.1',
-      comments: '存在问题，需要重新修改后提交',
-      priority: 'high',
     },
     // 7. 张三的最终节点 - 7月9日
     {
       id: 'node7',
-      reviewerId: 'reviewer1', // 张三
+      reviewerId: 'reviewer2', // 张三
       timePointId: 'timePoint2', // 7月9日
-      title: '控制价\n一审送审文件',
-      type: 'end',
-      status: 'reject',
-      flowType: 'main',
-      isVisible: true,
-      isVirtual: false,
+      title: '控制价\n二审送审文件',
+      status: 'end',
       stateInfo: '待修改',
       from: 'node7', // 从自己开始
-      // 附加信息
-      documentId: 'doc-2023-001',
-      documentVersion: 'v1.1',
-      comments: '收到驳回意见，准备修改',
-      priority: 'high',
+      to: '',
     },
     {
       id: 'node8',
-      reviewerId: 'reviewer1', // 张三
+      reviewerId: 'reviewer2', // 张三
       timePointId: 'timePoint3', // 6月10日
-      title: '控制价\n初步成果文件',
-      type: 'start',
+      title: '控制价\n二审送审文件',
       status: 'pass',
-      flowType: 'main',
-      isVisible: true,
-      isVirtual: false,
-      stateInfo: '提交一审',
+      stateInfo: '提交二审',
       from: 'node1', // 从自身开始
       to: 'node9', // 连接到李四节点
-      // 附加信息
-      documentId: 'doc-2023-001',
-      documentVersion: 'v1.0',
-      comments: '请进行初步审核',
-      priority: 'normal',
     },
-    // {
-    //   id: 'node9',
-    //   reviewerId: 'reviewer2', // 李四（一审审核员）
-    //   timePointId: 'timePoint3', // 6月10日（同一天接收）
-    //   title: '控制价\n一审送审文件',
-    //   type: 'virtual',
-    //   status: 'pending',
-    //   flowType: 'main',
-    //   isVisible: true,
-    //   isVirtual: true,
-    //   stateInfo: '历时1天',
-    //   from: 'node9', // 从自己开始
-    //   to: 'node10', // 连接到时间间隔节点
-    //   // 附加信息
-    //   documentId: 'doc-2023-001',
-    //   documentVersion: 'v1.0',
-    // },
-    //  {
-    //   id: 'node10',
-    //   reviewerId: 'reviewer3', // 李四
-    //   timePointId: 'timePoint4', // 7月9日
-    //   title: '控制价\n一审送审文件',
-    //   type: 'actual',
-    //   status: 'pass',
-    //   flowType: 'main',
-    //   isVisible: true,
-    //   isVirtual: false,
-    //   stateInfo: '提交二审',
-    //   from: 'node10', // 从自己开始
-    //   to: 'node11', // 连接到王五的接收节点
-    //   // 附加信息
-    //   documentId: 'doc-2023-001',
-    //   documentVersion: 'v1.1',
-    //   comments: '已完成一审，请进行二审',
-    //   priority: 'normal',
-    // },
-    // {
-    //   id: 'node11',
-    //   reviewerId: 'reviewer3', // 李四
-    //   timePointId: 'timePoint4', // 7月9日
-    //   title: '控制价\n一审送审文件',
-    //   type: 'actual',
-    //   status: 'pass',
-    //   flowType: 'main',
-    //   isVisible: true,
-    //   isVirtual: false,
-    //   stateInfo: '提交二审',
-    //   from: 'node11', // 从自己开始
-    //   to: 'node12', // 连接到王五的接收节点
-    //   // 附加信息
-    //   documentId: 'doc-2023-001',
-    //   documentVersion: 'v1.1',
-    //   comments: '已完成一审，请进行二审',
-    //   priority: 'normal',
-    // },
+    {
+      id: 'node9',
+      reviewerId: 'reviewer3', // 张三
+      timePointId: 'timePoint3', // 6月10日
+      title: '控制价\n二审送审文件',
+      status: 'pending',
+      stateInfo: '历时1天',
+      from: 'node9', // 从自身开始
+      to: 'node10', // 连接到李四节点
+    },
+    {
+      id: 'node10',
+      reviewerId: 'reviewer3', // 张三
+      timePointId: 'timePoint4', // 6月10日
+      title: '控制价\n二审结果文件',
+      status: 'pass',
+      stateInfo: '提交三审',
+      from: 'node10', // 从自身开始
+      to: 'node11', // 连接到李四节点
+    },
+    {
+      id: 'node11',
+      reviewerId: 'reviewer4', // 张三
+      timePointId: 'timePoint4', // 6月10日
+      title: '控制价\n二审结果文件',
+      status: 'pending',
+      stateInfo: '历时1天',
+      from: 'node11', // 从自身开始
+      to: 'node12', // 连接到李四节点
+    },
+    {
+      id: 'node12',
+      reviewerId: 'reviewer4', // 张三
+      timePointId: 'timePoint5', // 6月10日
+      title: '控制价\n三审结果文件\n（最终成果文件）',
+      status: 'end',
+      stateInfo: '提交三审',
+      from: 'node12', // 从自身开始
+      to: '', // 连接到李四节点
+    },
   ])
 
   // 获取时间点
