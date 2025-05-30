@@ -42,6 +42,7 @@ export default class WorkflowNodeRenderer {
   private config: NodeRendererConfig
   private timeIntervals: TimeInterval[]
   private nodesMap: Map<string, WorkflowNode> = new Map() // 存储节点ID到节点对象的映射
+  private cellNodeCount: Map<string, { count: number; nodes: WorkflowNode[] }> = new Map() // 存储单元格内节点数量
 
   // 动画相关属性
   private flowMarker: THREE.Mesh | null = null // 流程标记物
@@ -129,9 +130,52 @@ export default class WorkflowNodeRenderer {
   }
 
   /**
+   * 计算每个单元格内的节点数量
+   * @returns 单元格节点计数映射 {timePointId-reviewerId: count}
+   */
+  private calculateCellNodeCount(): Map<string, { count: number; nodes: WorkflowNode[] }> {
+    const cellNodeCount = new Map<string, { count: number; nodes: WorkflowNode[] }>()
+    
+    // 遍历所有节点，统计每个单元格内的节点数量
+    for (const [nodeId, node] of this.nodesMap.entries()) {
+      const cellKey = `${node.timePointId}-${node.reviewerId}`
+      const currentData = cellNodeCount.get(cellKey) || { count: 0, nodes: [] }
+      currentData.count += 1
+      currentData.nodes.push(node)
+      cellNodeCount.set(cellKey, currentData)
+    }
+    
+    console.log('单元格节点计数:', Array.from(cellNodeCount.entries()))
+    return cellNodeCount
+  }
+
+  /**
+   * 获取节点在单元格内的索引
+   * @param timePointId 时间点ID
+   * @param reviewerId 审核人ID
+   * @param nodeId 节点ID
+   * @returns 索引值（从0开始）
+   */
+  private getNodeIndexInCell(timePointId: string, reviewerId: string, nodeId: string): number {
+    let index = 0
+    
+    // 遍历所有节点，找出同一单元格内的节点，并确定当前节点的索引
+    for (const [id, node] of this.nodesMap.entries()) {
+      if (node.timePointId === timePointId && node.reviewerId === reviewerId) {
+        if (id === nodeId) {
+          return index
+        }
+        index++
+      }
+    }
+    
+    return 0
+  }
+
+  /**
    * 获取节点X坐标
    * @param timePointId 时间点ID
-   * @param nodeId 节点ID，用于在同一时间点内区分位置
+   * @param nodeId 节点ID
    * @returns X坐标
    */
   private getNodeX(timePointId: string, nodeId: string): number {
@@ -152,83 +196,62 @@ export default class WorkflowNodeRenderer {
 
     // 计算基础X坐标 - 时间点单元格的左边界位置
     const baseX = this.config.leftOffset + timePointIndex * this.config.cellWidth
-
-    // 添加固定的左侧边距，让节点不要紧贴格子边缘
-    const leftMargin = 20 // 从25减小到20，提供适中的边距
-
-    // 获取节点编号
-    const match = nodeId.match(/node(\d+)/)
-    if (!match) {
-      return baseX + leftMargin
+    
+    // 获取当前节点信息
+    const currentNode = this.nodesMap.get(nodeId)
+    if (!currentNode) {
+      return baseX + this.config.cellWidth / 2 // 默认居中
     }
-
-    const nodeNumber = parseInt(match[1])
-
-    // 对于最后一个时间点(7月9日)的节点，我们需要调整布局
-    // 这里有4个节点（4、5、6、7），需要在单元格内合理分布
-    if (timePointId === 'timePoint2') {
-      // 单元格可用宽度（减去左右边距）
-      const availableWidth = this.config.cellWidth - 2 * leftMargin
-
-      // 根据不同的节点ID分配不同的偏移百分比
-      let offsetPercent = 0.5 // 默认居中
-
-      switch (nodeId) {
-        case 'node4': // 李四的一审完成节点
-          offsetPercent = 0.15 // 位于单元格15%处，从20%调整，稍微靠近左边缘
-          break
-        case 'node5': // 王五的接收节点
-          offsetPercent = 0.15 // 位于单元格15%处，从20%调整，稍微靠近左边缘
-          break
-        case 'node6': // 王五的驳回节点
-          offsetPercent = 0.85 // 位于单元格85%处，从80%调整，稍微靠近右边缘
-          break
-        case 'node7': // 张三的最终节点
-          offsetPercent = 0.85 // 位于单元格85%处，从80%调整，稍微靠近右边缘
-          break
+    
+    // 计算单元格内节点数量和索引
+    const cellKey = `${timePointId}-${currentNode.reviewerId}`
+    const cellData = this.cellNodeCount.get(cellKey)
+    const nodeCount = cellData ? cellData.count : 1
+    const nodeIndex = this.getNodeIndexInCell(timePointId, currentNode.reviewerId, nodeId)
+    
+    console.log(`单元格 ${cellKey} 内有 ${nodeCount} 个节点，当前节点索引: ${nodeIndex}`)
+    
+    // 单元格宽度
+    const cellWidth = this.config.cellWidth
+    
+    if (nodeCount === 1) {
+      // 单元格内只有一个节点，居中放置
+      const finalX = baseX + cellWidth / 2
+      console.log(`单节点居中: ${finalX}`)
+      return finalX
+    } else {
+      // 单元格内有多个节点，水平排列
+      // 节点间距为节点宽度的1.5倍
+      let nodeSpacing = FIXED_NODE_WIDTH * 1.5
+      
+      // 计算所有节点占用的总宽度
+      let totalWidth = nodeCount * FIXED_NODE_WIDTH + (nodeCount - 1) * nodeSpacing
+      
+      // 检查是否超出单元格宽度
+      if (totalWidth > cellWidth) {
+        console.log(`警告: 节点总宽度(${totalWidth})超过单元格宽度(${cellWidth})，自动调整间距`)
+        
+        // 计算可用于间距的空间
+        const availableSpaceForGaps = cellWidth - (nodeCount * FIXED_NODE_WIDTH)
+        
+        // 计算每个间隙的宽度，但保持最小间距为节点宽度的0.5倍
+        const minSpacing = FIXED_NODE_WIDTH * 0.5
+        nodeSpacing = Math.max(availableSpaceForGaps / (nodeCount - 1), minSpacing)
+        
+        // 重新计算总宽度
+        totalWidth = nodeCount * FIXED_NODE_WIDTH + (nodeCount - 1) * nodeSpacing
       }
-
-      // 计算精确偏移位置
-      const offsetX = leftMargin + availableWidth * offsetPercent
-      const finalX = baseX + offsetX
-
-      console.log(`特殊处理时间点2节点: ${nodeId}, 偏移百分比: ${offsetPercent}, 最终X: ${finalX}`)
+      
+      // 计算起始X坐标（使节点组居中）
+      const startX = baseX + (cellWidth - totalWidth) / 2
+      
+      // 计算当前节点X坐标
+      // 每个节点的位置 = 起始位置 + 节点索引 * (节点宽度 + 节点间距) + 节点宽度/2
+      const finalX = startX + nodeIndex * (FIXED_NODE_WIDTH + nodeSpacing) + FIXED_NODE_WIDTH / 2
+      
+      console.log(`多节点排列: 总宽度=${totalWidth}, 起始位置=${startX}, 节点位置=${finalX}, 间距=${nodeSpacing}`)
       return finalX
     }
-
-    // 对于第一个时间点(6月4日)的节点，让它们垂直对齐
-    if (timePointId === 'timePoint1') {
-      // 单元格的中心位置
-      const cellCenter = this.config.cellWidth / 2
-      const finalX = baseX + cellCenter // 直接使用单元格中心位置，无需减去节点宽度的一半，节点已经在createNodeMesh中居中处理
-
-      console.log(`特殊处理时间点1节点: ${nodeId}, 居中处理, 最终X: ${finalX}`)
-      return finalX
-    }
-
-    // 一般情况：使用简单的规则计算偏移
-    // 1. 将节点ID的数字部分作为唯一标识
-    // 2. 取模6（假设每个单元格最多6个节点），得到在单元格内的相对位置
-    // 3. 根据这个相对位置计算偏移量，但确保总偏移不会超出单元格
-    const maxPositions = 6 // 每个单元格最多放6个节点，从4个增加到6个
-    const positionInCell = (nodeNumber - 1) % maxPositions
-
-    // 可用于节点的宽度
-    const availableWidth = this.config.cellWidth - 2 * leftMargin
-
-    // 计算每个节点位置的偏移量，确保最后一个节点不会超出单元格边界
-    const stepWidth = availableWidth / (maxPositions > 1 ? maxPositions - 1 : 1)
-    const offsetX = leftMargin + positionInCell * stepWidth
-
-    // 确保偏移不超过单元格宽度
-    const boundedOffset = Math.min(offsetX, this.config.cellWidth - leftMargin - 32)
-
-    const finalX = baseX + boundedOffset
-
-    console.log(
-      `节点位置在单元格内: ${positionInCell}/${maxPositions}, 偏移量: ${boundedOffset}, 最终X: ${finalX}`,
-    )
-    return finalX
   }
 
   /**
@@ -635,6 +658,7 @@ export default class WorkflowNodeRenderer {
     // 清除之前的节点和连接
     this.nodeGroup.clear()
     this.nodesMap.clear()
+    this.cellNodeCount.clear()
 
     // 重置动画路径
     this.animationPathPoints = []
@@ -653,7 +677,17 @@ export default class WorkflowNodeRenderer {
     // 将工作流节点数据传递给动画控制器，用于计算动画顺序
     this.teleportAnimationController2.setWorkflowNodes(nodes)
 
-    // 第一步：创建所有节点
+    // 第一步：先将所有节点信息存入nodesMap（不创建网格）
+    for (const node of nodes) {
+      if (!this.isTimeInterval(node.timePointId)) {
+        this.nodesMap.set(node.id, node)
+      }
+    }
+    
+    // 第二步：计算每个单元格内的节点数量
+    this.cellNodeCount = this.calculateCellNodeCount()
+
+    // 第三步：创建所有节点
     for (const node of nodes) {
       // 检查节点是否在时间间隔中，如果是则跳过
       if (this.isTimeInterval(node.timePointId)) {
@@ -678,7 +712,6 @@ export default class WorkflowNodeRenderer {
       this.nodeGroup.add(nodeMesh)
 
       // 存储节点引用
-      this.nodesMap.set(node.id, node)
       renderedNodeIds.add(node.id)
 
       // 记录节点位置，用于紫色动画节点

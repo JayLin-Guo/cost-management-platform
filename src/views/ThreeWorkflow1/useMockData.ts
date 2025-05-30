@@ -132,7 +132,7 @@ export default function useMockData() {
       title: '控制价\n二审送审文件',
       status: 'pass',
       stateInfo: '提交二审',
-      from: 'node1', // 从自身开始
+      from: 'node8', // 从自身开始
       to: 'node9', // 连接到李四节点
     },
     {
