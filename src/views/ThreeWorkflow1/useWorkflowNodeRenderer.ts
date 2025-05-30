@@ -124,9 +124,53 @@ export default class WorkflowNodeRenderer {
    */
   private getTimeIntervalPosition(timeInterval: TimeInterval, index: number): number {
     console.log(`计算时间间隔位置: 索引=${index}, id=${timeInterval.id}, date=${timeInterval.date}`)
-    const position = this.config.leftOffset + index * this.config.cellWidth
+    
+    // 从左侧固定区域右边界开始
+    let position = this.config.leftOffset;
+    
+    // 计算前面所有时间点的宽度总和
+    for (let i = 0; i < index; i++) {
+      const prevInterval = this.timeIntervals[i];
+      const prevTimePointId = prevInterval.id || '';
+      
+      // 计算每个审核人在该时间点的节点数量
+      const nodeCountPerReviewer = new Map<string, number>();
+      
+      // 统计每个审核人的节点数量
+      for (const [nodeId, node] of this.nodesMap.entries()) {
+        if (node.timePointId === prevTimePointId) {
+          const reviewerId = node.reviewerId;
+          const currentCount = nodeCountPerReviewer.get(reviewerId) || 0;
+          nodeCountPerReviewer.set(reviewerId, currentCount + 1);
+        }
+      }
+      
+      // 找出最大的节点数量
+      let maxNodesPerReviewer = 0;
+      nodeCountPerReviewer.forEach((count) => {
+        if (count > maxNodesPerReviewer) {
+          maxNodesPerReviewer = count;
+        }
+      });
+      
+      // 计算该时间点的宽度
+      let cellWidth = this.config.cellWidth; // 默认宽度
+      if (maxNodesPerReviewer > 1) {
+        // 如果最大节点数量大于1，宽度 = 最大节点数量 * 基础宽度
+        cellWidth = maxNodesPerReviewer * this.config.cellWidth;
+      } else {
+        // 单节点情况下，确保宽度足够显示一个节点
+        // 节点宽度 + 两侧留白
+        const minWidth = FIXED_NODE_WIDTH + 80; // 与getNodeX方法保持一致
+        cellWidth = Math.max(cellWidth, minWidth);
+      }
+      
+      // 累加宽度
+      position += cellWidth;
+    }
+    
     console.log(`  计算的位置: ${position}`)
-    return position
+    return position;
   }
 
   /**
@@ -194,8 +238,11 @@ export default class WorkflowNodeRenderer {
       return this.config.leftOffset
     }
 
-    // 计算基础X坐标 - 时间点单元格的左边界位置
-    const baseX = this.config.leftOffset + timePointIndex * this.config.cellWidth
+    // 获取时间间隔
+    const timeInterval = this.timeIntervals[timePointIndex];
+    
+    // 使用getTimeIntervalPosition获取时间点的X坐标
+    const baseX = this.getTimeIntervalPosition(timeInterval, timePointIndex);
     
     // 获取当前节点信息
     const currentNode = this.nodesMap.get(nodeId)
@@ -211,8 +258,17 @@ export default class WorkflowNodeRenderer {
     
     console.log(`单元格 ${cellKey} 内有 ${nodeCount} 个节点，当前节点索引: ${nodeIndex}`)
     
-    // 单元格宽度
-    const cellWidth = this.config.cellWidth
+    // 计算单元格宽度 - 基于节点数量动态计算
+    let cellWidth = this.config.cellWidth;
+    if (nodeCount > 1) {
+      // 如果有多个节点，宽度 = 节点数量 * 基础宽度
+      cellWidth = nodeCount * this.config.cellWidth;
+    } else {
+      // 单节点情况下，确保宽度足够显示一个节点
+      // 节点宽度 + 两侧留白
+      const minWidth = FIXED_NODE_WIDTH + 80; // 增加留白，确保单节点有足够空间
+      cellWidth = Math.max(cellWidth, minWidth);
+    }
     
     if (nodeCount === 1) {
       // 单元格内只有一个节点，居中放置
@@ -221,8 +277,8 @@ export default class WorkflowNodeRenderer {
       return finalX
     } else {
       // 单元格内有多个节点，水平排列
-      // 节点间距为节点宽度的1.5倍
-      let nodeSpacing = FIXED_NODE_WIDTH * 1.5
+      // 节点间距为节点宽度的1.5倍，确保有足够的间距
+      let nodeSpacing = FIXED_NODE_WIDTH * 1.8
       
       // 计算所有节点占用的总宽度
       let totalWidth = nodeCount * FIXED_NODE_WIDTH + (nodeCount - 1) * nodeSpacing
@@ -234,8 +290,8 @@ export default class WorkflowNodeRenderer {
         // 计算可用于间距的空间
         const availableSpaceForGaps = cellWidth - (nodeCount * FIXED_NODE_WIDTH)
         
-        // 计算每个间隙的宽度，但保持最小间距为节点宽度的0.5倍
-        const minSpacing = FIXED_NODE_WIDTH * 0.5
+        // 计算每个间隙的宽度，但保持最小间距为节点宽度的0.8倍
+        const minSpacing = FIXED_NODE_WIDTH * 0.8
         nodeSpacing = Math.max(availableSpaceForGaps / (nodeCount - 1), minSpacing)
         
         // 重新计算总宽度
@@ -927,51 +983,53 @@ export default class WorkflowNodeRenderer {
     // 调整起点和终点，使线从节点边缘开始和结束，而不是从中心
     const direction = new THREE.Vector3().subVectors(endPosition, startPosition).normalize()
 
-    // 根据连接方向选择合适的节点尺寸
     // 计算主要移动方向（X、Y或Z）
     const absX = Math.abs(direction.x)
     const absY = Math.abs(direction.y)
     const absZ = Math.abs(direction.z)
 
-    let offsetDistance
-    // 如果主要是X方向的移动
-    if (absX > absZ && absX > absY) {
-      offsetDistance = FIXED_NODE_WIDTH / 2
-    }
-    // 如果主要是Z方向的移动
-    else if (absZ > absX && absZ > absY) {
-      offsetDistance = FIXED_NODE_DEPTH / 2
-    }
-    // 如果主要是Y方向的移动或者是混合方向
-    else {
-      // 使用宽度和深度的平均值作为对角线移动的偏移量
-      offsetDistance = Math.min(FIXED_NODE_WIDTH, FIXED_NODE_DEPTH) / 2
+    // 确定主要移动方向
+    let primaryDirection = 'x'; // 默认为水平方向
+    if (absZ > absX) {
+      primaryDirection = 'z'; // 垂直方向
     }
 
-    // 增加一点额外的偏移，确保连接线从节点边缘开始和结束
-    offsetDistance += 5
+    // 根据主要移动方向选择合适的偏移距离
+    let offsetDistance;
+    if (primaryDirection === 'x') {
+      // 水平方向移动，使用节点宽度的一半作为偏移
+      offsetDistance = FIXED_NODE_WIDTH / 2 + 2;
+    } else {
+      // 垂直方向移动，使用节点深度的一半作为偏移
+      offsetDistance = FIXED_NODE_DEPTH / 2 + 2;
+    }
 
-    const adjustedStartPosition = startPosition
-      .clone()
-      .add(direction.clone().multiplyScalar(offsetDistance))
-    const adjustedEndPosition = endPosition
-      .clone()
-      .sub(direction.clone().multiplyScalar(offsetDistance))
+    // 计算调整后的起点和终点
+    const adjustedStartPosition = startPosition.clone().add(direction.clone().multiplyScalar(offsetDistance))
+    const adjustedEndPosition = endPosition.clone().sub(direction.clone().multiplyScalar(offsetDistance))
 
     // 创建直角连接线的点
     const points: THREE.Vector3[] = []
     points.push(adjustedStartPosition.clone())
 
-    // 创建直角连接线 - 使用横纵连接方式
-    // 先水平移动，再垂直移动
-    const midPoint1 = new THREE.Vector3(
-      adjustedEndPosition.x, // 终点的X坐标
-      adjustedStartPosition.y, // 起点的Y坐标
-      adjustedStartPosition.z, // 起点的Z坐标
-    )
-
-    // 添加第一个拐角点
-    points.push(midPoint1)
+    // 根据主要移动方向创建不同的拐角点
+    if (primaryDirection === 'x') {
+      // 水平方向为主 - 先水平移动，再垂直移动
+      const midPoint1 = new THREE.Vector3(
+        adjustedEndPosition.x, // 终点的X坐标
+        adjustedStartPosition.y, // 起点的Y坐标
+        adjustedStartPosition.z, // 起点的Z坐标
+      )
+      points.push(midPoint1)
+    } else {
+      // 垂直方向为主 - 先垂直移动，再水平移动
+      const midPoint1 = new THREE.Vector3(
+        adjustedStartPosition.x, // 起点的X坐标
+        adjustedStartPosition.y, // 起点的Y坐标
+        adjustedEndPosition.z, // 终点的Z坐标
+      )
+      points.push(midPoint1)
+    }
 
     // 添加终点
     points.push(adjustedEndPosition.clone())
@@ -980,23 +1038,19 @@ export default class WorkflowNodeRenderer {
     let midPoint: THREE.Vector3
 
     // 判断连接线是主要水平方向还是垂直方向
-    const isHorizontalDominant =
-      Math.abs(adjustedEndPosition.x - adjustedStartPosition.x) >
-      Math.abs(adjustedEndPosition.z - adjustedStartPosition.z)
-
-    if (isHorizontalDominant) {
+    if (primaryDirection === 'x') {
       // 水平方向为主的连接线 - 标签放在水平段的中间
       midPoint = new THREE.Vector3(
-        (adjustedStartPosition.x + midPoint1.x) / 2, // X坐标取水平段的中点
+        (adjustedStartPosition.x + points[1].x) / 2, // X坐标取水平段的中点
         adjustedStartPosition.y + 15, // Y坐标稍微上移，使标签更明显
         adjustedStartPosition.z, // Z坐标与水平段相同
       )
     } else {
       // 垂直方向为主的连接线 - 标签放在垂直段的中间
       midPoint = new THREE.Vector3(
-        midPoint1.x, // X坐标与拐角点相同
-        midPoint1.y + 15, // Y坐标稍微上移，使标签更明显
-        (midPoint1.z + adjustedEndPosition.z) / 2, // Z坐标取垂直段的中点
+        adjustedStartPosition.x, // X坐标与起点相同
+        adjustedStartPosition.y + 15, // Y坐标稍微上移，使标签更明显
+        (adjustedStartPosition.z + points[1].z) / 2, // Z坐标取垂直段的中点
       )
     }
 
@@ -1029,7 +1083,7 @@ export default class WorkflowNodeRenderer {
     // 添加到场景
     this.nodeGroup.add(line)
 
-    // 创建箭头指示方向 - 放在终点前的拐角处
+    // 创建箭头指示方向
     const arrow = this.createArrow(adjustedEndPosition, direction, color)
 
     // 为箭头设置相同的connectionId
@@ -1195,15 +1249,40 @@ export default class WorkflowNodeRenderer {
     const arrowMaterial = new THREE.MeshBasicMaterial({ color: color })
     const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial)
 
-    // 设置箭头位置和旋转
+    // 设置箭头位置
     arrow.position.copy(position)
+
+    // 计算主要移动方向（X、Y或Z）
+    const absX = Math.abs(direction.x)
+    const absY = Math.abs(direction.y)
+    const absZ = Math.abs(direction.z)
+
+    // 确定主要移动方向
+    let primaryDirection = 'x'; // 默认为水平方向
+    if (absZ > absX) {
+      primaryDirection = 'z'; // 垂直方向
+    }
 
     // 计算欧拉角使箭头指向正确的方向
     const arrowDirection = direction.clone().negate() // 箭头应该指向来源方向的反方向
+
+    // 使箭头指向正确的方向
     arrow.lookAt(position.clone().add(arrowDirection))
 
-    // 箭头需要额外旋转90度使尖端指向正确方向
-    arrow.rotateX(Math.PI / 2)
+    // 根据主要移动方向进行旋转调整
+    if (primaryDirection === 'x') {
+      // 水平方向，箭头需要旋转90度使尖端指向正确方向
+      arrow.rotateX(Math.PI / 2)
+    } else {
+      // 垂直方向，箭头需要不同的旋转
+      if (direction.z > 0) {
+        // 向Z轴正方向，箭头需要旋转-90度
+        arrow.rotateX(-Math.PI / 2)
+      } else {
+        // 向Z轴负方向，箭头需要旋转90度
+        arrow.rotateX(Math.PI / 2)
+      }
+    }
 
     // 添加到场景
     this.nodeGroup.add(arrow)

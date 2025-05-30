@@ -1,7 +1,7 @@
 import type { NodeRenderConfig, ConnectionRenderConfig, ColorConfig, AnimationConfig } from './types'
 
 // 固定尺寸常量
-export const FIXED_COLUMN_WIDTH = 140 // 固定列宽度（审核人员和文件状态列）
+export const FIXED_COLUMN_WIDTH = 180 // 固定列宽度（审核人员和文件状态列）
 export const FIXED_ROW_HEIGHT = 180 // 固定行高度（审核区域行高）
 export const FIXED_NODE_WIDTH = 100 // 固定节点宽度，从120减小到100
 export const FIXED_NODE_HEIGHT = 15 // 固定节点高度，显著减小高度使节点更矮
@@ -57,7 +57,7 @@ export const DEFAULT_CONFIG = {
   fixedColumnWidth: FIXED_COLUMN_WIDTH,
   fixedRowHeight: FIXED_ROW_HEIGHT,
   fixedNodeSize: FIXED_NODE_WIDTH,
-  cellWidth: 450, // 每个时间单元格的水平宽度，从380增加到450
+  cellWidth: 300, // 每个时间单元格的基础水平宽度，从200增加到300
   cellHeight: FIXED_CELL_HEIGHT, // 时间轴贴图的高度（Canvas高度，控制文字显示区域）
   timelineHeight: FIXED_TIMELINE_HEIGHT, // 时间轴3D长方体的物理高度（Y轴厚度）
   timelineDepth: FIXED_TIMELINE_DEPTH, // 时间轴3D长方体的Z轴宽度（深度）

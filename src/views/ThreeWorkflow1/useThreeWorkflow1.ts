@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
 import useMockData from './useMockData'
 import WorkflowNodeRenderer from './useWorkflowNodeRenderer'
-import { DEFAULT_CONFIG, COLORS, FONT_HEADER, FONT_CELL } from './config'
+import { DEFAULT_CONFIG, COLORS, FONT_HEADER, FONT_CELL, FIXED_NODE_WIDTH } from './config'
 import type { SceneConfig, TimeInterval, WorkflowNode } from './types'
 
 /**
@@ -136,9 +136,8 @@ class WorkflowScene {
    * 设置相机
    */
   private setupCamera(): void {
-    // 计算场景尺寸
-    const sceneWidth =
-      this.timeIntervals.length * DEFAULT_CONFIG.cellWidth + DEFAULT_CONFIG.leftOffset
+    // 计算场景尺寸 - 使用动态计算的总宽度
+    const sceneWidth = this.getSceneWidth()
     const totalRows = this.reviewers.length
     const sceneDepth = totalRows * DEFAULT_CONFIG.reviewRowHeight
 
@@ -171,9 +170,8 @@ class WorkflowScene {
   private setupControls(): void {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     
-    // 计算场景尺寸
-    const sceneWidth =
-      this.timeIntervals.length * DEFAULT_CONFIG.cellWidth + DEFAULT_CONFIG.leftOffset
+    // 计算场景尺寸 - 使用动态计算的总宽度
+    const sceneWidth = this.getSceneWidth()
     const totalRows = this.reviewers.length
     const sceneDepth = totalRows * DEFAULT_CONFIG.reviewRowHeight
     
@@ -202,7 +200,7 @@ class WorkflowScene {
     
     // 设置缩放限制
     this.controls.minDistance = 200
-    this.controls.maxDistance = 1000
+    this.controls.maxDistance = 1600
     
     // 启用缩放
     this.controls.enableZoom = true
@@ -282,9 +280,8 @@ class WorkflowScene {
    * 设置灯光
    */
   private setupLights(): void {
-    // 计算场景尺寸用于灯光定位
-    const sceneWidth =
-      this.timeIntervals.length * DEFAULT_CONFIG.cellWidth + DEFAULT_CONFIG.leftOffset
+    // 计算场景尺寸用于灯光定位 - 使用动态计算的总宽度
+    const sceneWidth = this.getSceneWidth()
     const totalRows = this.reviewers.length
     const sceneDepth = totalRows * DEFAULT_CONFIG.reviewRowHeight
 
@@ -343,9 +340,8 @@ class WorkflowScene {
    * 创建工作流布局
    */
   private createWorkflowLayout(): void {
-    // 计算场景尺寸
-    const sceneWidth =
-      this.timeIntervals.length * DEFAULT_CONFIG.cellWidth + DEFAULT_CONFIG.leftOffset
+    // 使用动态计算的总宽度
+    const sceneWidth = this.getSceneWidth()
     const sceneDepth = DEFAULT_CONFIG.reviewAreaDepth
 
     // 1. 创建时间轴长方体
@@ -476,8 +472,11 @@ class WorkflowScene {
     // 注意：所有行都使用reviewRowHeight（cellHeight的2倍）
     const adjustedDepth = totalRows * DEFAULT_CONFIG.reviewRowHeight
 
+    // 使用动态计算的总宽度，确保与时间轴单元格宽度对应
+    const adjustedWidth = this.getSceneWidth()
+
     // 创建审核区域平面几何体
-    const reviewAreaGeometry = new THREE.PlaneGeometry(width, adjustedDepth)
+    const reviewAreaGeometry = new THREE.PlaneGeometry(adjustedWidth, adjustedDepth)
 
     // 创建网格纹理
     const gridTexture = this.createGridTexture()
@@ -499,7 +498,7 @@ class WorkflowScene {
     // 设置位置和旋转 - 水平放置
     this.reviewArea.rotation.x = -Math.PI / 2
     this.reviewArea.position.set(
-      width / 2, // X轴居中
+      adjustedWidth / 2, // X轴居中
       -1, // Y轴略微下沉1个单位，避免Z-fighting
       adjustedDepth / 2 + DEFAULT_CONFIG.timelineDepth, // Z轴居中，向后偏移时间轴的深度，避免与时间轴重叠
     )
@@ -509,10 +508,10 @@ class WorkflowScene {
     this.scene.add(this.reviewArea)
 
     // 添加左侧分隔线
-    this.createDividerLine(width, adjustedDepth)
+    this.createDividerLine(adjustedWidth, adjustedDepth)
 
     // 添加网格线
-    this.createGridLines(width, adjustedDepth)
+    this.createGridLines(adjustedWidth, adjustedDepth)
   }
 
   /**
@@ -531,6 +530,15 @@ class WorkflowScene {
 
     const dividerLine = new THREE.Line(lineGeometry, lineMaterial)
     this.scene.add(dividerLine)
+    
+    // 添加第一列与第二列的分隔线
+    const firstColumnDividerX = DEFAULT_CONFIG.reviewerColumnWidth
+    const firstColumnLineGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(firstColumnDividerX, 0, DEFAULT_CONFIG.timelineDepth),
+      new THREE.Vector3(firstColumnDividerX, 0, depth + DEFAULT_CONFIG.timelineDepth),
+    ])
+    const firstColumnDividerLine = new THREE.Line(firstColumnLineGeometry, lineMaterial)
+    this.scene.add(firstColumnDividerLine)
   }
 
   /**
@@ -608,8 +616,7 @@ class WorkflowScene {
   private createTimelineTexture(): THREE.Texture {
     // 创建画布 - 使用更高的分辨率来提高清晰度
     const canvas = document.createElement('canvas')
-    const totalWidth =
-      this.timeIntervals.length * DEFAULT_CONFIG.cellWidth + DEFAULT_CONFIG.leftOffset
+    const totalWidth = this.getSceneWidth() // 使用动态计算的总宽度
     const canvasHeight = DEFAULT_CONFIG.cellHeight // 控制时间轴贴图的视觉高度
     
     // 提高画布分辨率，使文字更清晰
@@ -700,12 +707,46 @@ class WorkflowScene {
 
     // 使用timeIntervals作为日期数据源
     const timeIntervals = this.timeIntervals
+    const timePoints = this.mockData.timePoints.value
 
     // 绘制日期单元格 - 每个时间点对应一个单元格
+    let currentX = DEFAULT_CONFIG.leftOffset // 从左侧固定区域右边界开始
+    
     for (let i = 0; i < timeIntervals.length; i++) {
-      const x = DEFAULT_CONFIG.leftOffset + i * DEFAULT_CONFIG.cellWidth
       const timeInterval = timeIntervals[i]
-      const cellWidth = DEFAULT_CONFIG.cellWidth
+      const timePointId = timeInterval.id || '';
+      
+      // 计算每个审核人在该时间点的节点数量
+      const nodeCountPerReviewer = new Map<string, number>();
+      
+      // 统计每个审核人的节点数量
+      for (const node of this.workflowNodes) {
+        if (node.timePointId === timePointId) {
+          const reviewerId = node.reviewerId;
+          const currentCount = nodeCountPerReviewer.get(reviewerId) || 0;
+          nodeCountPerReviewer.set(reviewerId, currentCount + 1);
+        }
+      }
+      
+      // 找出最大的节点数量
+      let maxNodesPerReviewer = 0;
+      nodeCountPerReviewer.forEach((count) => {
+        if (count > maxNodesPerReviewer) {
+          maxNodesPerReviewer = count;
+        }
+      });
+      
+      // 计算该时间点的宽度
+      let cellWidth = DEFAULT_CONFIG.cellWidth; // 默认宽度
+      if (maxNodesPerReviewer > 1) {
+        // 如果最大节点数量大于1，宽度 = 最大节点数量 * 基础宽度
+        cellWidth = maxNodesPerReviewer * DEFAULT_CONFIG.cellWidth;
+      } else {
+        // 单节点情况下，确保宽度足够显示一个节点
+        // 节点宽度 + 两侧留白
+        const minWidth = FIXED_NODE_WIDTH + 80; // 与NodeRenderer中保持一致
+        cellWidth = Math.max(cellWidth, minWidth);
+      }
 
       // 为交替的单元格使用不同的背景色，增强视觉区分度
       // 间隔期间使用灰色背景，非间隔期间使用交替的深浅蓝色
@@ -716,21 +757,21 @@ class WorkflowScene {
           : COLORS.timelineCellBg.odd
 
       ctx.fillStyle = cellColor
-      ctx.fillRect(x, 0, cellWidth, canvasHeight)
+      ctx.fillRect(currentX, 0, cellWidth, canvasHeight)
 
       // 添加金属质感效果 - 顶部渐变高光，增强3D立体感
-      const metalGradient = ctx.createLinearGradient(x, 0, x, canvasHeight * 0.3)
+      const metalGradient = ctx.createLinearGradient(currentX, 0, currentX, canvasHeight * 0.3)
       metalGradient.addColorStop(0, 'rgba(255, 255, 255, 0.15)')
       metalGradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
       ctx.fillStyle = metalGradient
-      ctx.fillRect(x, 0, cellWidth, canvasHeight * 0.3)
+      ctx.fillRect(currentX, 0, cellWidth, canvasHeight * 0.3)
 
       // 绘制单元格边框 - 增强单元格之间的视觉分隔
       ctx.strokeStyle = COLORS.timelineBorder
       ctx.lineWidth = 1
-      ctx.strokeRect(x, 0, cellWidth, canvasHeight)
+      ctx.strokeRect(currentX, 0, cellWidth, canvasHeight)
 
-      const cellCenterX = x + cellWidth / 2
+      const cellCenterX = currentX + cellWidth / 2
 
       // 绘制日期文本 (居中显示) - 使用更清晰的字体渲染
       ctx.font = FONT_CELL
@@ -742,6 +783,9 @@ class WorkflowScene {
       // 再绘制文字本体，间隔期间使用灰色文本，非间隔期间使用白色文本
       ctx.fillStyle = timeInterval.isInterval ? '#cccccc' : COLORS.timelineText
       ctx.fillText(timeInterval.label, cellCenterX, canvasHeight / 2)
+      
+      // 更新当前X坐标，为下一个单元格做准备
+      currentX += cellWidth
     }
 
     // 创建纹理并设置优化参数
@@ -765,7 +809,46 @@ class WorkflowScene {
     timeInterval: TimeInterval,
     index: number,
   ): number {
-    return DEFAULT_CONFIG.leftOffset + index * DEFAULT_CONFIG.cellWidth
+    // 从左侧固定区域右边界开始
+    let currentX = DEFAULT_CONFIG.leftOffset;
+    
+    // 计算前面所有时间点的宽度总和
+    for (let i = 0; i < index; i++) {
+      const prevInterval = this.timeIntervals[i];
+      const prevTimePointId = prevInterval.id || '';
+      
+      // 计算每个审核人在该时间点的节点数量
+      const nodeCountPerReviewer = new Map<string, number>();
+      
+      // 统计每个审核人的节点数量
+      for (const node of this.workflowNodes) {
+        if (node.timePointId === prevTimePointId) {
+          const reviewerId = node.reviewerId;
+          const currentCount = nodeCountPerReviewer.get(reviewerId) || 0;
+          nodeCountPerReviewer.set(reviewerId, currentCount + 1);
+        }
+      }
+      
+      // 找出最大的节点数量
+      let maxNodesPerReviewer = 0;
+      nodeCountPerReviewer.forEach((count) => {
+        if (count > maxNodesPerReviewer) {
+          maxNodesPerReviewer = count;
+        }
+      });
+      
+      // 计算该时间点的宽度
+      let cellWidth = DEFAULT_CONFIG.cellWidth; // 默认宽度
+      if (maxNodesPerReviewer > 1) {
+        // 如果最大节点数量大于1，宽度 = 最大节点数量 * 2 * 基础宽度
+        cellWidth = maxNodesPerReviewer * 2 * DEFAULT_CONFIG.cellWidth;
+      }
+      
+      // 累加宽度
+      currentX += cellWidth;
+    }
+    
+    return currentX;
   }
 
   /**
@@ -819,17 +902,59 @@ class WorkflowScene {
     ])
     this.scene.add(new THREE.Line(verticalLine2, gridMaterial))
 
-    // 绘制时间区域的网格线，包括所有时间间隔点
+    // 绘制时间区域的网格线，使用动态计算的单元格宽度
+    // 从左侧固定区域右边界开始
+    let currentX = DEFAULT_CONFIG.leftOffset;
+    
+    // 绘制每个时间点的垂直线
     for (let i = 0; i <= this.timeIntervals.length; i++) {
-      const x = DEFAULT_CONFIG.leftOffset + i * DEFAULT_CONFIG.cellWidth
-
+      // 绘制当前位置的垂直线
       const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x, 0, DEFAULT_CONFIG.timelineDepth), // 从时间轴底部开始
-        new THREE.Vector3(x, 0, depth + DEFAULT_CONFIG.timelineDepth),
-      ])
-
-      const line = new THREE.Line(lineGeometry, gridMaterial)
-      this.scene.add(line)
+        new THREE.Vector3(currentX, 0, DEFAULT_CONFIG.timelineDepth), // 从时间轴底部开始
+        new THREE.Vector3(currentX, 0, depth + DEFAULT_CONFIG.timelineDepth),
+      ]);
+      this.scene.add(new THREE.Line(lineGeometry, gridMaterial));
+      
+      // 如果不是最后一条线，计算下一个位置
+      if (i < this.timeIntervals.length) {
+        const timeInterval = this.timeIntervals[i];
+        const timePointId = timeInterval.id || '';
+        
+        // 计算每个审核人在该时间点的节点数量
+        const nodeCountPerReviewer = new Map<string, number>();
+        
+        // 统计每个审核人的节点数量
+        for (const node of this.workflowNodes) {
+          if (node.timePointId === timePointId) {
+            const reviewerId = node.reviewerId;
+            const currentCount = nodeCountPerReviewer.get(reviewerId) || 0;
+            nodeCountPerReviewer.set(reviewerId, currentCount + 1);
+          }
+        }
+        
+        // 找出最大的节点数量
+        let maxNodesPerReviewer = 0;
+        nodeCountPerReviewer.forEach((count) => {
+          if (count > maxNodesPerReviewer) {
+            maxNodesPerReviewer = count;
+          }
+        });
+        
+        // 计算该时间点的宽度
+        let cellWidth = DEFAULT_CONFIG.cellWidth; // 默认宽度
+        if (maxNodesPerReviewer > 1) {
+          // 如果最大节点数量大于1，宽度 = 最大节点数量 * 基础宽度
+          cellWidth = maxNodesPerReviewer * DEFAULT_CONFIG.cellWidth;
+        } else {
+          // 单节点情况下，确保宽度足够显示一个节点
+          // 节点宽度 + 两侧留白
+          const minWidth = FIXED_NODE_WIDTH + 80; // 与NodeRenderer中保持一致
+          cellWidth = Math.max(cellWidth, minWidth);
+        }
+        
+        // 更新当前X坐标
+        currentX += cellWidth;
+      }
     }
   }
 
@@ -975,7 +1100,51 @@ class WorkflowScene {
    * 获取场景宽度
    */
   getSceneWidth(): number {
-    return this.timeIntervals.length * DEFAULT_CONFIG.cellWidth + DEFAULT_CONFIG.leftOffset
+    // 计算动态宽度
+    // 1. 获取所有时间点
+    const timePoints = this.mockData.timePoints.value;
+    // 2. 初始宽度为左侧固定区域宽度
+    let totalWidth = DEFAULT_CONFIG.leftOffset;
+    
+    // 3. 遍历所有时间点，计算宽度
+    for (const timePoint of timePoints) {
+      // 计算每个审核人在该时间点的节点数量
+      const nodeCountPerReviewer = new Map<string, number>();
+      
+      // 统计每个审核人的节点数量
+      for (const node of this.workflowNodes) {
+        if (node.timePointId === timePoint.id) {
+          const reviewerId = node.reviewerId;
+          const currentCount = nodeCountPerReviewer.get(reviewerId) || 0;
+          nodeCountPerReviewer.set(reviewerId, currentCount + 1);
+        }
+      }
+      
+      // 找出最大的节点数量
+      let maxNodesPerReviewer = 0;
+      nodeCountPerReviewer.forEach((count) => {
+        if (count > maxNodesPerReviewer) {
+          maxNodesPerReviewer = count;
+        }
+      });
+      
+      // 计算该时间点的宽度
+      let cellWidth = DEFAULT_CONFIG.cellWidth; // 默认宽度
+      if (maxNodesPerReviewer > 1) {
+        // 如果最大节点数量大于1，宽度 = 最大节点数量 * 基础宽度
+        cellWidth = maxNodesPerReviewer * DEFAULT_CONFIG.cellWidth;
+      } else {
+        // 单节点情况下，确保宽度足够显示一个节点
+        // 节点宽度 + 两侧留白
+        const minWidth = FIXED_NODE_WIDTH + 80; // 与NodeRenderer中保持一致
+        cellWidth = Math.max(cellWidth, minWidth);
+      }
+      
+      // 累加到总宽度
+      totalWidth += cellWidth;
+    }
+    
+    return totalWidth;
   }
 
   /**
@@ -984,7 +1153,6 @@ class WorkflowScene {
   getSceneDepth(): number {
     return this.reviewers.length * DEFAULT_CONFIG.reviewRowHeight
   }
-
   /**
    * 获取相机对象
    */
@@ -1101,7 +1269,6 @@ class WorkflowScene {
     this.controls.update()
   }
 }
-
 /**
  * 工作流程图Hook
  */
@@ -1198,3 +1365,5 @@ export default function useThreeWorkflow1() {
     getRotationLimitState,   // 添加获取旋转限制状态的方法
   }
 }
+
+
