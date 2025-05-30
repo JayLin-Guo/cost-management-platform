@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
 import useMockData from './useMockData'
-import WorkflowNodeRenderer from './useWorkflowNodeRenderer'
+import WorkflowNodeRenderer, { calculateCellWidth } from './useWorkflowNodeRenderer'
 import { DEFAULT_CONFIG, COLORS, FONT_HEADER, FONT_CELL, FIXED_NODE_WIDTH } from './config'
 import type { SceneConfig, TimeInterval, WorkflowNode } from './types'
 
@@ -736,17 +736,8 @@ class WorkflowScene {
         }
       });
       
-      // 计算该时间点的宽度
-      let cellWidth = DEFAULT_CONFIG.cellWidth; // 默认宽度
-      if (maxNodesPerReviewer > 1) {
-        // 如果最大节点数量大于1，宽度 = 最大节点数量 * 基础宽度
-        cellWidth = maxNodesPerReviewer * DEFAULT_CONFIG.cellWidth;
-      } else {
-        // 单节点情况下，确保宽度足够显示一个节点
-        // 节点宽度 + 两侧留白
-        const minWidth = FIXED_NODE_WIDTH + 80; // 与NodeRenderer中保持一致
-        cellWidth = Math.max(cellWidth, minWidth);
-      }
+      // 使用calculateCellWidth函数计算该时间点的宽度
+      const cellWidth = calculateCellWidth(maxNodesPerReviewer, DEFAULT_CONFIG.cellWidth);
 
       // 为交替的单元格使用不同的背景色，增强视觉区分度
       // 间隔期间使用灰色背景，非间隔期间使用交替的深浅蓝色
@@ -837,12 +828,8 @@ class WorkflowScene {
         }
       });
       
-      // 计算该时间点的宽度
-      let cellWidth = DEFAULT_CONFIG.cellWidth; // 默认宽度
-      if (maxNodesPerReviewer > 1) {
-        // 如果最大节点数量大于1，宽度 = 最大节点数量 * 2 * 基础宽度
-        cellWidth = maxNodesPerReviewer * 2 * DEFAULT_CONFIG.cellWidth;
-      }
+      // 使用calculateCellWidth函数计算该时间点的宽度
+      const cellWidth = calculateCellWidth(maxNodesPerReviewer, DEFAULT_CONFIG.cellWidth);
       
       // 累加宽度
       currentX += cellWidth;
@@ -940,17 +927,8 @@ class WorkflowScene {
           }
         });
         
-        // 计算该时间点的宽度
-        let cellWidth = DEFAULT_CONFIG.cellWidth; // 默认宽度
-        if (maxNodesPerReviewer > 1) {
-          // 如果最大节点数量大于1，宽度 = 最大节点数量 * 基础宽度
-          cellWidth = maxNodesPerReviewer * DEFAULT_CONFIG.cellWidth;
-        } else {
-          // 单节点情况下，确保宽度足够显示一个节点
-          // 节点宽度 + 两侧留白
-          const minWidth = FIXED_NODE_WIDTH + 80; // 与NodeRenderer中保持一致
-          cellWidth = Math.max(cellWidth, minWidth);
-        }
+        // 使用calculateCellWidth函数计算该时间点的宽度
+        const cellWidth = calculateCellWidth(maxNodesPerReviewer, DEFAULT_CONFIG.cellWidth);
         
         // 更新当前X坐标
         currentX += cellWidth;
@@ -1100,15 +1078,11 @@ class WorkflowScene {
    * 获取场景宽度
    */
   getSceneWidth(): number {
-    // 计算动态宽度
-    // 1. 获取所有时间点
-    const timePoints = this.mockData.timePoints.value;
-    // 2. 初始宽度为左侧固定区域宽度
+    // 初始宽度为左侧固定区域宽度
     let totalWidth = DEFAULT_CONFIG.leftOffset;
-    
-    // 3. 遍历所有时间点，计算宽度
-    for (const timePoint of timePoints) {
-      // 计算每个审核人在该时间点的节点数量
+
+    // 遍历所有时间点
+    for (const timePoint of this.timePoints) {
       const nodeCountPerReviewer = new Map<string, number>();
       
       // 统计每个审核人的节点数量
@@ -1128,17 +1102,8 @@ class WorkflowScene {
         }
       });
       
-      // 计算该时间点的宽度
-      let cellWidth = DEFAULT_CONFIG.cellWidth; // 默认宽度
-      if (maxNodesPerReviewer > 1) {
-        // 如果最大节点数量大于1，宽度 = 最大节点数量 * 基础宽度
-        cellWidth = maxNodesPerReviewer * DEFAULT_CONFIG.cellWidth;
-      } else {
-        // 单节点情况下，确保宽度足够显示一个节点
-        // 节点宽度 + 两侧留白
-        const minWidth = FIXED_NODE_WIDTH + 80; // 与NodeRenderer中保持一致
-        cellWidth = Math.max(cellWidth, minWidth);
-      }
+      // 使用calculateCellWidth函数计算该时间点的宽度
+      const cellWidth = calculateCellWidth(maxNodesPerReviewer, DEFAULT_CONFIG.cellWidth);
       
       // 累加到总宽度
       totalWidth += cellWidth;

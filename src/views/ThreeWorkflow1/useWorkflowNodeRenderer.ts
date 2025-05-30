@@ -25,6 +25,24 @@ import {
 } from './useAnimationSequence'
 
 /**
+ * 计算单元格宽度
+ * @param nodeCount 节点数量
+ * @param baseCellWidth 基础单元格宽度
+ * @returns 计算后的单元格宽度
+ */
+export function calculateCellWidth(nodeCount: number, baseCellWidth: number): number {
+  if (nodeCount > 1) {
+    // 如果有多个节点，宽度 = 节点数量 * 基础宽度
+    return nodeCount * baseCellWidth;
+  } else {
+    // 单节点情况下，确保宽度足够显示一个节点
+    // 节点宽度 + 两侧留白
+    const minWidth = FIXED_NODE_WIDTH + 80; // 增加留白，确保单节点有足够空间
+    return Math.max(baseCellWidth, minWidth);
+  }
+}
+
+/**
  * 动画模式枚举
  */
 export enum AnimationMode {
@@ -153,17 +171,8 @@ export default class WorkflowNodeRenderer {
         }
       });
       
-      // 计算该时间点的宽度
-      let cellWidth = this.config.cellWidth; // 默认宽度
-      if (maxNodesPerReviewer > 1) {
-        // 如果最大节点数量大于1，宽度 = 最大节点数量 * 基础宽度
-        cellWidth = maxNodesPerReviewer * this.config.cellWidth;
-      } else {
-        // 单节点情况下，确保宽度足够显示一个节点
-        // 节点宽度 + 两侧留白
-        const minWidth = FIXED_NODE_WIDTH + 80; // 与getNodeX方法保持一致
-        cellWidth = Math.max(cellWidth, minWidth);
-      }
+      // 使用calculateCellWidth函数计算该时间点的宽度
+      const cellWidth = calculateCellWidth(maxNodesPerReviewer, this.config.cellWidth);
       
       // 累加宽度
       position += cellWidth;
@@ -258,17 +267,8 @@ export default class WorkflowNodeRenderer {
     
     console.log(`单元格 ${cellKey} 内有 ${nodeCount} 个节点，当前节点索引: ${nodeIndex}`)
     
-    // 计算单元格宽度 - 基于节点数量动态计算
-    let cellWidth = this.config.cellWidth;
-    if (nodeCount > 1) {
-      // 如果有多个节点，宽度 = 节点数量 * 基础宽度
-      cellWidth = nodeCount * this.config.cellWidth;
-    } else {
-      // 单节点情况下，确保宽度足够显示一个节点
-      // 节点宽度 + 两侧留白
-      const minWidth = FIXED_NODE_WIDTH + 80; // 增加留白，确保单节点有足够空间
-      cellWidth = Math.max(cellWidth, minWidth);
-    }
+    // 计算单元格宽度 - 使用calculateCellWidth函数
+    const cellWidth = calculateCellWidth(nodeCount, this.config.cellWidth);
     
     if (nodeCount === 1) {
       // 单元格内只有一个节点，居中放置
