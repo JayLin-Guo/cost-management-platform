@@ -58,7 +58,7 @@ export class HttpService {
         axiosCanceler.addPending(config)
         
         // 处理token
-        this.handleToken(config as ExtendAxiosRequestConfig)
+        // this.handleToken(config as ExtendAxiosRequestConfig)
         
         // 处理Loading
         if ((config as any).requestOptions.showLoading) {
@@ -85,6 +85,7 @@ export class HttpService {
     // 响应拦截器
     axiosInstance.interceptors.response.use(
       (response: AxiosResponse) => {
+       
         // 处理响应数据
         return this.handleResponse(response)
       },

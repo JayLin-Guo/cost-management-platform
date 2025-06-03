@@ -23,9 +23,8 @@ export default defineConfig(({ command, mode }) => {
       proxy: {
         // 主服务API
         '/api': {
-          target: 'http://localhost:8080',
+          target: 'http://localhost:8055',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },
     },

@@ -50,9 +50,9 @@ httpService.getAxios().interceptors.response.use(
     // 例如：特定的业务状态码处理，数据转换等
     
     // 记录API响应（仅在开发环境）
-    if (import.meta.env.DEV) {
-      console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data)
-    }
+    // if (import.meta.env.DEV) {
+    //   console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data)
+    // }
     
     return response
   },

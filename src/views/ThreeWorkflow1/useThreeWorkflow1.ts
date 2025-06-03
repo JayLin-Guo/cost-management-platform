@@ -2,10 +2,10 @@ import { ref, shallowRef } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
-import useMockData from './useMockData'
 import WorkflowNodeRenderer, { calculateCellWidth } from './useWorkflowNodeRenderer'
 import { DEFAULT_CONFIG, COLORS, FONT_HEADER, FONT_CELL, FIXED_NODE_WIDTH } from './config'
 import type { SceneConfig, TimeInterval, WorkflowNode } from './types'
+import type { Reviewer, TimePoint } from './useMockData' // 仍然需要类型定义
 
 /**
  * 工作流程图场景类
@@ -26,12 +26,12 @@ class WorkflowScene {
   private timeLabels: THREE.Group
   private nodeGroup: THREE.Group
 
-  // 数据相关
-  private mockData = useMockData()
+  // 数据相关 - 改为直接接收数据
+  // private mockData = useMockData()
   private timeIntervals: TimeInterval[] = []
-  private timePoints = this.mockData.timePoints.value
-  private reviewers = this.mockData.reviewers.value
-  private workflowNodes = this.mockData.workflowNodes.value
+  private timePoints: TimePoint[] = [] // 修改为直接持有数据
+  private reviewers: Reviewer[] = [] // 修改为直接持有数据
+  private workflowNodes: WorkflowNode[] = [] // 修改为直接持有数据
 
   // 节点渲染器
   private nodeRenderer: WorkflowNodeRenderer
@@ -45,8 +45,20 @@ class WorkflowScene {
   // 添加一个属性来跟踪旋转限制状态
   private isRotationLimited: boolean = true
 
-  constructor(config: SceneConfig) {
+  constructor(
+    config: SceneConfig, 
+    data: { 
+      reviewers: Reviewer[], 
+      timePoints: TimePoint[], 
+      workflowNodes: WorkflowNode[] 
+    }
+  ) {
     this.config = config
+    
+    // 直接使用传入的数据
+    this.reviewers = data.reviewers
+    this.timePoints = data.timePoints
+    this.workflowNodes = data.workflowNodes
 
     // 初始化Three.js核心组件
     this.scene = new THREE.Scene()
@@ -82,11 +94,18 @@ class WorkflowScene {
         timelineDepth: DEFAULT_CONFIG.timelineDepth,
       },
       this.timeIntervals,
-      this.mockData.getReviewer.bind(this.mockData),
+      this.getReviewer.bind(this), // 修改为自己的方法
     )
 
     // 初始化场景
     this.init()
+  }
+
+  /**
+   * 获取审核人信息
+   */
+  private getReviewer(reviewerId: string): Reviewer | undefined {
+    return this.reviewers.find(reviewer => reviewer.id === reviewerId)
   }
 
   /**
@@ -707,7 +726,7 @@ class WorkflowScene {
 
     // 使用timeIntervals作为日期数据源
     const timeIntervals = this.timeIntervals
-    const timePoints = this.mockData.timePoints.value
+    const timePoints = this.timePoints
 
     // 绘制日期单元格 - 每个时间点对应一个单元格
     let currentX = DEFAULT_CONFIG.leftOffset // 从左侧固定区域右边界开始
@@ -1063,7 +1082,6 @@ class WorkflowScene {
       passCount: this.workflowNodes.filter((n) => n.status === 'pass').length,
       rejectCount: this.workflowNodes.filter((n) => n.status === 'reject').length,
       pendingCount: this.workflowNodes.filter((n) => n.status === 'pending').length,
-  
     }
   }
 
@@ -1239,15 +1257,33 @@ class WorkflowScene {
  */
 export default function useThreeWorkflow1() {
   const workflowScene = shallowRef<WorkflowScene | null>(null)
+  const isLoading = ref(false) // 添加加载状态
 
   /**
    * 初始化场景
+   * @param container 容器元素
+   * @param cssContainer CSS容器元素
+   * @param data 工作流数据
    */
-  const initialize = (container: HTMLElement, cssContainer: HTMLElement) => {
-    workflowScene.value = new WorkflowScene({
-      container,
-      cssContainer,
-    })
+  const initialize = (
+    container: HTMLElement, 
+    cssContainer: HTMLElement, 
+    data: { 
+      reviewers: Reviewer[], 
+      timePoints: TimePoint[], 
+      workflowNodes: WorkflowNode[] 
+    }
+  ) => {
+    // 如果已存在场景实例，先清理
+    if (workflowScene.value) {
+      cleanup()
+    }
+    
+    // 创建新的场景实例，并传入数据
+    workflowScene.value = new WorkflowScene(
+      { container, cssContainer },
+      data
+    )
   }
 
   /**
@@ -1328,6 +1364,7 @@ export default function useThreeWorkflow1() {
     toggleRotationLimits,    // 添加切换旋转限制的方法
     setRotationLimits,       // 添加设置旋转限制的方法
     getRotationLimitState,   // 添加获取旋转限制状态的方法
+    isLoading,               // 暴露加载状态
   }
 }
 
