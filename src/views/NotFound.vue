@@ -30,7 +30,7 @@ const goHome = () => {
 h1 {
   margin: 0;
   font-size: 6rem;
-  color: #409EFF;
+  color: #409eff;
 }
 
 h2 {
@@ -44,4 +44,4 @@ p {
   font-size: 1.2rem;
   color: #606266;
 }
-</style> 
+</style>

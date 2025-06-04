@@ -1,4 +1,9 @@
-import type { NodeRenderConfig, ConnectionRenderConfig, ColorConfig, AnimationConfig } from './types'
+import type {
+  NodeRenderConfig,
+  ConnectionRenderConfig,
+  ColorConfig,
+  AnimationConfig,
+} from './types'
 
 // 固定尺寸常量
 export const FIXED_COLUMN_WIDTH = 180 // 固定列宽度（审核人员和文件状态列）
@@ -24,8 +29,8 @@ export const COLORS: ColorConfig = {
   timelineHeaderBg: 'rgba(26, 31, 58, 0.95)', // 时间轴标题背景色，与时间轴颜色协调
   timelineCellBg: {
     interval: 'rgba(45, 53, 97, 0.6)', // 间隔单元格背景色，深空主题
-    even: 'rgba(26, 31, 58, 0.6)',      // 偶数单元格背景色
-    odd: 'rgba(16, 20, 42, 0.6)',       // 奇数单元格背景色，更深
+    even: 'rgba(26, 31, 58, 0.6)', // 偶数单元格背景色
+    odd: 'rgba(16, 20, 42, 0.6)', // 奇数单元格背景色，更深
   },
   nodeColors: {
     main: {
@@ -48,7 +53,7 @@ export const COLORS: ColorConfig = {
     electricParticle: 0x00ff80, // 电弧粒子颜色，青绿色
     highlightRing: 0x00ffff, // 高亮环颜色，青色
     highlightSphere: 0x00ffff, // 高亮球颜色，青色
-  }
+  },
 }
 
 // 默认场景配置
@@ -169,7 +174,7 @@ export const ANIMATION_CONFIG: AnimationConfig = {
       floatAmountMultiplier: 1.2, // 浮动幅度倍数
       pulseSpeedMultiplier: 1.5, // 脉冲速度倍数
       pulseAmountMultiplier: 1.2, // 脉冲幅度倍数
-    }
+    },
   },
   // 高亮动画
   highlight: {
@@ -197,5 +202,5 @@ export const ANIMATION_CONFIG: AnimationConfig = {
     pulseIntensityVariation: 0.3, // 脉冲强度变化范围
     arcPulseSpeed: 0.3, // 电弧脉冲速度
     arcPulseAmount: 0.1, // 电弧脉冲幅度
-  }
-} 
+  },
+}

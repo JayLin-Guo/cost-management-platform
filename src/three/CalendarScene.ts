@@ -43,36 +43,36 @@ export class CalendarScene {
         color: 0x1a3a7a,
         metalness: 0.7,
         roughness: 0.3,
-        envMapIntensity: 0.8
+        envMapIntensity: 0.8,
       }), // 右
       new THREE.MeshStandardMaterial({
         color: 0x1a3a7a,
         metalness: 0.7,
         roughness: 0.3,
-        envMapIntensity: 0.8
+        envMapIntensity: 0.8,
       }), // 左
       new THREE.MeshStandardMaterial({
         map: calendarTexture,
         roughness: 0.3,
-        metalness: 0.6
+        metalness: 0.6,
       }), // 顶
       new THREE.MeshStandardMaterial({
         color: 0x1a3a7a,
         metalness: 0.7,
         roughness: 0.3,
-        envMapIntensity: 0.8
+        envMapIntensity: 0.8,
       }), // 底
       new THREE.MeshStandardMaterial({
         color: 0x1a3a7a,
         metalness: 0.7,
         roughness: 0.3,
-        envMapIntensity: 0.8
+        envMapIntensity: 0.8,
       }), // 前
       new THREE.MeshStandardMaterial({
         color: 0x1a3a7a,
         metalness: 0.7,
         roughness: 0.3,
-        envMapIntensity: 0.8
+        envMapIntensity: 0.8,
       }), // 后
     ]
 
@@ -143,7 +143,7 @@ export class CalendarScene {
       opacity: 1.0, // 不透明度调高
       side: THREE.DoubleSide,
       metalness: 0.3,
-      roughness: 0.7
+      roughness: 0.7,
     })
 
     this.contentPlane = new THREE.Mesh(contentPlaneGeometry, contentPlaneMaterial)
@@ -154,7 +154,7 @@ export class CalendarScene {
     this.contentPlane.position.set(
       0, // X轴居中
       0, // Y轴与地面平齐
-      -gridSizeZ / 4 // Z轴向后调整，使日历条位于正前方
+      -gridSizeZ / 4, // Z轴向后调整，使日历条位于正前方
     )
 
     this.contentPlane.receiveShadow = true
@@ -163,7 +163,7 @@ export class CalendarScene {
     const edgeGeometry = new THREE.EdgesGeometry(contentPlaneGeometry)
     const edgeMaterial = new THREE.LineBasicMaterial({
       color: 0x4a7ad1,
-      linewidth: 1.5  // 注意：由于WebGL限制，线宽在大多数浏览器中会被忽略
+      linewidth: 1.5, // 注意：由于WebGL限制，线宽在大多数浏览器中会被忽略
     })
     const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial)
     edges.rotation.x = -Math.PI / 2 // 与底板相同的旋转
@@ -173,7 +173,6 @@ export class CalendarScene {
     this.group.add(this.calendarBar)
     this.group.add(this.contentPlane)
     this.group.add(edges)
-
   }
 
   /**
@@ -234,7 +233,11 @@ export class CalendarScene {
  * @param calendarBarMesh THREE.Mesh 日历条Mesh
  * @param options 配置项（可选：单元格大小、间距等）
  */
-export function renderNodeTreeOnCalendar(nodeTree: FileNodeTree, calendarBarMesh: THREE.Mesh, options: any = {}) {
+export function renderNodeTreeOnCalendar(
+  nodeTree: FileNodeTree,
+  calendarBarMesh: THREE.Mesh,
+  options: any = {},
+) {
   // 审核人Y轴映射
   const reviewerYMap = reviewers.reduce(
     (map, r, idx) => {
@@ -246,19 +249,19 @@ export function renderNodeTreeOnCalendar(nodeTree: FileNodeTree, calendarBarMesh
   // 时间X轴映射
   const timelineXMap = timeline.reduce(
     (map, date, idx) => {
-      const cellWidth = 140  // 固定单元格宽度为140px，与日历贴图保持一致
-      const leftOffset = 280  // 左侧偏移量，与日历贴图保持一致
+      const cellWidth = 140 // 固定单元格宽度为140px，与日历贴图保持一致
+      const leftOffset = 280 // 左侧偏移量，与日历贴图保持一致
       // 计算节点位置，需要调整为3D坐标系
       // 由于Three.js中心是(0,0,0)，所以需要将左侧偏移后的位置向左偏移整个场景宽度的一半
-      const totalWidth = timeline.length * cellWidth  // 总宽度
-      const sceneCenter = (leftOffset + totalWidth) / 2  // 场景中心位置
-      map[date] = (leftOffset + idx * cellWidth + cellWidth / 2) - sceneCenter  // 居中对齐
+      const totalWidth = timeline.length * cellWidth // 总宽度
+      const sceneCenter = (leftOffset + totalWidth) / 2 // 场景中心位置
+      map[date] = leftOffset + idx * cellWidth + cellWidth / 2 - sceneCenter // 居中对齐
       return map
     },
     {} as Record<string, number>,
   )
   // 单元格参数
-  const cellWidth = options.cellWidth || 45  // 调整为与日历单元格对应的宽度
+  const cellWidth = options.cellWidth || 45 // 调整为与日历单元格对应的宽度
   const cellHeight = options.cellHeight || 18
   const cellDepth = options.cellDepth || 10
 
@@ -271,14 +274,21 @@ export function renderNodeTreeOnCalendar(nodeTree: FileNodeTree, calendarBarMesh
 
   // 获取状态颜色
   function getStatusColor(status: string): number {
-    switch(status) {
-      case '已审核': return 0x00ff66; // 绿色
-      case '已提交': return 0x00aaff; // 蓝色
-      case '审核中': return 0xffcc00; // 黄色
-      case '待审核': return 0x888888; // 灰色
-      case '已驳回': return 0xff3366; // 红色
-      case '未上传': return 0x555555; // 深灰色
-      default: return 0xaaaaaa;      // 默认灰色
+    switch (status) {
+      case '已审核':
+        return 0x00ff66 // 绿色
+      case '已提交':
+        return 0x00aaff // 蓝色
+      case '审核中':
+        return 0xffcc00 // 黄色
+      case '待审核':
+        return 0x888888 // 灰色
+      case '已驳回':
+        return 0xff3366 // 红色
+      case '未上传':
+        return 0x555555 // 深灰色
+      default:
+        return 0xaaaaaa // 默认灰色
     }
   }
 
@@ -303,7 +313,7 @@ export function renderNodeTreeOnCalendar(nodeTree: FileNodeTree, calendarBarMesh
     const nodeColor = getStatusColor(node.status)
     const box = new THREE.Mesh(
       new THREE.BoxGeometry(cellWidth, cellHeight, cellDepth),
-      createGlowingMaterial(nodeColor)
+      createGlowingMaterial(nodeColor),
     )
     box.position.set(x, y, z)
     box.castShadow = true
@@ -319,7 +329,7 @@ export function renderNodeTreeOnCalendar(nodeTree: FileNodeTree, calendarBarMesh
       time: node.time,
       type: node.type,
       status: node.status,
-      remark: node.remark || ''
+      remark: node.remark || '',
     }
 
     // 添加节点标签
@@ -341,7 +351,7 @@ export function renderNodeTreeOnCalendar(nodeTree: FileNodeTree, calendarBarMesh
       const labelMaterial = new THREE.MeshBasicMaterial({
         map: texture,
         transparent: true,
-        opacity: 0.9
+        opacity: 0.9,
       })
 
       const label = new THREE.Mesh(labelGeometry, labelMaterial)
@@ -354,7 +364,7 @@ export function renderNodeTreeOnCalendar(nodeTree: FileNodeTree, calendarBarMesh
     const indicatorMaterial = new THREE.MeshStandardMaterial({
       color: nodeColor,
       emissive: nodeColor,
-      emissiveIntensity: 0.5
+      emissiveIntensity: 0.5,
     })
     const indicator = new THREE.Mesh(indicatorGeometry, indicatorMaterial)
     indicator.position.set(cellWidth / 2 - 5, cellHeight / 2 + 2, cellDepth / 2 + 2)
@@ -372,7 +382,7 @@ export function renderNodeTreeOnCalendar(nodeTree: FileNodeTree, calendarBarMesh
           new THREE.Vector3(parentPos.x, parentPos.y, parentPos.z),
           new THREE.Vector3(parentPos.x + (x - parentPos.x) * 0.25, parentPos.y + 15, parentPos.z),
           new THREE.Vector3(x - (x - parentPos.x) * 0.25, y + 15, z),
-          new THREE.Vector3(x, y, z)
+          new THREE.Vector3(x, y, z),
         )
 
         const points = curve.getPoints(30)
@@ -381,7 +391,7 @@ export function renderNodeTreeOnCalendar(nodeTree: FileNodeTree, calendarBarMesh
           color: 0x1adfff,
           linewidth: 2,
           transparent: true,
-          opacity: 0.7
+          opacity: 0.7,
         })
 
         const line = new THREE.Line(lineGeometry, lineMaterial)
@@ -389,10 +399,9 @@ export function renderNodeTreeOnCalendar(nodeTree: FileNodeTree, calendarBarMesh
 
         // 添加方向指示箭头
         const arrowPos = curve.getPointAt(0.7)
-        const arrowDir = new THREE.Vector3().subVectors(
-          curve.getPointAt(0.8),
-          curve.getPointAt(0.6)
-        ).normalize()
+        const arrowDir = new THREE.Vector3()
+          .subVectors(curve.getPointAt(0.8), curve.getPointAt(0.6))
+          .normalize()
 
         const arrowLength = 5
         const arrowGeometry = new THREE.ConeGeometry(2, arrowLength, 8)

@@ -87,21 +87,21 @@ function useInitLoad() {
       })
     })
 
-    const cellWidth = 140  // 固定单元格宽度为140px，与日历贴图保持一致
-    const leftOffset = 280  // 左侧偏移量，与日历贴图保持一致
-    const iconColWidth = 120  // 图标列宽度
-    const nameColWidth = 160  // 姓名列宽度
+    const cellWidth = 140 // 固定单元格宽度为140px，与日历贴图保持一致
+    const leftOffset = 280 // 左侧偏移量，与日历贴图保持一致
+    const iconColWidth = 120 // 图标列宽度
+    const nameColWidth = 160 // 姓名列宽度
     const rowHeight = 36
-    const iconOffsetX = 30  // icon向右偏移
-    const nameOffsetX = 20  // 姓名向左偏移
-    const calendarBarHeight = 60  // 预留日历条厚度
-    const startY = 20 + calendarBarHeight  // 内容整体下移
-    const totalWidth = timeline.length * cellWidth  // 总宽度
+    const iconOffsetX = 30 // icon向右偏移
+    const nameOffsetX = 20 // 姓名向左偏移
+    const calendarBarHeight = 60 // 预留日历条厚度
+    const startY = 20 + calendarBarHeight // 内容整体下移
+    const totalWidth = timeline.length * cellWidth // 总宽度
     const canvasWidth = leftOffset + totalWidth
     const canvasHeight = startY + reviewers.length * rowHeight + 40
     const canvas = document.createElement('canvas')
     const scale = window.devicePixelRatio || 2
-    const extraScale = 2  // 分辨率提升倍数
+    const extraScale = 2 // 分辨率提升倍数
     canvas.width = canvasWidth * scale * extraScale
     canvas.height = canvasHeight * scale * extraScale
     canvas.style.width = canvasWidth + 'px'
@@ -113,7 +113,7 @@ function useInitLoad() {
     ctx.scale(scale * extraScale, scale * extraScale)
 
     // 绘制垂直分隔线
-    ctx.strokeStyle = '#5a80b0'  // 使用与底板网格线相同的颜色
+    ctx.strokeStyle = '#5a80b0' // 使用与底板网格线相同的颜色
     ctx.lineWidth = 1.5
     ctx.beginPath()
     ctx.moveTo(leftOffset, 0)
@@ -126,7 +126,7 @@ function useInitLoad() {
       const y = startY + i * rowHeight
 
       // 绘制分隔线
-      ctx.strokeStyle = '#3970a0'  // 与底板网格线相同的颜色
+      ctx.strokeStyle = '#3970a0' // 与底板网格线相同的颜色
       ctx.setLineDash([6, 4])
       ctx.beginPath()
       ctx.moveTo(0, y)
@@ -184,12 +184,22 @@ function useInitLoad() {
 
           // 根据状态设置颜色
           let statusColor = '#888888' // 默认灰色
-          switch(status) {
-            case '已审核': statusColor = '#00ff66'; break; // 绿色
-            case '已提交': statusColor = '#00aaff'; break; // 蓝色
-            case '审核中': statusColor = '#ffcc00'; break; // 黄色
-            case '已驳回': statusColor = '#ff3366'; break; // 红色
-            case '未上传': statusColor = '#555555'; break; // 深灰色
+          switch (status) {
+            case '已审核':
+              statusColor = '#00ff66'
+              break // 绿色
+            case '已提交':
+              statusColor = '#00aaff'
+              break // 蓝色
+            case '审核中':
+              statusColor = '#ffcc00'
+              break // 黄色
+            case '已驳回':
+              statusColor = '#ff3366'
+              break // 红色
+            case '未上传':
+              statusColor = '#555555'
+              break // 深灰色
           }
 
           // 绘制状态指示点
@@ -215,10 +225,10 @@ function useInitLoad() {
   }
 
   const createTempCalendarTexture = () => {
-    const cellWidth = 140  // 固定单元格宽度为140px
-    const leftOffset = 280  // 左侧偏移量，对应审核区域左侧的人员和文件夹 (140*2)
+    const cellWidth = 140 // 固定单元格宽度为140px
+    const leftOffset = 280 // 左侧偏移量，对应审核区域左侧的人员和文件夹 (140*2)
 
-    const totalWidth = timeline.length * cellWidth  // 总宽度
+    const totalWidth = timeline.length * cellWidth // 总宽度
     const canvasWidth = leftOffset + totalWidth // 日历总宽度
     const canvasHeight = 60
     const canvas = document.createElement('canvas')
@@ -231,13 +241,13 @@ function useInitLoad() {
 
     // 背景渐变 - 使用参考项目中的深蓝色渐变
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height)
-    gradient.addColorStop(0, '#2c4470')  // 顶部颜色，与底板和左侧区域一致
-    gradient.addColorStop(1, '#1e3055')  // 底部颜色
+    gradient.addColorStop(0, '#2c4470') // 顶部颜色，与底板和左侧区域一致
+    gradient.addColorStop(1, '#1e3055') // 底部颜色
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     // 顶部亮线 - 增强亮度
-    ctx.strokeStyle = '#3a9adf'  // 更亮的蓝色
+    ctx.strokeStyle = '#3a9adf' // 更亮的蓝色
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(0, 0)
@@ -261,7 +271,7 @@ function useInitLoad() {
     ctx.stroke()
 
     // 绘制日期表头和分割线
-    ctx.font = 'bold 16px Microsoft YaHei'  // 加粗字体
+    ctx.font = 'bold 16px Microsoft YaHei' // 加粗字体
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     timeline.forEach((date, idx) => {
@@ -277,15 +287,17 @@ function useInitLoad() {
 
       // 判断是否是今天
       const today = new Date()
-      const isToday = date === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      const isToday =
+        date ===
+        `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
       // 设置文字颜色
       if (isToday) {
-        ctx.fillStyle = '#ffff00'  // 今天用黄色
+        ctx.fillStyle = '#ffff00' // 今天用黄色
       } else if (isWeekend) {
-        ctx.fillStyle = '#ff6e6e'  // 周末用红色
+        ctx.fillStyle = '#ff6e6e' // 周末用红色
       } else {
-        ctx.fillStyle = '#ffffff'  // 工作日用白色
+        ctx.fillStyle = '#ffffff' // 工作日用白色
       }
 
       // 绘制日期数字
@@ -294,10 +306,10 @@ function useInitLoad() {
 
       // 绘制星期
       ctx.font = '14px Microsoft YaHei'
-      ctx.fillText(weekday, x + cellWidth / 2, canvasHeight * 2/3)
+      ctx.fillText(weekday, x + cellWidth / 2, (canvasHeight * 2) / 3)
 
       // 分割线 - 使用参考项目的样式
-      ctx.strokeStyle = '#1a5ad1'  // 较暗的蓝色
+      ctx.strokeStyle = '#1a5ad1' // 较暗的蓝色
       ctx.setLineDash([4, 4])
       ctx.beginPath()
       ctx.moveTo(x, 0)
@@ -361,30 +373,28 @@ function useInitLoad() {
     scene.background = new THREE.Color(0x0f2555)
 
     // 计算理想的相机位置和参数
-    const cellWidth = 140  // 固定单元格宽度
-    const leftOffset = 280  // 左侧偏移
-    const totalWidth = timeline.length * cellWidth  // 总宽度
-    const calendarWidth = leftOffset + totalWidth  // 日历总宽度
-    const calendarHeight = 400  // 日历高度
+    const cellWidth = 140 // 固定单元格宽度
+    const leftOffset = 280 // 左侧偏移
+    const totalWidth = timeline.length * cellWidth // 总宽度
+    const calendarWidth = leftOffset + totalWidth // 日历总宽度
+    const calendarHeight = 400 // 日历高度
 
     // 优化后的相机视角 - 根据场景大小自适应调整
     const aspectRatio = container.clientWidth / container.clientHeight
     // 使用正交相机，更适合平面可视化
     camera = new THREE.OrthographicCamera(
-      calendarWidth / -2,  // left
-      calendarWidth / 2,   // right
-      calendarHeight / 2,  // top
+      calendarWidth / -2, // left
+      calendarWidth / 2, // right
+      calendarHeight / 2, // top
       calendarHeight / -2, // bottom
-      1,                   // near
-      2000                 // far
+      1, // near
+      2000, // far
     )
     // 调整相机缩放以适应容器
-    const cameraZoom = Math.min(
-      container.clientWidth / calendarWidth,
-      container.clientHeight / calendarHeight
-    ) * 0.9  // 留出10%的边距，确保完全显示
+    const cameraZoom =
+      Math.min(container.clientWidth / calendarWidth, container.clientHeight / calendarHeight) * 0.9 // 留出10%的边距，确保完全显示
     camera.zoom = cameraZoom
-    camera.position.set(0, 400, 100)  // 调整相机高度和距离，更接近顶视图
+    camera.position.set(0, 400, 100) // 调整相机高度和距离，更接近顶视图
     camera.lookAt(0, 0, 0)
     camera.updateProjectionMatrix()
 
@@ -402,7 +412,7 @@ function useInitLoad() {
     controls.enableDamping = true
     controls.dampingFactor = 0.1
     // 限制相机旋转角度 - 防止过度旋转
-    controls.minPolarAngle = Math.PI / 4   // 45度
+    controls.minPolarAngle = Math.PI / 4 // 45度
     controls.maxPolarAngle = Math.PI / 2.2 // 约82度
     // 允许平移，但设置合理的限制范围
     controls.enablePan = true
@@ -414,8 +424,8 @@ function useInitLoad() {
     controls.minDistance = 50
     controls.maxDistance = 1000
     // 限制相机高度，保持良好的视角
-    controls.maxZoom = 3.0  // 正交相机最大缩放
-    controls.minZoom = 0.2  // 正交相机最小缩放
+    controls.maxZoom = 3.0 // 正交相机最大缩放
+    controls.minZoom = 0.2 // 正交相机最小缩放
 
     // 取消控制左右转动限制，允许自由旋转
     // controls.minAzimuthAngle = azimuth - Math.PI / 4
@@ -463,17 +473,17 @@ function useInitLoad() {
     const calendarTexture = createTempCalendarTexture()
     if (calendarTexture) {
       // 使用与相机设置相同的尺寸参数
-      const cellWidth = 140  // 固定单元格宽度
-      const leftOffset = 280  // 左侧偏移
-      const totalWidth = timeline.length * cellWidth  // 总宽度
-      const calendarWidth = leftOffset + totalWidth  // 日历总宽度
-      const calendarDepth = 400  // 与相机视图匹配的深度
+      const cellWidth = 140 // 固定单元格宽度
+      const leftOffset = 280 // 左侧偏移
+      const totalWidth = timeline.length * cellWidth // 总宽度
+      const calendarWidth = leftOffset + totalWidth // 日历总宽度
+      const calendarDepth = 400 // 与相机视图匹配的深度
 
       calendarScene = new CalendarScene({
-        gridSizeX: calendarWidth,  // 使用计算得到的日历总宽度
-        gridSizeZ: calendarDepth,  // 使用与相机视图匹配的深度
+        gridSizeX: calendarWidth, // 使用计算得到的日历总宽度
+        gridSizeZ: calendarDepth, // 使用与相机视图匹配的深度
         calendarBarHeight: 8,
-        calendarBarDepth: 40,  // 稍微增加日历条的厚度，让它更显眼
+        calendarBarDepth: 40, // 稍微增加日历条的厚度，让它更显眼
         calendarTexture,
       })
       calendarScene.addToScene(scene)
@@ -504,11 +514,15 @@ function useInitLoad() {
 
   // 鼠标移动处理
   function onMouseMove(event) {
-    if (!calendarScene || !camera) return
+    if (!calendarScene || !camera) {
+      return
+    }
 
     // 计算鼠标在归一化设备坐标中的位置
     const container = document.getElementById('3d-container')
-    if (!container) return
+    if (!container) {
+      return
+    }
 
     const rect = container.getBoundingClientRect()
     mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1
@@ -541,11 +555,15 @@ function useInitLoad() {
 
   // 鼠标点击处理
   function onMouseClick(event) {
-    if (!calendarScene || !camera) return
+    if (!calendarScene || !camera) {
+      return
+    }
 
     // 计算鼠标在归一化设备坐标中的位置
     const container = document.getElementById('3d-container')
-    if (!container) return
+    if (!container) {
+      return
+    }
 
     const rect = container.getBoundingClientRect()
     mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1
@@ -593,9 +611,11 @@ function useInitLoad() {
 
   // 重置所有节点的缩放
   function resetNodesScale() {
-    if (!calendarScene || !calendarScene.calendarBar) return
+    if (!calendarScene || !calendarScene.calendarBar) {
+      return
+    }
 
-    calendarScene.calendarBar.children.forEach(child => {
+    calendarScene.calendarBar.children.forEach((child) => {
       if (child instanceof THREE.Mesh && child.geometry instanceof THREE.BoxGeometry) {
         child.scale.set(1, 1, 1)
       }
@@ -623,10 +643,8 @@ function useInitLoad() {
     const calendarHeight = 400
 
     // 计算新的缩放比例
-    const cameraZoom = Math.min(
-      container.clientWidth / calendarWidth,
-      container.clientHeight / calendarHeight
-    ) * 0.9
+    const cameraZoom =
+      Math.min(container.clientWidth / calendarWidth, container.clientHeight / calendarHeight) * 0.9
 
     // 更新相机参数
     camera.left = calendarWidth / -2
@@ -674,13 +692,15 @@ function useInitLoad() {
   // 节点动画效果
   function animateNodes() {
     // 找到所有节点和连接线
-    if (!calendarScene || !calendarScene.calendarBar) return
+    if (!calendarScene || !calendarScene.calendarBar) {
+      return
+    }
 
     // 获取当前时间
     const time = Date.now() * 0.001
 
     // 遍历日历条的子对象
-    calendarScene.calendarBar.children.forEach(child => {
+    calendarScene.calendarBar.children.forEach((child) => {
       // 节点呼吸效果
       if (child instanceof THREE.Mesh && child.geometry instanceof THREE.BoxGeometry) {
         // 记录原始Y坐标（如果没有记录）
@@ -693,11 +713,12 @@ function useInitLoad() {
         child.position.y = originalY + Math.sin(time + child.position.x * 0.05) * 0.5
 
         // 查找状态指示器
-        child.children.forEach(subChild => {
+        child.children.forEach((subChild) => {
           if (subChild instanceof THREE.Mesh && subChild.geometry instanceof THREE.SphereGeometry) {
             // 指示器发光效果
             if (subChild.material instanceof THREE.MeshStandardMaterial) {
-              subChild.material.emissiveIntensity = 0.3 + Math.sin(time * 3 + child.position.x * 0.1) * 0.2
+              subChild.material.emissiveIntensity =
+                0.3 + Math.sin(time * 3 + child.position.x * 0.1) * 0.2
             }
           }
         })
@@ -705,7 +726,7 @@ function useInitLoad() {
 
       // 连接线动画
       if (child instanceof THREE.Group) {
-        child.children.forEach(line => {
+        child.children.forEach((line) => {
           if (line instanceof THREE.Line) {
             // 线条呼吸效果
             if (line.material instanceof THREE.LineBasicMaterial) {

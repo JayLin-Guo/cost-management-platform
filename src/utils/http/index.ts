@@ -30,7 +30,7 @@ const defaultConfig: CreateAxiosOptions = {
     retryDelay: 1000,
     // 忽略取消令牌
     ignoreCancelToken: false,
-  }
+  },
 }
 
 // 创建HTTP服务实例
@@ -41,32 +41,57 @@ export const request = httpService.getAxios()
 export const clearPendingRequests = axiosCanceler.clearPending.bind(axiosCanceler)
 
 // GET请求
-export function get<T = any>(url: string, params?: any, options?: RequestOptions): Promise<ApiResponse<T>> {
+export function get<T = any>(
+  url: string,
+  params?: any,
+  options?: RequestOptions,
+): Promise<ApiResponse<T>> {
   return httpService.get(url, params, options)
 }
 
 // POST请求
-export function post<T = any>(url: string, data?: any, options?: RequestOptions): Promise<ApiResponse<T>> {
+export function post<T = any>(
+  url: string,
+  data?: any,
+  options?: RequestOptions,
+): Promise<ApiResponse<T>> {
   return httpService.post(url, data, options)
 }
 
 // PUT请求
-export function put<T = any>(url: string, data?: any, options?: RequestOptions): Promise<ApiResponse<T>> {
+export function put<T = any>(
+  url: string,
+  data?: any,
+  options?: RequestOptions,
+): Promise<ApiResponse<T>> {
   return httpService.put(url, data, options)
 }
 
 // DELETE请求
-export function del<T = any>(url: string, params?: any, options?: RequestOptions): Promise<ApiResponse<T>> {
+export function del<T = any>(
+  url: string,
+  params?: any,
+  options?: RequestOptions,
+): Promise<ApiResponse<T>> {
   return httpService.delete(url, params, options)
 }
 
 // 上传文件
-export function upload<T = any>(url: string, file: File | FormData, options?: RequestOptions): Promise<ApiResponse<T>> {
+export function upload<T = any>(
+  url: string,
+  file: File | FormData,
+  options?: RequestOptions,
+): Promise<ApiResponse<T>> {
   return httpService.upload(url, file, options)
 }
 
 // 下载文件
-export function download(url: string, params?: any, fileName?: string, options?: RequestOptions): Promise<void> {
+export function download(
+  url: string,
+  params?: any,
+  fileName?: string,
+  options?: RequestOptions,
+): Promise<void> {
   return httpService.download(url, params, fileName, options)
 }
 
@@ -75,4 +100,4 @@ export { httpService, HttpService }
 export type { ApiResponse, RequestOptions }
 
 // 默认导出
-export default httpService 
+export default httpService

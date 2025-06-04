@@ -55,20 +55,24 @@ export function isExist(val: unknown): boolean {
 }
 
 export function isEmpty<T = unknown>(val: T): val is T {
-  if (isNullOrUndefined(val)) return true
-  if (isString(val) && val === '') return true
-  if (isArray(val) && val.length === 0) return true
-  if (isObject(val) && Object.keys(val).length === 0) return true
-  
+  if (isNullOrUndefined(val)) {
+    return true
+  }
+  if (isString(val) && val === '') {
+    return true
+  }
+  if (isArray(val) && val.length === 0) {
+    return true
+  }
+  if (isObject(val) && Object.keys(val).length === 0) {
+    return true
+  }
+
   return false
 }
 
 export function isPromise<T = any>(val: unknown): val is Promise<T> {
-  return (
-    isObject(val) && 
-    isFunction(val.then) && 
-    isFunction(val.catch)
-  )
+  return isObject(val) && isFunction(val.then) && isFunction(val.catch)
 }
 
 export function isDate(val: unknown): val is Date {
@@ -93,4 +97,4 @@ export function isServer(): boolean {
 
 export function isClient(): boolean {
   return !isServer()
-} 
+}

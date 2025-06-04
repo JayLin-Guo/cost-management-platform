@@ -43,7 +43,7 @@ interface UserInfo {
 export function login(params: LoginParams) {
   return post<LoginResult>(`${baseUrl}/login`, params, {
     showLoading: true,
-    showErrorMsg: true
+    showErrorMsg: true,
   })
 }
 
@@ -51,9 +51,13 @@ export function login(params: LoginParams) {
  * 用户登出
  */
 export function logout() {
-  return post(`${baseUrl}/logout`, {}, {
-    showLoading: true
-  })
+  return post(
+    `${baseUrl}/logout`,
+    {},
+    {
+      showLoading: true,
+    },
+  )
 }
 
 /**
@@ -77,7 +81,7 @@ export function changePassword(params: { oldPassword: string; newPassword: strin
   return post(`${baseUrl}/change-password`, params, {
     showLoading: true,
     showSuccessMsg: true,
-    successMsg: '密码修改成功！'
+    successMsg: '密码修改成功！',
   })
 }
 
@@ -88,7 +92,7 @@ export function updateUserInfo(params: Partial<UserInfo>) {
   return post(`${baseUrl}/update-info`, params, {
     showLoading: true,
     showSuccessMsg: true,
-    successMsg: '用户信息更新成功！'
+    successMsg: '用户信息更新成功！',
   })
 }
 
@@ -96,9 +100,13 @@ export function updateUserInfo(params: Partial<UserInfo>) {
  * 上传头像
  */
 export function uploadAvatar(file: File) {
-  return post<{ avatarUrl: string }>(`${baseUrl}/upload-avatar`, { file }, {
-    showLoading: true,
-    showSuccessMsg: true,
-    successMsg: '头像上传成功！'
-  })
-} 
+  return post<{ avatarUrl: string }>(
+    `${baseUrl}/upload-avatar`,
+    { file },
+    {
+      showLoading: true,
+      showSuccessMsg: true,
+      successMsg: '头像上传成功！',
+    },
+  )
+}

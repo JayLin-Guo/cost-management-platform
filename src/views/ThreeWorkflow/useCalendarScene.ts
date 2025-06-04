@@ -27,7 +27,7 @@ export function useCalendarScene() {
     const calendarBarGeometry = new THREE.BoxGeometry(
       calendarBarWidth,
       height,
-      40 // 日历条厚度
+      40, // 日历条厚度
     )
 
     // 创建日历贴图 (用于日历条顶部的日期显示)
@@ -40,7 +40,7 @@ export function useCalendarScene() {
       new THREE.MeshStandardMaterial({ map: calendarTexture, roughness: 0.3, metalness: 0.6 }), // 顶
       new THREE.MeshStandardMaterial({ color: 0x1a3a7a, metalness: 0.7, roughness: 0.3 }), // 底
       new THREE.MeshStandardMaterial({ color: 0x1a3a7a, metalness: 0.7, roughness: 0.3 }), // 前
-      new THREE.MeshStandardMaterial({ color: 0x1a3a7a, metalness: 0.7, roughness: 0.3 })  // 后
+      new THREE.MeshStandardMaterial({ color: 0x1a3a7a, metalness: 0.7, roughness: 0.3 }), // 后
     ]
 
     const calendarBar = new THREE.Mesh(calendarBarGeometry, calendarBarMaterials)
@@ -62,15 +62,15 @@ export function useCalendarScene() {
       opacity: 1.0,
       side: THREE.DoubleSide,
       metalness: 0.3,
-      roughness: 0.7
+      roughness: 0.7,
     })
 
     const contentPlane = new THREE.Mesh(contentPlaneGeometry, contentPlaneMaterial)
     contentPlane.rotation.x = -Math.PI / 2 // 水平放置
     contentPlane.position.set(
-      0,                // X轴居中
-      -1,               // Y轴略微下沉1个单位，避免Z-fighting
-      0                 // Z轴位于中心
+      0, // X轴居中
+      -1, // Y轴略微下沉1个单位，避免Z-fighting
+      0, // Z轴位于中心
     )
     contentPlane.receiveShadow = true
 
@@ -78,20 +78,18 @@ export function useCalendarScene() {
     const lineMaterial = new THREE.LineBasicMaterial({ color: 0x55aaff })
 
     // 计算分隔线位置 - 确保在左侧区域的右边界
-    const dividerX = -width/2 + leftOffset
+    const dividerX = -width / 2 + leftOffset
 
     const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(dividerX, 0, -depth/2),
-      new THREE.Vector3(dividerX, 0, depth/2)
+      new THREE.Vector3(dividerX, 0, -depth / 2),
+      new THREE.Vector3(dividerX, 0, depth / 2),
     ])
     const dividerLine = new THREE.Line(lineGeometry, lineMaterial)
-
 
     // 组合元素 - 移除了edges
     group.add(calendarBar)
     group.add(contentPlane)
     group.add(dividerLine)
-
 
     // 存储重要元素的引用，方便外部访问
     group.userData = {
@@ -100,7 +98,7 @@ export function useCalendarScene() {
       leftOffset,
       width,
       depth,
-      cellWidth
+      cellWidth,
     }
 
     return group
@@ -109,7 +107,11 @@ export function useCalendarScene() {
   /**
    * 创建日历贴图
    */
-  function createCalendarTexture(timeline: string[], leftOffset: number, cellWidth: number): THREE.Texture {
+  function createCalendarTexture(
+    timeline: string[],
+    leftOffset: number,
+    cellWidth: number,
+  ): THREE.Texture {
     const totalWidth = leftOffset + timeline.length * cellWidth
     const canvasHeight = 60
 
@@ -178,7 +180,9 @@ export function useCalendarScene() {
       // 判断周末和今天
       const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6
       const today = new Date()
-      const isToday = date === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      const isToday =
+        date ===
+        `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
       // 设置文字颜色
       if (isToday) {
@@ -195,7 +199,7 @@ export function useCalendarScene() {
 
       // 绘制星期
       ctx.font = '14px Arial'
-      ctx.fillText(weekday, x + cellWidth / 2, canvasHeight * 2/3)
+      ctx.fillText(weekday, x + cellWidth / 2, (canvasHeight * 2) / 3)
 
       // 日期分割线
       ctx.strokeStyle = '#1a5ad1'
@@ -215,7 +219,11 @@ export function useCalendarScene() {
   /**
    * 创建网格纹理
    */
-  function createGridTexture(cellWidth: number, leftOffset: number, timelineLength: number = 10): THREE.Texture {
+  function createGridTexture(
+    cellWidth: number,
+    leftOffset: number,
+    timelineLength: number = 10,
+  ): THREE.Texture {
     // 从外部函数传入的参数已经是基于BASE_UNIT计算的
     // cellWidth = BASE_UNIT.CELL_WIDTH
     // leftOffset = BASE_UNIT.CELL_WIDTH * BASE_UNIT.LEFT_CELLS
@@ -248,6 +256,6 @@ export function useCalendarScene() {
 
   // 返回公开API
   return {
-    createCalendarScene
+    createCalendarScene,
   }
 }

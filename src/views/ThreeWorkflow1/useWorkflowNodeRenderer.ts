@@ -15,7 +15,7 @@ import type {
   ConnectionRenderConfig,
   NodeRendererConfig,
   TimeInterval,
-  WorkflowNode
+  WorkflowNode,
 } from './types'
 import { TeleportAnimationController2 } from './useTeleportAnimation2'
 import {
@@ -33,12 +33,12 @@ import {
 export function calculateCellWidth(nodeCount: number, baseCellWidth: number): number {
   if (nodeCount > 1) {
     // 如果有多个节点，宽度 = 节点数量 * 基础宽度
-    return nodeCount * baseCellWidth;
+    return nodeCount * baseCellWidth
   } else {
     // 单节点情况下，确保宽度足够显示一个节点
     // 节点宽度 + 两侧留白
-    const minWidth = FIXED_NODE_WIDTH + 80; // 增加留白，确保单节点有足够空间
-    return Math.max(baseCellWidth, minWidth);
+    const minWidth = FIXED_NODE_WIDTH + 80 // 增加留白，确保单节点有足够空间
+    return Math.max(baseCellWidth, minWidth)
   }
 }
 
@@ -74,7 +74,6 @@ export default class WorkflowNodeRenderer {
   // 动画控制器
   private teleportAnimationController2: TeleportAnimationController2
   private currentAnimationMode: AnimationMode = AnimationMode.DIRECT // 默认使用方案2
-
 
   // 连接线配置
   private connectionConfigs: Record<'solid' | 'dashed', ConnectionRenderConfig> = CONNECTION_CONFIGS
@@ -144,42 +143,42 @@ export default class WorkflowNodeRenderer {
     // console.log(`计算时间间隔位置: 索引=${index}, id=${timeInterval.id}, date=${timeInterval.date}`)
 
     // 从左侧固定区域右边界开始
-    let position = this.config.leftOffset;
+    let position = this.config.leftOffset
 
     // 计算前面所有时间点的宽度总和
     for (let i = 0; i < index; i++) {
-      const prevInterval = this.timeIntervals[i];
-      const prevTimePointId = prevInterval.id || '';
+      const prevInterval = this.timeIntervals[i]
+      const prevTimePointId = prevInterval.id || ''
 
       // 计算每个审核人在该时间点的节点数量
-      const nodeCountPerReviewer = new Map<string, number>();
+      const nodeCountPerReviewer = new Map<string, number>()
 
       // 统计每个审核人的节点数量
       for (const [nodeId, node] of this.nodesMap.entries()) {
         if (node.timePointId === prevTimePointId) {
-          const reviewerId = node.reviewerId;
-          const currentCount = nodeCountPerReviewer.get(reviewerId) || 0;
-          nodeCountPerReviewer.set(reviewerId, currentCount + 1);
+          const reviewerId = node.reviewerId
+          const currentCount = nodeCountPerReviewer.get(reviewerId) || 0
+          nodeCountPerReviewer.set(reviewerId, currentCount + 1)
         }
       }
 
       // 找出最大的节点数量
-      let maxNodesPerReviewer = 0;
+      let maxNodesPerReviewer = 0
       nodeCountPerReviewer.forEach((count) => {
         if (count > maxNodesPerReviewer) {
-          maxNodesPerReviewer = count;
+          maxNodesPerReviewer = count
         }
-      });
+      })
 
       // 使用calculateCellWidth函数计算该时间点的宽度
-      const cellWidth = calculateCellWidth(maxNodesPerReviewer, this.config.cellWidth);
+      const cellWidth = calculateCellWidth(maxNodesPerReviewer, this.config.cellWidth)
 
       // 累加宽度
-      position += cellWidth;
+      position += cellWidth
     }
 
     // console.log(`  计算的位置: ${position}`)
-    return position;
+    return position
   }
 
   /**
@@ -248,10 +247,10 @@ export default class WorkflowNodeRenderer {
     }
 
     // 获取时间间隔
-    const timeInterval = this.timeIntervals[timePointIndex];
+    const timeInterval = this.timeIntervals[timePointIndex]
 
     // 使用getTimeIntervalPosition获取时间点的X坐标
-    const baseX = this.getTimeIntervalPosition(timeInterval, timePointIndex);
+    const baseX = this.getTimeIntervalPosition(timeInterval, timePointIndex)
 
     // 获取当前节点信息
     const currentNode = this.nodesMap.get(nodeId)
@@ -268,7 +267,7 @@ export default class WorkflowNodeRenderer {
     // console.log(`单元格 ${cellKey} 内有 ${nodeCount} 个节点，当前节点索引: ${nodeIndex}`)
 
     // 计算单元格宽度 - 使用calculateCellWidth函数
-    const cellWidth = calculateCellWidth(nodeCount, this.config.cellWidth);
+    const cellWidth = calculateCellWidth(nodeCount, this.config.cellWidth)
 
     if (nodeCount === 1) {
       // 单元格内只有一个节点，居中放置
@@ -288,7 +287,7 @@ export default class WorkflowNodeRenderer {
         // console.log(`警告: 节点总宽度(${totalWidth})超过单元格宽度(${cellWidth})，自动调整间距`)
 
         // 计算可用于间距的空间
-        const availableSpaceForGaps = cellWidth - (nodeCount * FIXED_NODE_WIDTH)
+        const availableSpaceForGaps = cellWidth - nodeCount * FIXED_NODE_WIDTH
 
         // 计算每个间隙的宽度，但保持最小间距为节点宽度的0.8倍
         const minSpacing = FIXED_NODE_WIDTH * 0.8
@@ -369,7 +368,7 @@ export default class WorkflowNodeRenderer {
     // console.log(`创建节点几何体 - 尺寸: ${width}x${height}x${depth}`)
 
     // 获取节点颜色 - 根据流程类型，不再考虑状态
-    let nodeColor = 0x4caf50
+    const nodeColor = 0x4caf50
 
     // 创建顶面的文本贴图
     const topTexture = this.createTextTexture(
@@ -547,7 +546,9 @@ export default class WorkflowNodeRenderer {
       // 更新电弧粒子位置
       arcGroup.children.forEach((child, index) => {
         // 跳过第一个子对象（电弧线）
-        if (index === 0) return
+        if (index === 0) {
+          return
+        }
 
         // 更新粒子位置
         if (child.userData && child.userData.position !== undefined) {
@@ -636,7 +637,9 @@ export default class WorkflowNodeRenderer {
 
     // 获取绘图上下文
     const context = canvas.getContext('2d')
-    if (!context) return new THREE.Texture()
+    if (!context) {
+      return new THREE.Texture()
+    }
 
     // 设置半透明背景 - 模拟图片中的效果
     context.fillStyle = 'rgba(20, 40, 80, 0.7)' // 深蓝色半透明背景
@@ -774,7 +777,6 @@ export default class WorkflowNodeRenderer {
 
       // 为节点添加点击事件监听器
       nodeMesh.userData.onClick = (event: MouseEvent) => {
-  
         this.handleNodeClick(event, node.id, node, nodeMesh.userData)
       }
     }
@@ -857,7 +859,9 @@ export default class WorkflowNodeRenderer {
     // 为每个渲染的节点查找其实际连接的目标节点
     renderedNodeIds.forEach((nodeId) => {
       const node = nodeMap.get(nodeId)
-      if (!node || !node.to) return
+      if (!node || !node.to) {
+        return
+      }
 
       // 如果直接目标节点已渲染，直接连接
       if (renderedNodeIds.has(node.to)) {
@@ -870,7 +874,9 @@ export default class WorkflowNodeRenderer {
         // 沿着连接链向下查找，直到找到渲染的节点或无法继续
         while (currentNodeId) {
           const currentNode = nodeMap.get(currentNodeId)
-          if (!currentNode || !currentNode.to) break
+          if (!currentNode || !currentNode.to) {
+            break
+          }
 
           if (renderedNodeIds.has(currentNode.to)) {
             // 找到渲染的目标节点，创建连接
@@ -989,24 +995,28 @@ export default class WorkflowNodeRenderer {
     const absZ = Math.abs(direction.z)
 
     // 确定主要移动方向
-    let primaryDirection = 'x'; // 默认为水平方向
+    let primaryDirection = 'x' // 默认为水平方向
     if (absZ > absX) {
-      primaryDirection = 'z'; // 垂直方向
+      primaryDirection = 'z' // 垂直方向
     }
 
     // 根据主要移动方向选择合适的偏移距离
-    let offsetDistance;
+    let offsetDistance
     if (primaryDirection === 'x') {
       // 水平方向移动，使用节点宽度的一半作为偏移
-      offsetDistance = FIXED_NODE_WIDTH / 2 + 2;
+      offsetDistance = FIXED_NODE_WIDTH / 2 + 2
     } else {
       // 垂直方向移动，使用节点深度的一半作为偏移
-      offsetDistance = FIXED_NODE_DEPTH / 2 + 2;
+      offsetDistance = FIXED_NODE_DEPTH / 2 + 2
     }
 
     // 计算调整后的起点和终点
-    const adjustedStartPosition = startPosition.clone().add(direction.clone().multiplyScalar(offsetDistance))
-    const adjustedEndPosition = endPosition.clone().sub(direction.clone().multiplyScalar(offsetDistance))
+    const adjustedStartPosition = startPosition
+      .clone()
+      .add(direction.clone().multiplyScalar(offsetDistance))
+    const adjustedEndPosition = endPosition
+      .clone()
+      .sub(direction.clone().multiplyScalar(offsetDistance))
 
     // 创建直角连接线的点
     const points: THREE.Vector3[] = []
@@ -1055,23 +1065,29 @@ export default class WorkflowNodeRenderer {
     }
 
     // 根据流程类型选择颜色，不再考虑状态
-    let color = 0x4caf50
+    const color = 0x4caf50
 
     // 创建连接线段 - 分别处理水平段和垂直段
     this.createConnectionSegments(points, primaryDirection, color, sourceNodeData)
 
     // 计算箭头位置和方向 - 箭头应该指向目标节点
     // 将箭头位置稍微向后移动，不要贴在节点上
-    const arrowDirection = new THREE.Vector3().subVectors(
-      adjustedEndPosition,
-      points[points.length - 2]
-    ).normalize()
+    const arrowDirection = new THREE.Vector3()
+      .subVectors(adjustedEndPosition, points[points.length - 2])
+      .normalize()
 
     // 箭头位置向后偏移一点距离
     const arrowPosition = adjustedEndPosition.clone().sub(arrowDirection.clone().multiplyScalar(8))
 
     // 创建箭头指示方向
-    const arrow = this.createArrow(arrowPosition, arrowDirection, color, primaryDirection, adjustedStartPosition, adjustedEndPosition)
+    const arrow = this.createArrow(
+      arrowPosition,
+      arrowDirection,
+      color,
+      primaryDirection,
+      adjustedStartPosition,
+      adjustedEndPosition,
+    )
 
     // 为箭头设置相同的connectionId
     if (arrow) {
@@ -1090,7 +1106,7 @@ export default class WorkflowNodeRenderer {
     points: THREE.Vector3[],
     primaryDirection: string,
     color: number,
-    sourceNodeData: WorkflowNode
+    sourceNodeData: WorkflowNode,
   ): void {
     const connectionId = `${sourceNodeData.id}->${sourceNodeData.to}`
 
@@ -1121,7 +1137,7 @@ export default class WorkflowNodeRenderer {
         connectionType: 'horizontal',
         flowType: DEFAULT_FLOW_TYPE,
         connectionId: connectionId,
-        type: 'connectionLine'
+        type: 'connectionLine',
       }
 
       this.nodeGroup.add(horizontalLine)
@@ -1145,7 +1161,7 @@ export default class WorkflowNodeRenderer {
           connectionType: 'vertical',
           flowType: DEFAULT_FLOW_TYPE,
           connectionId: connectionId,
-          type: 'connectionLine'
+          type: 'connectionLine',
         }
 
         this.nodeGroup.add(verticalLine)
@@ -1171,7 +1187,7 @@ export default class WorkflowNodeRenderer {
         connectionType: 'vertical',
         flowType: DEFAULT_FLOW_TYPE,
         connectionId: connectionId,
-        type: 'connectionLine'
+        type: 'connectionLine',
       }
 
       this.nodeGroup.add(verticalLine)
@@ -1201,7 +1217,7 @@ export default class WorkflowNodeRenderer {
           connectionType: 'horizontal',
           flowType: DEFAULT_FLOW_TYPE,
           connectionId: connectionId,
-          type: 'connectionLine'
+          type: 'connectionLine',
         }
 
         this.nodeGroup.add(horizontalLine)
@@ -1320,7 +1336,9 @@ export default class WorkflowNodeRenderer {
 
     // 获取绘图上下文
     const context = canvas.getContext('2d')
-    if (!context) return new THREE.Texture()
+    if (!context) {
+      return new THREE.Texture()
+    }
 
     // 统一使用黄色背景、黑色文字样式，类似于"历时35天"的效果
     const backgroundColor = 'rgba(255, 193, 7, 0.9)' // 黄色背景，接近#FFC107
@@ -1410,31 +1428,46 @@ export default class WorkflowNodeRenderer {
 
     // 使用primaryDirection来判断箭头类型，而不是依赖方向向量的大小比较
     if (primaryDirection === 'x') {
-
       vertices = [
-        0, 0, 0,      // 箭头尖端
-        -16, 0, 5,    // 左后角 - 增加长度，减小宽度使其更尖锐
-        -16, 0, -5    // 左前角 - 增加长度，减小宽度使其更尖锐
+        0,
+        0,
+        0, // 箭头尖端
+        -16,
+        0,
+        5, // 左后角 - 增加长度，减小宽度使其更尖锐
+        -16,
+        0,
+        -5, // 左前角 - 增加长度，减小宽度使其更尖锐
       ]
     } else {
-
       // 通过比较起始和结束位置的Z坐标来判断方向
       const deltaZ = endPosition.z - startPosition.z
 
       if (deltaZ > 0) {
         // 向下的箭头 (正Z方向)
         vertices = [
-          0, 0, 0,      // 箭头尖端
-          -5, 0, -16,   // 左后角 - 在X轴方向展开，向后延伸
-          5, 0, -16     // 右后角 - 在X轴方向展开，向后延伸
+          0,
+          0,
+          0, // 箭头尖端
+          -5,
+          0,
+          -16, // 左后角 - 在X轴方向展开，向后延伸
+          5,
+          0,
+          -16, // 右后角 - 在X轴方向展开，向后延伸
         ]
       } else {
-
         // 向上的箭头 (负Z方向)
         vertices = [
-          0, 0, 0,      // 箭头尖端
-          -5, 0, 16,    // 左前角 - 在X轴方向展开，向前延伸
-          5, 0, 16      // 右前角 - 在X轴方向展开，向前延伸
+          0,
+          0,
+          0, // 箭头尖端
+          -5,
+          0,
+          16, // 左前角 - 在X轴方向展开，向前延伸
+          5,
+          0,
+          16, // 右前角 - 在X轴方向展开，向前延伸
         ]
       }
     }
@@ -1450,7 +1483,7 @@ export default class WorkflowNodeRenderer {
       color: color,
       transparent: true,
       opacity: 0.9,
-      side: THREE.DoubleSide // 双面材质，确保从各个角度都能看到
+      side: THREE.DoubleSide, // 双面材质，确保从各个角度都能看到
     })
 
     // 创建箭头网格
@@ -1471,12 +1504,17 @@ export default class WorkflowNodeRenderer {
    * @param nodeId 节点ID
    * @param nodeData 节点数据
    */
-  public handleNodeClick(event: MouseEvent, nodeId: string, nodeData: WorkflowNode, userData: any): void {
+  public handleNodeClick(
+    event: MouseEvent,
+    nodeId: string,
+    nodeData: WorkflowNode,
+    userData: any,
+  ): void {
     // console.log(`节点被点击: ID=${nodeId}, 标题=${nodeData.title}, 类型=${nodeData.type}`, nodeData)
 
     // 根据节点数据中的 type 字段触发不同的自定义事件
     const nodeType = nodeData.type || 'reviewNode'
-    
+
     if (nodeType === 'reviewNode') {
       // 审核节点点击 - 打开审核操作弹窗
       const clickEvent = new CustomEvent('workflow-review-node-click', {

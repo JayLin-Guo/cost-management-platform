@@ -10,14 +10,18 @@
               <div class="title-section">
                 <div class="title-icon">
                   <svg viewBox="0 0 24 24">
-                    <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />
+                    <path
+                      d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z"
+                    />
                   </svg>
                 </div>
                 <h3 class="dialog-title">{{ title }}</h3>
               </div>
               <button class="close-btn" @click="handleClose">
                 <svg viewBox="0 0 24 24">
-                  <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+                  <path
+                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"
+                  />
                 </svg>
               </button>
             </div>
@@ -60,24 +64,24 @@ const props = withDefaults(defineProps<Props>(), {
   width: '800px',
   height: 'auto',
   closeOnClickModal: true,
-  destroyOnClose: false
+  destroyOnClose: false,
 })
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
-  'close': []
-  'closed': []
+  close: []
+  closed: []
 }>()
 
 // 计算弹窗样式
 const dialogStyle = computed(() => {
   const width = typeof props.width === 'number' ? `${props.width}px` : props.width
   const height = typeof props.height === 'number' ? `${props.height}px` : props.height
-  
+
   return {
     width,
     height: height !== 'auto' ? height : undefined,
-    maxHeight: height === 'auto' ? '90vh' : undefined
+    maxHeight: height === 'auto' ? '90vh' : undefined,
   }
 })
 
@@ -116,7 +120,7 @@ const handleOverlayClick = () => {
   background: transparent;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 
+  box-shadow:
     0 0 50px rgba(0, 255, 255, 0.3),
     0 0 100px rgba(0, 255, 255, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -140,10 +144,12 @@ const handleOverlayClick = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, 
+  background: linear-gradient(
+    135deg,
     rgba(26, 31, 58, 0.95) 0%,
     rgba(45, 53, 97, 0.95) 50%,
-    rgba(26, 31, 58, 0.95) 100%);
+    rgba(26, 31, 58, 0.95) 100%
+  );
   backdrop-filter: blur(10px);
 }
 
@@ -226,10 +232,12 @@ const handleOverlayClick = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg,
+  background: linear-gradient(
+    180deg,
     rgba(10, 14, 39, 0.95) 0%,
     rgba(16, 20, 45, 0.95) 50%,
-    rgba(10, 14, 39, 0.95) 100%);
+    rgba(10, 14, 39, 0.95) 100%
+  );
   backdrop-filter: blur(10px);
 }
 
@@ -254,10 +262,12 @@ const handleOverlayClick = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(26, 31, 58, 0.95) 0%,
     rgba(45, 53, 97, 0.95) 50%,
-    rgba(26, 31, 58, 0.95) 100%);
+    rgba(26, 31, 58, 0.95) 100%
+  );
   backdrop-filter: blur(10px);
 }
 
@@ -315,15 +325,15 @@ const handleOverlayClick = () => {
     max-width: calc(100vw - 20px);
     max-height: calc(100vh - 20px);
   }
-  
+
   .header-content,
   .body-content,
   .footer-content {
     padding: 20px;
   }
-  
+
   .dialog-title {
     font-size: 18px;
   }
 }
-</style> 
+</style>

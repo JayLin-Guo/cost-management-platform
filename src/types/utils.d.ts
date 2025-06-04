@@ -45,4 +45,4 @@ declare type FormRule = {
 }
 
 // 表单验证规则数组
-declare type FormRules = Record<string, FormRule | FormRule[]> 
+declare type FormRules = Record<string, FormRule | FormRule[]>

@@ -5,21 +5,19 @@
 
     <!-- 添加动画控制按钮 -->
     <div class="animation-controls">
-      <el-button type="primary" @click="startAnimation" :disabled="isPlaying">
+      <el-button type="primary" :disabled="isPlaying" @click="startAnimation">
         <el-icon><VideoPlay /></el-icon>开始文件流转
       </el-button>
-      <el-button type="danger" @click="stopAnimation" :disabled="!isPlaying">
+      <el-button type="danger" :disabled="!isPlaying" @click="stopAnimation">
         <el-icon><VideoPause /></el-icon>停止演示
       </el-button>
     </div>
 
     <!-- 文件信息弹窗 -->
     <el-dialog
-      v-model="showFileInfo"
-      title="文件详情"
-      width="30%"
-      destroy-on-close
-    >
+v-model="showFileInfo"
+title="文件详情" width="30%"
+destroy-on-close>
       <div v-if="selectedObject">
         <h3>{{ selectedObject.title }}</h3>
         <p>状态: {{ getStatusText(selectedObject.status) }}</p>
@@ -39,16 +37,12 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="showFileInfo = false">关闭</el-button>
-          <el-button type="primary" @click="showFileInfo = false">
-            确定
-          </el-button>
+          <el-button type="primary" @click="showFileInfo = false"> 确定 </el-button>
         </span>
       </template>
     </el-dialog>
   </div>
 </template>
-
-
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, onBeforeUnmount, watch, reactive } from 'vue'
@@ -60,13 +54,20 @@ const threeContainer = ref<HTMLElement | null>(null)
 const cssContainer = ref<HTMLElement | null>(null)
 
 // THREE workflow核心功能
-const { initialize, cleanup, selectedObject, startFlowAnimation, stopFlowAnimation, isAnimationPlaying } = useThreeWorkflow()
+const {
+  initialize,
+  cleanup,
+  selectedObject,
+  startFlowAnimation,
+  stopFlowAnimation,
+  isAnimationPlaying,
+} = useThreeWorkflow()
 
 // 文件详情显示控制
 const showFileInfo = ref(false)
 const fileList = reactive([
   { name: 'document1.pdf', size: '1.2MB' },
-  { name: 'document2.pdf', size: '0.8MB' }
+  { name: 'document2.pdf', size: '0.8MB' },
 ])
 
 // 动画状态
@@ -87,11 +88,14 @@ function stopAnimation() {
 }
 
 // 监听变化
-watch(() => isAnimationPlaying, (newValue) => {
-  if (typeof newValue === 'boolean') {
-    isPlaying.value = newValue
-  }
-})
+watch(
+  () => isAnimationPlaying,
+  (newValue) => {
+    if (typeof newValue === 'boolean') {
+      isPlaying.value = newValue
+    }
+  },
+)
 
 // 监听selectedObject变化，显示文件详情
 watch(selectedObject, (newVal) => {
@@ -115,7 +119,7 @@ function getStatusText(status: number): string {
     1: '审核中',
     2: '已通过',
     3: '已驳回',
-    4: '已提交'
+    4: '已提交',
   }
   return statusMap[status] || '未知状态'
 }
@@ -188,8 +192,12 @@ onUnmounted(() => {
 
 /* 弹窗动画 */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 :global(.review-popup) {

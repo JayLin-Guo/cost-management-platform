@@ -7,7 +7,7 @@
         <span class="label-text">{{ label }}</span>
         <span v-if="required" class="required-mark">*</span>
       </div>
-      
+
       <!-- 控件容器 -->
       <div class="form-item-control">
         <!-- 输入框 -->
@@ -26,18 +26,18 @@
           />
           <div class="input-border"></div>
         </div>
-        
+
         <!-- 选择器 -->
         <div v-else-if="type === 'select'" class="control-wrapper">
           <div class="select-bg"></div>
-          <div class="large-screen-select" @click="toggleDropdown" ref="selectRef">
+          <div ref="selectRef" class="large-screen-select" @click="toggleDropdown">
             <span class="select-value">{{ selectedLabel || placeholder }}</span>
-            <svg class="select-arrow" :class="{ 'rotated': dropdownVisible }" viewBox="0 0 24 24">
+            <svg class="select-arrow" :class="{ rotated: dropdownVisible }" viewBox="0 0 24 24">
               <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
             </svg>
           </div>
           <div class="select-border"></div>
-          
+
           <!-- 下拉选项 -->
           <teleport to="body">
             <transition name="dropdown">
@@ -48,11 +48,15 @@
                     v-for="option in options"
                     :key="option.value"
                     class="select-option"
-                    :class="{ 'selected': option.value === inputValue }"
+                    :class="{ selected: option.value === inputValue }"
                     @click="selectOption(option)"
                   >
                     <span>{{ option.label }}</span>
-                    <svg v-if="option.value === inputValue" class="option-check" viewBox="0 0 24 24">
+                    <svg
+                      v-if="option.value === inputValue"
+                      class="option-check"
+                      viewBox="0 0 24 24"
+                    >
                       <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
                     </svg>
                   </div>
@@ -61,7 +65,7 @@
             </transition>
           </teleport>
         </div>
-        
+
         <!-- 文本域 -->
         <div v-else-if="type === 'textarea'" class="control-wrapper">
           <div class="textarea-bg"></div>
@@ -78,7 +82,7 @@
           ></textarea>
           <div class="textarea-border"></div>
         </div>
-        
+
         <!-- 按钮 -->
         <div v-else-if="type === 'button'" class="control-wrapper">
           <button
@@ -125,28 +129,28 @@ const props = withDefaults(defineProps<Props>(), {
   inputType: 'text',
   rows: 3,
   buttonType: 'primary',
-  options: () => []
+  options: () => [],
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: any]
-  'focus': [event: FocusEvent]
-  'blur': [event: FocusEvent]
-  'input': [event: Event]
-  'click': [event: MouseEvent]
+  focus: [event: FocusEvent]
+  blur: [event: FocusEvent]
+  input: [event: Event]
+  click: [event: MouseEvent]
 }>()
 
 // 注入表单配置
 const formConfig = inject('formConfig', {
   labelWidth: '120px',
   labelPosition: 'left',
-  disabled: false
+  disabled: false,
 })
 
 // 响应式数据
 const inputValue = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
+  set: (value) => emit('update:modelValue', value),
 })
 
 const dropdownVisible = ref(false)
@@ -157,13 +161,16 @@ const selectRef = ref<HTMLElement | null>(null)
 // 计算标签样式
 const labelStyle = computed(() => ({
   width: formConfig.labelWidth,
-  textAlign: (formConfig.labelPosition === 'right' ? 'right' : 'left') as 'left' | 'right' | 'center'
+  textAlign: (formConfig.labelPosition === 'right' ? 'right' : 'left') as
+    | 'left'
+    | 'right'
+    | 'center',
 }))
 
 // 计算选中的标签
 const selectedLabel = computed(() => {
   if (props.type === 'select' && props.options.length > 0) {
-    const selected = props.options.find(option => option.value === inputValue.value)
+    const selected = props.options.find((option) => option.value === inputValue.value)
     return selected?.label || ''
   }
   return ''
@@ -178,7 +185,7 @@ const calculateDropdownPosition = () => {
       top: `${rect.bottom + 4}px`,
       left: `${rect.left}px`,
       width: `${rect.width}px`,
-      zIndex: 99999
+      zIndex: 99999,
     }
   }
 }
@@ -248,10 +255,12 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(0, 255, 255, 0.02) 0%,
     rgba(0, 255, 255, 0.05) 50%,
-    rgba(0, 255, 255, 0.02) 100%);
+    rgba(0, 255, 255, 0.02) 100%
+  );
   border-radius: 6px;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -313,10 +322,12 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(26, 31, 58, 0.8) 0%,
     rgba(16, 20, 45, 0.8) 50%,
-    rgba(26, 31, 58, 0.8) 100%);
+    rgba(26, 31, 58, 0.8) 100%
+  );
   border-radius: 6px;
   backdrop-filter: blur(10px);
 }
@@ -359,7 +370,7 @@ onUnmounted(() => {
 .large-screen-input:focus + .input-border,
 .large-screen-textarea:focus + .textarea-border {
   border-color: #00ffff;
-  box-shadow: 
+  box-shadow:
     0 0 20px rgba(0, 255, 255, 0.3),
     inset 0 0 20px rgba(0, 255, 255, 0.1);
 }
@@ -412,10 +423,12 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(26, 31, 58, 0.95) 0%,
     rgba(16, 20, 45, 0.95) 50%,
-    rgba(26, 31, 58, 0.95) 100%);
+    rgba(26, 31, 58, 0.95) 100%
+  );
   backdrop-filter: blur(15px);
   border: 1px solid rgba(0, 255, 255, 0.3);
   border-radius: 6px;
@@ -512,9 +525,7 @@ onUnmounted(() => {
 
 /* 次要按钮 */
 .large-screen-button.secondary .button-bg {
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.1) 0%, 
-    rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -580,4 +591,4 @@ onUnmounted(() => {
 .dropdown-content::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 255, 255, 0.5);
 }
-</style> 
+</style>

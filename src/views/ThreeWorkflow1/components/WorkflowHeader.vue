@@ -34,18 +34,30 @@
 
           <!-- 用户操作区 -->
           <div class="user-controls">
-            <button class="control-btn user-info-btn" @click="$emit('user-info')" title="查看个人信息和账户设置">
+            <button
+              class="control-btn user-info-btn"
+              title="查看个人信息和账户设置"
+              @click="$emit('user-info')"
+            >
               <div class="btn-glow"></div>
               <svg class="btn-icon" viewBox="0 0 24 24">
-                <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                <path
+                  d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"
+                />
               </svg>
               <span>个人信息</span>
             </button>
-            
-            <button class="control-btn logout-btn" @click="$emit('logout')" title="安全退出当前账户">
+
+            <button
+              class="control-btn logout-btn"
+              title="安全退出当前账户"
+              @click="$emit('logout')"
+            >
               <div class="btn-glow"></div>
               <svg class="btn-icon" viewBox="0 0 24 24">
-                <path d="M16,17V14H9V10H16V7L21,12L16,17M14,2A2,2 0 0,1 16,4V6H14V4H5V20H14V18H16V20A2,2 0 0,1 14,22H5A2,2 0 0,1 3,20V4A2,2 0 0,1 5,2H14Z" />
+                <path
+                  d="M16,17V14H9V10H16V7L21,12L16,17M14,2A2,2 0 0,1 16,4V6H14V4H5V20H14V18H16V20A2,2 0 0,1 14,22H5A2,2 0 0,1 3,20V4A2,2 0 0,1 5,2H14Z"
+                />
               </svg>
               <span>退出登录</span>
             </button>
@@ -58,16 +70,26 @@
           <div class="task-selector-section">
             <div class="selector-container">
               <div class="selector-glow"></div>
-              <div class="task-selector" @click="toggleTaskList" title="点击选择不同的工作任务，当前任务将影响3D场景显示的内容">
+              <div
+                class="task-selector"
+                title="点击选择不同的工作任务，当前任务将影响3D场景显示的内容"
+                @click="toggleTaskList"
+              >
                 <div class="selector-content">
                   <span class="selector-label">当前任务</span>
-                  <span class="selected-task">{{ currentTask?.name || currentTask?.title || '选择任务' }}</span>
-                  <svg class="selector-arrow" :class="{ 'rotated': showTaskList }" viewBox="0 0 24 24">
+                  <span class="selected-task">{{
+                    currentTask?.name || currentTask?.title || '选择任务'
+                  }}</span>
+                  <svg
+                    class="selector-arrow"
+                    :class="{ rotated: showTaskList }"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
                   </svg>
                 </div>
               </div>
-              
+
               <!-- 下拉列表 -->
               <transition name="dropdown">
                 <div v-if="showTaskList" class="task-dropdown">
@@ -92,35 +114,59 @@
 
           <!-- 任务操作按钮组 -->
           <div class="task-actions">
-            <button class="action-btn add-btn" @click="$emit('add-task')" title="创建新的工作任务 (Ctrl+N)">
+            <button
+              class="action-btn add-btn"
+              title="创建新的工作任务 (Ctrl+N)"
+              @click="$emit('add-task')"
+            >
               <div class="btn-glow"></div>
               <svg class="btn-icon" viewBox="0 0 24 24">
                 <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
               </svg>
             </button>
-            
-            <button class="action-btn view-btn" @click="$emit('view-task')" :disabled="!currentTask" title="查看当前任务的详细信息 (Ctrl+I)">
+
+            <button
+              class="action-btn view-btn"
+              :disabled="!currentTask"
+              title="查看当前任务的详细信息 (Ctrl+I)"
+              @click="$emit('view-task')"
+            >
               <div class="btn-glow"></div>
               <svg class="btn-icon" viewBox="0 0 24 24">
-                <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                <path
+                  d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"
+                />
               </svg>
             </button>
-            
-            <button class="action-btn delete-btn" @click="$emit('delete-task')" :disabled="!currentTask" title="删除当前选中的任务 (Delete)">
+
+            <button
+              class="action-btn delete-btn"
+              :disabled="!currentTask"
+              title="删除当前选中的任务 (Delete)"
+              @click="$emit('delete-task')"
+            >
               <div class="btn-glow"></div>
               <svg class="btn-icon" viewBox="0 0 24 24">
-                <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                <path
+                  d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"
+                />
               </svg>
             </button>
 
             <!-- 分隔线 -->
             <div class="action-separator"></div>
-            
+
             <!-- 视角控制按钮 -->
-            <button class="action-btn rotation-btn" @click="$emit('toggle-rotation')" title="切换3D视角控制模式：自由视角 ⇄ 锁定视角 (Space)">
+            <button
+              class="action-btn rotation-btn"
+              title="切换3D视角控制模式：自由视角 ⇄ 锁定视角 (Space)"
+              @click="$emit('toggle-rotation')"
+            >
               <div class="btn-glow special-glow"></div>
               <svg class="btn-icon" viewBox="0 0 24 24">
-                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z" />
+                <path
+                  d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"
+                />
               </svg>
             </button>
           </div>
@@ -144,7 +190,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   projectTitle: '任丘市2025年农村公路建设工程施工第一标段',
   tasksList: () => [],
-  showTaskList: false
+  showTaskList: false,
 })
 
 // Emits
@@ -155,7 +201,7 @@ const emit = defineEmits<{
   'select-task': [task: any]
   'toggle-task-list': []
   'user-info': []
-  'logout': []
+  logout: []
   'toggle-rotation': []
 }>()
 
@@ -166,16 +212,16 @@ const currentDate = ref('')
 // 更新时间
 const updateTime = () => {
   const now = new Date()
-  currentTime.value = now.toLocaleTimeString('zh-CN', { 
+  currentTime.value = now.toLocaleTimeString('zh-CN', {
     hour12: false,
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit'
+    second: '2-digit',
   })
   currentDate.value = now.toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit'
+    day: '2-digit',
   })
 }
 
@@ -247,7 +293,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: 
+  background-image:
     radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 40% 80%, rgba(0, 255, 128, 0.1) 0%, transparent 50%);
@@ -260,7 +306,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: 
+  background-image:
     linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 50px 50px;
@@ -655,12 +701,12 @@ onUnmounted(() => {
 }
 
 @keyframes rotationGlow {
-  0% { 
-    opacity: 0.2; 
+  0% {
+    opacity: 0.2;
     transform: scale(1);
   }
-  100% { 
-    opacity: 0.5; 
+  100% {
+    opacity: 0.5;
     transform: scale(1.02);
   }
 }
@@ -724,32 +770,56 @@ onUnmounted(() => {
 
 /* 动画 */
 @keyframes particleFloat {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(180deg); }
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(180deg);
+  }
 }
 
 @keyframes gridMove {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(50px, 50px); }
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
 }
 
 @keyframes titleGlow {
-  0% { opacity: 0.2; filter: blur(10px); }
-  100% { opacity: 0.4; filter: blur(15px); }
+  0% {
+    opacity: 0.2;
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 0.4;
+    filter: blur(15px);
+  }
 }
 
 @keyframes underlineFlow {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 @keyframes timeGlow {
-  0% { opacity: 0.3; }
-  100% { opacity: 0.6; }
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.6;
+  }
 }
 
 /* 过渡动画 */
-.dropdown-enter-active, .dropdown-leave-active {
+.dropdown-enter-active,
+.dropdown-leave-active {
   transition: all 0.3s ease;
 }
 
@@ -768,7 +838,7 @@ onUnmounted(() => {
   .right-section {
     min-width: 380px;
   }
-  
+
   .task-selector-section {
     max-width: 200px;
   }
@@ -778,39 +848,39 @@ onUnmounted(() => {
   .workflow-header {
     height: 100px;
   }
-  
+
   .header-content {
     flex-direction: column;
     padding: 10px 20px;
     gap: 10px;
   }
-  
+
   .left-section {
     padding-right: 0;
   }
-  
+
   .right-section {
     min-width: auto;
     gap: 8px;
   }
-  
+
   .top-controls {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .bottom-controls {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .task-selector-section {
     max-width: none;
   }
-  
+
   .task-actions {
     flex-wrap: wrap;
     gap: 6px;
   }
 }
-</style> 
+</style>

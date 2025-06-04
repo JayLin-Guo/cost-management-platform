@@ -20,7 +20,8 @@ const routes: Array<RouteRecordRaw> = [
     meta: {
       title: '三维工作流',
     },
-  },  {
+  },
+  {
     path: '/threeworkflow1',
     name: 'ThreeWorkflow1',
     component: () => import('../views/ThreeWorkflow1/index.vue'),
@@ -37,9 +38,7 @@ const routes: Array<RouteRecordRaw> = [
       keepAlive: true,
       requireAuth: false,
     },
-
-
-  }
+  },
 ]
 
 const router = createRouter({

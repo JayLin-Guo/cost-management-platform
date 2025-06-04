@@ -78,5 +78,5 @@ export const HttpStatusMessages: Record<number, string> = {
   502: '网关错误',
   503: '服务不可用',
   504: '网关超时',
-  505: 'HTTP版本不支持'
-} 
+  505: 'HTTP版本不支持',
+}

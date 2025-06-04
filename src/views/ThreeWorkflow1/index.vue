@@ -48,10 +48,10 @@
     </div>
 
     <!-- 3D场景容器 -->
-    <div ref="threeContainer" class="three-container" v-show="!isLoading && hasData"></div>
+    <div v-show="!isLoading && hasData" ref="threeContainer" class="three-container"></div>
 
     <!-- CSS2D渲染器容器 - 用于HTML标签 -->
-    <div ref="cssContainer" class="css-container" v-show="!isLoading && hasData"></div>
+    <div v-show="!isLoading && hasData" ref="cssContainer" class="css-container"></div>
 
     <!-- 使用大屏任务管理对话框组件 -->
     <LargeScreenDialog
@@ -61,7 +61,7 @@
       height="700px"
       :close-on-click-modal="false"
     >
-      <TaskForm v-model="formData" :mapOptions="taskBaseDocMap" />
+      <TaskForm v-model="formData" :map-options="taskBaseDocMap" />
       <template #footer>
         <div class="dialog-footer-actions">
           <button class="large-screen-button secondary" @click="handleDialogClosed">
@@ -83,10 +83,7 @@
     </LargeScreenDialog>
 
     <!-- 状态详情弹窗 -->
-    <StatusDetailsDialog
-      v-model:visible="showStatusDialog"
-      :node-data="currentStatusData"
-    />
+    <StatusDetailsDialog v-model:visible="showStatusDialog" :node-data="currentStatusData" />
   </div>
 </template>
 
@@ -168,7 +165,7 @@ const currentStatusData = ref<any>(null)
 const reviewFormData = reactive({
   comment: '',
   status: '',
-  files: [] as any[]
+  files: [] as any[],
 })
 
 // 切换旋转限制
@@ -264,49 +261,49 @@ function handleReviewNodeClick(event: any) {
   const { nodeData, userData } = event.detail
   console.log('审核节点被点击:', nodeData)
   console.log('审核节点被点击userData:', userData)
-  
+
   currentStatusData.value = nodeData
   reviewFormData.comment = ''
   reviewFormData.status = ''
   reviewFormData.files = nodeData.reviewData?.files || []
-    // reviewNodeDialogVisible.value = true
+  // reviewNodeDialogVisible.value = true
   window.open('https://www.baidu.com', '_blank')
 }
 
 // 处理状态节点点击
 function handleStatusNodeClick(event: any) {
   console.log('状态节点点击事件:', event.detail)
-  
+
   const { nodeData, fromNodeData, toNodeData, connectionInfo } = event.detail
-  
+
   console.log('节点数据:', nodeData)
   console.log('前一个节点数据:', fromNodeData)
   console.log('后一个节点数据:', toNodeData)
   console.log('连接信息:', connectionInfo)
-  
+
   // 准备状态对话框数据
   currentStatusData.value = {
     ...nodeData,
     fromNodeData,
     toNodeData,
-    connectionInfo
+    connectionInfo,
   }
-  
+
   showStatusDialog.value = true
 }
 
 // 处理状态标签点击
 function handleStatusLabelClick(event: any) {
   const { labelData, nodeData, fromNodeData, toNodeData, connectionInfo } = event.detail
-  
+
   console.log('状态标签被点击 - 详细信息:', {
     标签数据: labelData,
     当前节点数据: nodeData,
     上一个节点数据: fromNodeData,
     下一个节点数据: toNodeData,
-    连接信息: connectionInfo
+    连接信息: connectionInfo,
   })
-  
+
   // 构建扩展的节点数据，包含上一个和下一个节点信息
   const extendedNodeData = {
     ...nodeData,
@@ -315,30 +312,32 @@ function handleStatusLabelClick(event: any) {
       nextNode: toNodeData,
       connectionStatus: connectionInfo?.status,
       connectionFrom: connectionInfo?.from,
-      connectionTo: connectionInfo?.to
-    }
+      connectionTo: connectionInfo?.to,
+    },
   }
-  
+
   currentStatusData.value = extendedNodeData
   showStatusDialog.value = true
 }
 
 // 提交审核
 function submitReview(action: 'approve' | 'reject') {
-  if (!currentStatusData.value) return
-  
+  if (!currentStatusData.value) {
+    return
+  }
+
   const nodeId = currentStatusData.value.id
   const comment = reviewFormData.comment
-  
+
   console.log(`${action === 'approve' ? '通过' : '驳回'}审核:`, {
     nodeId,
     comment,
-    action
+    action,
   })
-  
+
   // 这里可以调用API提交审核结果
   ElMessage.success(`${action === 'approve' ? '审核通过' : '审核驳回'}操作已提交`)
-  
+
   // 这里可以调用API更新审核状态
   // await updateReviewStatus(nodeId, action, comment)
   // await loadWorkflowData(currentTask.value.id.toString())
@@ -354,16 +353,16 @@ function closeDialogs() {
 // 获取状态文本
 function getStatusText(status: string) {
   const statusMap: Record<string, string> = {
-    'pending': '待处理',
+    pending: '待处理',
     'in-progress': '进行中',
-    'completed': '已完成',
-    'approved': '已通过',
-    'rejected': '已驳回',
-    'cancelled': '已取消',
-    'waiting': '等待中',
-    'reviewing': '审核中',
-    'failed': '失败',
-    'success': '成功'
+    completed: '已完成',
+    approved: '已通过',
+    rejected: '已驳回',
+    cancelled: '已取消',
+    waiting: '等待中',
+    reviewing: '审核中',
+    failed: '失败',
+    success: '成功',
   }
   return statusMap[status] || status
 }
@@ -609,9 +608,7 @@ function getStatusText(status: string) {
 
 /* 次要按钮 */
 .large-screen-button.secondary .button-bg {
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.1) 0%, 
-    rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 

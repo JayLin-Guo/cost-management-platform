@@ -116,4 +116,4 @@ declare interface CostCategory {
   parentId?: number | string
   children?: CostCategory[]
   [key: string]: any
-} 
+}

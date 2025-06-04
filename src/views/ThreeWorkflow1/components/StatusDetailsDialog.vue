@@ -12,7 +12,6 @@
       <div class="status-info-section">
         <h3 class="section-title">状态信息</h3>
         <div class="info-grid">
-    
           <div class="info-item">
             <span class="label">状态:</span>
             <span class="value status" :class="nodeData.status">
@@ -41,7 +40,13 @@
           <div class="comment-meta">
             <span class="reviewer">审核人: {{ statusData.reviewer || '未知' }}</span>
             <span class="review-result" :class="statusData.reviewResult">
-              {{ statusData.reviewResult === 'approved' ? '通过' : statusData.reviewResult === 'rejected' ? '驳回' : '待审核' }}
+              {{
+                statusData.reviewResult === 'approved'
+                  ? '通过'
+                  : statusData.reviewResult === 'rejected'
+                    ? '驳回'
+                    : '待审核'
+              }}
             </span>
           </div>
         </div>
@@ -51,15 +56,17 @@
       <div v-if="statusData.attachments?.length" class="attachments-section">
         <h3 class="section-title">附件文件 ({{ statusData.attachments.length }})</h3>
         <div class="attachments-list">
-          <div 
-            v-for="(attachment, index) in statusData.attachments" 
-            :key="index" 
+          <div
+            v-for="(attachment, index) in statusData.attachments"
+            :key="index"
             class="attachment-item"
           >
             <div class="attachment-info">
               <div class="attachment-name">
                 <svg class="file-icon" viewBox="0 0 24 24">
-                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                  <path
+                    d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"
+                  />
                 </svg>
                 {{ attachment.name }}
               </div>
@@ -69,22 +76,21 @@
               </div>
             </div>
             <div class="attachment-actions">
-              <button 
-                class="action-btn view-btn" 
-                @click="handlePreviewFile(attachment)"
+              <button
+                class="action-btn view-btn"
                 :disabled="!canPreview(attachment)"
+                @click="handlePreviewFile(attachment)"
               >
                 <svg viewBox="0 0 24 24">
-                  <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                  <path
+                    d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"
+                  />
                 </svg>
                 预览
               </button>
-              <button 
-                class="action-btn download-btn" 
-                @click="handleDownloadFile(attachment)"
-              >
+              <button class="action-btn download-btn" @click="handleDownloadFile(attachment)">
                 <svg viewBox="0 0 24 24">
-                  <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/>
+                  <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
                 </svg>
                 下载
               </button>
@@ -102,13 +108,15 @@
             <div class="node-header">上一个节点</div>
             <div class="node-info">
               <!-- <div class="node-id">{{ nodeData.connectionDetails.previousNode.id }}</div> -->
-              <div class="node-title">{{ nodeData.connectionDetails.previousNode.title || '无标题' }}</div>
+              <div class="node-title">{{
+                nodeData.connectionDetails.previousNode.title || '无标题'
+              }}</div>
               <div class="node-status" :class="nodeData.connectionDetails.previousNode.status">
                 {{ getStatusText(nodeData.connectionDetails.previousNode.status) }}
               </div>
             </div>
           </div>
-          
+
           <!-- 连接箭头 -->
           <div class="connection-arrow">
             <div class="arrow-line"></div>
@@ -117,13 +125,15 @@
               {{ getStatusText(nodeData.connectionDetails.connectionStatus || '') }}
             </div>
           </div>
-          
+
           <!-- 下一个节点 -->
           <div v-if="nodeData.connectionDetails.nextNode" class="connection-node">
             <div class="node-header">下一个节点</div>
             <div class="node-info">
               <!-- <div class="node-id">{{ nodeData.connectionDetails.nextNode.id }}</div> -->
-              <div class="node-title">{{ nodeData.connectionDetails.nextNode.title || '无标题' }}</div>
+              <div class="node-title">{{
+                nodeData.connectionDetails.nextNode.title || '无标题'
+              }}</div>
               <div class="node-status" :class="nodeData.connectionDetails.nextNode.status">
                 {{ getStatusText(nodeData.connectionDetails.nextNode.status) }}
               </div>
@@ -171,7 +181,7 @@ const {
   canPreview,
   handlePreviewFile,
   handleDownloadFile,
-  fetchStatusDetails
+  fetchStatusDetails,
 } = useStatusDetails()
 
 // 监听节点数据变化，重新获取详情
@@ -179,11 +189,15 @@ const nodeId = computed(() => props.nodeData?.id)
 
 // 当弹窗打开且有节点数据时，获取详情
 const visible = computed(() => props.visible)
-watch([visible, nodeId], ([isVisible, id]) => {
-  if (isVisible && id) {
-    fetchStatusDetails(id)
-  }
-}, { immediate: true })
+watch(
+  [visible, nodeId],
+  ([isVisible, id]) => {
+    if (isVisible && id) {
+      fetchStatusDetails(id)
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
@@ -635,4 +649,4 @@ watch([visible, nodeId], ([isVisible, id]) => {
 .history-list::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 200, 255, 0.5);
 }
-</style> 
+</style>

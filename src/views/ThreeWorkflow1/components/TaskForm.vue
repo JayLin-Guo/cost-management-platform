@@ -2,53 +2,53 @@
   <div class="task-form">
     <LargeScreenForm :label-width="'120px'" label-position="left" :disabled="mode === 'view'">
       <LargeScreenFormItem
+        v-model="taskForm.name"
         type="input"
         label="任务名称"
-        v-model="taskForm.name"
         placeholder="请输入任务名称"
         :required="true"
       />
 
       <LargeScreenFormItem
+        v-model="taskForm.category"
         type="select"
         label="任务分类"
-        v-model="taskForm.category"
         placeholder="请选择分类"
         :options="taskCategoryOptions"
         :required="true"
       />
 
       <LargeScreenFormItem
+        v-model="taskForm.participants"
         type="select"
         label="参与人员"
-        v-model="taskForm.participants"
         placeholder="请选择人员"
         :options="participantOptions"
         :required="true"
       />
 
       <LargeScreenFormItem
+        v-model="taskForm.responsible"
         type="select"
         label="任务负责人"
-        v-model="taskForm.responsible"
         placeholder="请选择负责人"
         :options="responsibleOptions"
         :required="true"
       />
 
       <LargeScreenFormItem
+        v-model="taskForm.needReview"
         type="select"
         label="是否审核"
-        v-model="taskForm.needReview"
         placeholder="请选择审核级别"
         :options="reviewLevelOptions"
         :required="true"
       />
 
       <LargeScreenFormItem
+        v-model="taskForm.description"
         type="textarea"
         label="任务说明"
-        v-model="taskForm.description"
         placeholder="请输入描述内容"
         :rows="3"
       />
@@ -125,31 +125,39 @@ const reviewers = computed(() => {
 
 // 转换选项格式
 const taskCategoryOptions = computed(() => {
-  return taskCategories.value?.map(item => ({
-    label: item.name,
-    value: item.id
-  })) || []
+  return (
+    taskCategories.value?.map((item) => ({
+      label: item.name,
+      value: item.id,
+    })) || []
+  )
 })
 
 const participantOptions = computed(() => {
-  return participants.value?.map(item => ({
-    label: item.name,
-    value: item.id
-  })) || []
+  return (
+    participants.value?.map((item) => ({
+      label: item.name,
+      value: item.id,
+    })) || []
+  )
 })
 
 const responsibleOptions = computed(() => {
-  return responsibles.value?.map(item => ({
-    label: item.name,
-    value: item.id
-  })) || []
+  return (
+    responsibles.value?.map((item) => ({
+      label: item.name,
+      value: item.id,
+    })) || []
+  )
 })
 
 const reviewLevelOptions = computed(() => {
-  return reviewLevels.value?.map(item => ({
-    label: item.name,
-    value: item.id
-  })) || []
+  return (
+    reviewLevels.value?.map((item) => ({
+      label: item.name,
+      value: item.id,
+    })) || []
+  )
 })
 
 // 处理文件上传
@@ -178,7 +186,6 @@ const handleUpload = () => {
 //       // 取消操作
 //     })
 // }
-
 </script>
 
 <style scoped>
@@ -194,10 +201,12 @@ const handleUpload = () => {
 }
 
 :deep(.form-bg) {
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(0, 255, 255, 0.02) 0%,
     rgba(0, 255, 255, 0.05) 50%,
-    rgba(0, 255, 255, 0.02) 100%);
+    rgba(0, 255, 255, 0.02) 100%
+  );
 }
 
 :deep(.large-screen-form-item) {
@@ -263,17 +272,19 @@ const handleUpload = () => {
 /* 表单项悬停效果 */
 :deep(.large-screen-form-item:hover .form-item-bg) {
   opacity: 1;
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(0, 255, 255, 0.05) 0%,
     rgba(0, 255, 255, 0.08) 50%,
-    rgba(0, 255, 255, 0.05) 100%);
+    rgba(0, 255, 255, 0.05) 100%
+  );
 }
 
 /* 焦点状态增强 */
 :deep(.large-screen-input:focus + .input-border),
 :deep(.large-screen-textarea:focus + .textarea-border) {
   border-color: #00ffff;
-  box-shadow: 
+  box-shadow:
     0 0 20px rgba(0, 255, 255, 0.3),
     inset 0 0 20px rgba(0, 255, 255, 0.1);
 }

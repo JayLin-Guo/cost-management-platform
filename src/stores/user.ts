@@ -17,7 +17,7 @@ interface LoginParams {
 
 // 使用组合式API方式创建store
 export const useUserStore = defineStore(
-  'user', 
+  'user',
   () => {
     const token = ref('')
     const userInfo = ref<UserInfo>({})
@@ -34,7 +34,7 @@ export const useUserStore = defineStore(
             nickname: 'Admin',
             avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
             role: 'admin',
-            permissions: ['*']
+            permissions: ['*'],
           }
           resolve()
         } else {
@@ -62,10 +62,10 @@ export const useUserStore = defineStore(
       userInfo,
       login,
       getUserInfo,
-      logout
+      logout,
     }
   },
   {
-    persist: true
-  }
-) 
+    persist: true,
+  },
+)

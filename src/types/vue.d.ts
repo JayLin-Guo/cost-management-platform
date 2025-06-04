@@ -13,13 +13,13 @@ declare module '@vue/runtime-core' {
 // 扩展 ComponentPublicInstance
 declare module 'vue' {
   interface ComponentCustomProperties {
-    $message: typeof import('element-plus')['ElMessage']
-    $notify: typeof import('element-plus')['ElNotification']
-    $msgbox: typeof import('element-plus')['ElMessageBox']
-    $alert: typeof import('element-plus')['ElMessageBox']['alert']
-    $confirm: typeof import('element-plus')['ElMessageBox']['confirm']
-    $prompt: typeof import('element-plus')['ElMessageBox']['prompt']
-    $loading: typeof import('element-plus')['ElLoading']['service']
+    $message: (typeof import('element-plus'))['ElMessage']
+    $notify: (typeof import('element-plus'))['ElNotification']
+    $msgbox: (typeof import('element-plus'))['ElMessageBox']
+    $alert: (typeof import('element-plus'))['ElMessageBox']['alert']
+    $confirm: (typeof import('element-plus'))['ElMessageBox']['confirm']
+    $prompt: (typeof import('element-plus'))['ElMessageBox']['prompt']
+    $loading: (typeof import('element-plus'))['ElLoading']['service']
   }
 }
 
@@ -34,4 +34,4 @@ declare module 'vue-router' {
     roles?: string[]
     permissions?: string[]
   }
-} 
+}

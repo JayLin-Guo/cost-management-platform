@@ -11,11 +11,11 @@ interface ImportMetaEnv {
 }
 
 // Node.js 全局变量，帮助 Vite 配置
-declare var __dirname: string
-declare var __filename: string
-declare var process: {
+declare let __dirname: string
+declare let __filename: string
+declare let process: {
   env: {
     NODE_ENV: 'development' | 'production'
     [key: string]: string | undefined
   }
-} 
+}

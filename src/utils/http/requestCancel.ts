@@ -17,17 +17,17 @@ export class AxiosCanceler {
     if (this.checkIgnoreCancelToken(config)) {
       return
     }
-    
+
     // 生成请求标识
     const requestKey = this.generateRequestKey(config)
-    
+
     // 如果存在相同标识的请求，先取消前一个
     if (this.pendingMap.has(requestKey)) {
       const controller = this.pendingMap.get(requestKey)
       controller && controller.abort()
       this.pendingMap.delete(requestKey)
     }
-    
+
     // 创建新的AbortController，添加到Map中
     const controller = new AbortController()
     config.signal = controller.signal
@@ -43,10 +43,10 @@ export class AxiosCanceler {
     if (this.checkIgnoreCancelToken(config)) {
       return
     }
-    
+
     // 生成请求标识
     const requestKey = this.generateRequestKey(config)
-    
+
     // 从Map中移除
     if (this.pendingMap.has(requestKey)) {
       this.pendingMap.delete(requestKey)
@@ -57,7 +57,7 @@ export class AxiosCanceler {
    * 清除所有pending中的请求
    */
   clearPending(): void {
-    this.pendingMap.forEach(controller => {
+    this.pendingMap.forEach((controller) => {
       controller && controller.abort()
     })
     this.pendingMap.clear()
@@ -87,13 +87,10 @@ export class AxiosCanceler {
     // 转换为扩展的请求配置类型
     const extendConfig = config as ExtendAxiosRequestConfig
     const ignoreCancelToken = extendConfig?.requestOptions?.ignoreCancelToken
-    
-    return !!(
-      ignoreCancelToken || 
-      (config.headers && config.headers['ignoreCancelToken'])
-    )
+
+    return !!(ignoreCancelToken || (config.headers && config.headers['ignoreCancelToken']))
   }
 }
 
 // 导出单例
-export const axiosCanceler = new AxiosCanceler() 
+export const axiosCanceler = new AxiosCanceler()
