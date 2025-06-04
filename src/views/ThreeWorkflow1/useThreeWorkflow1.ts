@@ -309,12 +309,12 @@ class WorkflowScene {
     const centerY = 0
     const centerZ = sceneDepth / 2 + DEFAULT_CONFIG.timelineDepth / 2
 
-    // 环境光 - 使用略带蓝色的环境光，与深蓝色背景协调
-    const ambientLight = new THREE.AmbientLight(0x1a2a50, 0.5)
+    // 环境光 - 使用深空主题的环境光，与背景色协调
+    const ambientLight = new THREE.AmbientLight(0x1a1f3a, 0.4)
     this.scene.add(ambientLight)
 
-    // 主方向光 - 从右上角照射到时间轴和场景中心
-    const mainLight = new THREE.DirectionalLight(0xd0d8ff, 0.8) // 增强亮度
+    // 主方向光 - 使用冷色调，营造科技感
+    const mainLight = new THREE.DirectionalLight(0xb0d0ff, 0.9) // 冷白色，增强科技感
     mainLight.position.set(centerX + 500, 600, centerZ - 300) // 右上角位置
     mainLight.target.position.set(centerX, 0, centerZ) // 照射目标为场景中心
     mainLight.castShadow = true
@@ -332,8 +332,8 @@ class WorkflowScene {
     this.scene.add(mainLight)
     this.scene.add(mainLight.target) // 必须将target添加到场景中
 
-    // 专门照射时间轴的聚光灯
-    const timelineSpotlight = new THREE.SpotLight(0xa0c0ff, 0.6)
+    // 专门照射时间轴的聚光灯 - 使用青色调
+    const timelineSpotlight = new THREE.SpotLight(0x80d0ff, 0.7)
     timelineSpotlight.position.set(centerX, 400, DEFAULT_CONFIG.timelineDepth / 2)
     timelineSpotlight.target.position.set(centerX, 0, DEFAULT_CONFIG.timelineDepth / 2) // 直接对准时间轴
     timelineSpotlight.angle = Math.PI / 6 // 较窄的光束
@@ -345,14 +345,19 @@ class WorkflowScene {
     this.scene.add(timelineSpotlight)
     this.scene.add(timelineSpotlight.target)
     
-    // 添加柔和的补光，减少暗部过暗
-    const fillLight = new THREE.DirectionalLight(0x304070, 0.3) // 增强补光
+    // 添加柔和的补光，使用深空主题色调
+    const fillLight = new THREE.DirectionalLight(0x2d3561, 0.4) // 使用头部组件渐变色
     fillLight.position.set(centerX - 300, 200, centerZ + 500) // 从左前方照射
     fillLight.target.position.set(centerX, 0, centerZ) // 照射目标为场景中心
     fillLight.castShadow = false
     
     this.scene.add(fillLight)
     this.scene.add(fillLight.target)
+
+    // 添加科技感点光源 - 青色调
+    const techLight = new THREE.PointLight(0x00ffff, 0.6, 800)
+    techLight.position.set(centerX, 300, centerZ)
+    this.scene.add(techLight)
   }
 
   /**
@@ -503,12 +508,14 @@ class WorkflowScene {
     // 创建审核区域平面材质
     const reviewAreaMaterial = new THREE.MeshStandardMaterial({
       map: gridTexture,
-      color: 0x3a5787,
+      color: 0x1a1f3a, // 使用头部组件渐变中间色
       transparent: true,
-      opacity: 1.0,
+      opacity: 0.9,
       side: THREE.DoubleSide,
-      metalness: 0.3,
-      roughness: 0.7,
+      metalness: 0.4, // 增加金属感
+      roughness: 0.6, // 适中的粗糙度
+      emissive: 0x0a0e27, // 添加微弱的自发光，与背景色一致
+      emissiveIntensity: 0.1,
     })
 
     // 创建审核区域平面
@@ -537,7 +544,7 @@ class WorkflowScene {
    * 创建左侧分隔线
    */
   private createDividerLine(width: number, depth: number): void {
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x55aaff })
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff }) // 青色分隔线
 
     // 计算分隔线位置 - 在左侧区域的右边界
     const dividerX = DEFAULT_CONFIG.leftOffset
@@ -580,17 +587,19 @@ class WorkflowScene {
       const labelDiv = document.createElement('div')
       labelDiv.className = 'reviewer-label'
       labelDiv.style.cssText = `
-        background: rgba(50, 50, 80, 0.9);
-        color: white;
+        background: rgba(26, 31, 58, 0.95);
+        color: #00ffff;
         padding: 8px 12px;
-        border-radius: 4px;
+        border-radius: 6px;
         font-family: 'Microsoft YaHei', sans-serif;
         font-size: 14px;
         font-weight: bold;
         text-align: center;
-        border: 1px solid #666;
+        border: 1px solid #2d3561;
         min-width: 80px;
         pointer-events: none;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
       `
       labelDiv.textContent = reviewer.name
 
@@ -607,16 +616,18 @@ class WorkflowScene {
         const notUploadedDiv = document.createElement('div')
         notUploadedDiv.className = 'not-uploaded-label'
         notUploadedDiv.style.cssText = `
-          background: rgba(80, 50, 50, 0.9);
-          color: #ffcccc;
+          background: rgba(45, 20, 20, 0.95);
+          color: #ff6464;
           padding: 8px 12px;
-          border-radius: 4px;
+          border-radius: 6px;
           font-family: 'Microsoft YaHei', sans-serif;
           font-size: 14px;
           text-align: center;
-          border: 1px solid #996666;
+          border: 1px solid #663333;
           min-width: 80px;
           pointer-events: none;
+          box-shadow: 0 0 10px rgba(255, 100, 100, 0.3);
+          text-shadow: 0 0 5px rgba(255, 100, 100, 0.5);
         `
         notUploadedDiv.textContent = '未上传文件'
 
@@ -652,10 +663,10 @@ class WorkflowScene {
     // 缩放绘图上下文以匹配像素比
     ctx.scale(pixelRatio, pixelRatio)
 
-    // 绘制背景 - 深蓝色渐变背景
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height)
-    gradient.addColorStop(0, '#2a3551')
-    gradient.addColorStop(1, '#1e2a45')
+    // 绘制背景 - 深空主题渐变背景
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight)
+    gradient.addColorStop(0, '#1a1f3a') // 头部组件渐变中间色
+    gradient.addColorStop(1, '#0a0e27') // 深空背景色
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, totalWidth, canvasHeight)
 
@@ -970,15 +981,16 @@ class WorkflowScene {
       return new THREE.Texture()
     }
 
-    // 蓝色渐变背景
+    // 深空主题渐变背景
     const gradient = gridCtx.createLinearGradient(0, 0, 0, gridSize)
-    gradient.addColorStop(0, '#2c4470')
-    gradient.addColorStop(1, '#1e3055')
+    gradient.addColorStop(0, '#1a1f3a') // 头部组件渐变中间色
+    gradient.addColorStop(0.5, '#2d3561') // 头部组件渐变色
+    gradient.addColorStop(1, '#0a0e27') // 深空背景色
     gridCtx.fillStyle = gradient
     gridCtx.fillRect(0, 0, gridSize, gridSize)
 
-    // 绘制网格线
-    gridCtx.strokeStyle = 'rgba(83, 122, 188, 0.3)'
+    // 绘制网格线 - 使用青色调，与主题色协调
+    gridCtx.strokeStyle = 'rgba(0, 255, 255, 0.15)' // 青色网格线，低透明度
     gridCtx.lineWidth = 1
 
     // 水平网格线
@@ -993,6 +1005,26 @@ class WorkflowScene {
     // 垂直网格线
     const cellWidth = gridSize / 10
     for (let x = 0; x <= gridSize; x += cellWidth) {
+      gridCtx.beginPath()
+      gridCtx.moveTo(x, 0)
+      gridCtx.lineTo(x, gridSize)
+      gridCtx.stroke()
+    }
+
+    // 添加主要网格线 - 更亮的青色
+    gridCtx.strokeStyle = 'rgba(0, 255, 255, 0.25)'
+    gridCtx.lineWidth = 2
+
+    // 主要水平线（每5个单元格）
+    for (let y = 0; y <= gridSize; y += cellHeight * 5) {
+      gridCtx.beginPath()
+      gridCtx.moveTo(0, y)
+      gridCtx.lineTo(gridSize, y)
+      gridCtx.stroke()
+    }
+
+    // 主要垂直线（每5个单元格）
+    for (let x = 0; x <= gridSize; x += cellWidth * 5) {
       gridCtx.beginPath()
       gridCtx.moveTo(x, 0)
       gridCtx.lineTo(x, gridSize)
@@ -1192,24 +1224,30 @@ class WorkflowScene {
       return new THREE.Texture();
     }
     
-    // 创建渐变背景 - 使用0x14204e作为基础颜色
+    // 创建深空主题渐变背景
     const gradient = ctx.createLinearGradient(0, 0, 0, size);
-    gradient.addColorStop(0, '#14204e'); // 深蓝色顶部
-    gradient.addColorStop(0.5, '#1a2a5c'); // 中间过渡色（稍微亮一点）
-    gradient.addColorStop(1, '#0e1838'); // 底部（稍微暗一点）
+    gradient.addColorStop(0, '#0a0e27'); // 深空背景色
+    gradient.addColorStop(0.3, '#1a1f3a'); // 头部组件渐变中间色
+    gradient.addColorStop(0.7, '#2d3561'); // 头部组件渐变色
+    gradient.addColorStop(1, '#0a0e27'); // 深空背景色
     
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, size, size);
     
-    // 添加一些亮点模拟光源，但亮度降低以匹配深蓝色主题
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    // 添加青色光源点，增强科技感
+    ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
     ctx.beginPath();
-    ctx.arc(size * 0.8, size * 0.2, size * 0.1, 0, Math.PI * 2);
+    ctx.arc(size * 0.8, size * 0.2, size * 0.08, 0, Math.PI * 2);
     ctx.fill();
     
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fillStyle = 'rgba(0, 255, 128, 0.4)';
     ctx.beginPath();
-    ctx.arc(size * 0.1, size * 0.1, size * 0.05, 0, Math.PI * 2);
+    ctx.arc(size * 0.2, size * 0.7, size * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.beginPath();
+    ctx.arc(size * 0.1, size * 0.1, size * 0.04, 0, Math.PI * 2);
     ctx.fill();
     
     // 创建纹理
@@ -1250,6 +1288,142 @@ class WorkflowScene {
 
     // 更新控制器
     this.controls.update()
+  }
+
+  private drawReviewerInfo(ctx: CanvasRenderingContext2D, width: number, depth: number): void {
+    // 使用更大的字体和更好的渲染设置
+    ctx.font = 'bold 20px Microsoft YaHei'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    this.reviewers.forEach((reviewer, index) => {
+      const x = DEFAULT_CONFIG.reviewerColumnWidth / 2
+      const y = (index + 0.5) * DEFAULT_CONFIG.reviewRowHeight
+
+      // 绘制更大的背景卡片
+      const cardWidth = DEFAULT_CONFIG.reviewerColumnWidth - 10
+      const cardHeight = 50
+      const cardX = x - cardWidth / 2
+      const cardY = y - cardHeight / 2
+
+      // 更明显的卡片背景
+      const cardGradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardHeight)
+      cardGradient.addColorStop(0, 'rgba(0, 255, 255, 0.3)')
+      cardGradient.addColorStop(0.5, 'rgba(0, 255, 255, 0.2)')
+      cardGradient.addColorStop(1, 'rgba(0, 255, 255, 0.1)')
+      ctx.fillStyle = cardGradient
+      ctx.fillRect(cardX, cardY, cardWidth, cardHeight)
+
+      // 更明显的卡片边框
+      ctx.strokeStyle = '#00ffff'
+      ctx.lineWidth = 2
+      ctx.strokeRect(cardX, cardY, cardWidth, cardHeight)
+
+      // 添加内部高光效果
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+      ctx.lineWidth = 1
+      ctx.strokeRect(cardX + 1, cardY + 1, cardWidth - 2, cardHeight - 2)
+
+      // 绘制更明显的文字阴影
+      ctx.fillStyle = 'rgba(0, 0, 0, 1.0)'
+      ctx.fillText(reviewer.name, x + 2, y + 2)
+
+      // 绘制主文字 - 使用更亮的颜色
+      ctx.fillStyle = '#ffffff'
+      ctx.fillText(reviewer.name, x, y)
+
+      // 添加文字发光效果
+      ctx.shadowColor = '#00ffff'
+      ctx.shadowBlur = 8
+      ctx.fillStyle = '#00ffff'
+      ctx.fillText(reviewer.name, x, y)
+      
+      // 重置阴影
+      ctx.shadowBlur = 0
+
+      // 添加更大的状态指示器
+      ctx.fillStyle = '#00ff80'
+      ctx.beginPath()
+      ctx.arc(cardX + 20, y, 5, 0, Math.PI * 2)
+      ctx.fill()
+      
+      // 指示器边框
+      ctx.strokeStyle = '#ffffff'
+      ctx.lineWidth = 1
+      ctx.stroke()
+    })
+  }
+
+  private drawFileStatusInfo(ctx: CanvasRenderingContext2D, width: number, depth: number): void {
+    // 使用更大的字体
+    ctx.font = 'bold 18px Microsoft YaHei'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    // 在文件上传区域显示状态信息
+    const fileAreaX = DEFAULT_CONFIG.reviewerColumnWidth + DEFAULT_CONFIG.fileUploadColumnWidth / 2
+    const fileAreaY = depth / 2
+
+    // 绘制文件状态区域标题
+    const cardWidth = DEFAULT_CONFIG.fileUploadColumnWidth - 20
+    const cardHeight = 60
+    const cardX = fileAreaX - cardWidth / 2
+    const cardY = fileAreaY - cardHeight / 2
+
+    // 绘制卡片背景
+    const cardGradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardHeight)
+    cardGradient.addColorStop(0, 'rgba(255, 51, 102, 0.3)')
+    cardGradient.addColorStop(0.5, 'rgba(255, 51, 102, 0.2)')
+    cardGradient.addColorStop(1, 'rgba(255, 51, 102, 0.1)')
+    ctx.fillStyle = cardGradient
+    ctx.fillRect(cardX, cardY, cardWidth, cardHeight)
+
+    // 绘制卡片边框
+    ctx.strokeStyle = '#ff3366'
+    ctx.lineWidth = 2
+    ctx.strokeRect(cardX, cardY, cardWidth, cardHeight)
+
+    // 添加内部高光
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+    ctx.lineWidth = 1
+    ctx.strokeRect(cardX + 1, cardY + 1, cardWidth - 2, cardHeight - 2)
+
+    // 绘制文字阴影
+    ctx.fillStyle = 'rgba(0, 0, 0, 1.0)'
+    ctx.fillText('文件状态', fileAreaX + 2, fileAreaY + 2)
+
+    // 绘制主文字
+    ctx.fillStyle = '#ffffff'
+    ctx.fillText('文件状态', fileAreaX, fileAreaY)
+
+    // 添加文字发光效果
+    ctx.shadowColor = '#ff3366'
+    ctx.shadowBlur = 6
+    ctx.fillStyle = '#ff3366'
+    ctx.fillText('文件状态', fileAreaX, fileAreaY)
+    
+    // 重置阴影
+    ctx.shadowBlur = 0
+
+    // 添加状态图标 - 警告图标
+    const iconSize = 8
+    const iconX = cardX + cardWidth - 15
+    const iconY = cardY + 15
+
+    // 绘制警告三角形
+    ctx.strokeStyle = '#ff3366'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(iconX, iconY - iconSize)
+    ctx.lineTo(iconX - iconSize, iconY + iconSize)
+    ctx.lineTo(iconX + iconSize, iconY + iconSize)
+    ctx.closePath()
+    ctx.stroke()
+
+    // 绘制感叹号
+    ctx.fillStyle = '#ff3366'
+    ctx.fillRect(iconX - 1, iconY - 3, 2, 4)
+    ctx.fillRect(iconX - 1, iconY + 3, 2, 2)
   }
 }
 /**

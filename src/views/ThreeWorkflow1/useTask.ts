@@ -5,7 +5,7 @@ export const useTask = () => {
   const taskDialogVisible = ref(false)
   const taskDialogType = ref<'add' | 'view'>('add')
   const formData = ref({})
-  const tasksList = ref([])
+  const tasksList = ref<any[]>([])
 
   // 是否显示任务列表
   const showTaskList = ref(false)
@@ -37,6 +37,10 @@ export const useTask = () => {
     showTaskList.value = !showTaskList.value
   }
 
+const submitForm = ()=>{
+  
+}
+
   return {
     showTaskList,
     taskDialogVisible,
@@ -49,5 +53,6 @@ export const useTask = () => {
     handleDialogClosed,
     handleViewTask,
     handleDeleteTask,
+    submitForm,
   }
 }

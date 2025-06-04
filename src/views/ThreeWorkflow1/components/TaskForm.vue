@@ -3,7 +3,7 @@
     <el-form
       :model="taskForm"
       label-width="100px"
-      :disabled="dialogType === 'view'"
+      :disabled="mode === 'view'"
       class="task-form-container"
     >
       <el-form-item label="任务名称" prop="name" required>
@@ -70,7 +70,7 @@
         <el-input
           v-model="taskForm.description"
           type="textarea"
-          rows="3"
+          :rows="3"
           placeholder="请输入描述内容"
           class="task-description"
         />
@@ -85,9 +85,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, defineProps, defineEmits, watch, onBeforeMount, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { useInitFetch } from '../useInitFetch'
-import { createTask, updateTask, deleteTask as apiDeleteTask } from '@/api/task'
+
 
 // 定义组件属性
 const props = defineProps({
@@ -101,6 +99,10 @@ const props = defineProps({
   mapOptions: {
     type: Object,
     default: () => ({}),
+  },
+  mode: {
+    type: String,
+    default: 'add',
   },
 })
 
@@ -141,48 +143,28 @@ const reviewers = computed(() => {
 })
 
 // 选择审核人员
-const selectReviewer = (index: number) => {
-  if (dialogType.value === 'view') return
+// const selectReviewer = (index: number) => {
+//   if (dialogType.value === 'view') return
 
-  // 弹出选择框逻辑
-  ElMessageBox.prompt('请输入审核人名称', '选择审核人', {
-    confirmButtonText: '确认',
-    cancelButtonText: '取消',
-    inputValue: taskForm.reviewers[index]?.name || '',
-    inputPlaceholder: '请输入审核人姓名',
-  })
-    .then(({ value }) => {
-      if (!taskForm.reviewers[index]) {
-        taskForm.reviewers[index] = { level: reviewLevels.value[index].name, name: '' }
-      }
-      taskForm.reviewers[index].name = value
-    })
-    .catch(() => {
-      // 取消操作
-    })
-}
+//   // 弹出选择框逻辑
+//   ElMessageBox.prompt('请输入审核人名称', '选择审核人', {
+//     confirmButtonText: '确认',
+//     cancelButtonText: '取消',
+//     inputValue: taskForm.reviewers[index]?.name || '',
+//     inputPlaceholder: '请输入审核人姓名',
+//   })
+//     .then(({ value }) => {
+//       if (!taskForm.reviewers[index]) {
+//         taskForm.reviewers[index] = { level: reviewLevels.value[index].name, name: '' }
+//       }
+//       taskForm.reviewers[index].name = value
+//     })
+//     .catch(() => {
+//       // 取消操作
+//     })
+// }
 
-// 提交表单
-const submitForm = async () => {
-  try {
-    if (dialogType.value === 'add') {
-      // 调用新增任务的API
-      await createTask(taskForm)
-      ElMessage.success('任务新增成功')
-      emit('task-added')
-    } else if (dialogType.value === 'delete' && props.taskDetail) {
-      // 调用删除任务的API
-      await apiDeleteTask(props.taskDetail.id)
-      ElMessage.success('任务删除成功')
-      emit('task-deleted', props.taskDetail.id)
-    }
 
-    close()
-  } catch (error) {
-    console.error('任务操作失败:', error)
-    ElMessage.error('操作失败，请稍后重试')
-  }
-}
 </script>
 
 <style scoped>

@@ -16,38 +16,38 @@ export const FONT_CELL = 'bold 16px Microsoft YaHei' // 单元格字体
 
 // 颜色配置
 export const COLORS: ColorConfig = {
-  background: 0x14204e, // 深蓝色背景
-  timelineBar: 0x1e2a5c, // 稍微亮一点的深蓝色，增强时间轴的可见度
+  background: 0x0a0e27, // 深空色背景，与头部组件渐变起始色一致
+  timelineBar: 0x1a1f3a, // 时间轴颜色，使用头部组件渐变中间色
   timelineText: '#ffffff', // 时间轴文字颜色 - 纯白色
-  timelineShadow: 'rgba(0, 0, 0, 0.5)', // 时间轴文字阴影颜色
-  timelineBorder: '#4a5a8a', // 时间轴边框颜色
-  timelineHeaderBg: 'rgba(50, 50, 80, 0.9)', // 时间轴标题背景色
+  timelineShadow: 'rgba(0, 0, 0, 0.8)', // 时间轴文字阴影颜色，增强对比度
+  timelineBorder: '#2d3561', // 时间轴边框颜色，使用头部组件渐变色
+  timelineHeaderBg: 'rgba(26, 31, 58, 0.95)', // 时间轴标题背景色，与时间轴颜色协调
   timelineCellBg: {
-    interval: 'rgba(60, 70, 100, 0.5)', // 间隔单元格背景色
-    even: 'rgba(45, 55, 85, 0.5)',      // 偶数单元格背景色
-    odd: 'rgba(35, 45, 75, 0.5)',       // 奇数单元格背景色
+    interval: 'rgba(45, 53, 97, 0.6)', // 间隔单元格背景色，深空主题
+    even: 'rgba(26, 31, 58, 0.6)',      // 偶数单元格背景色
+    odd: 'rgba(16, 20, 42, 0.6)',       // 奇数单元格背景色，更深
   },
   nodeColors: {
     main: {
-      pass: 0x4caf50, // 绿色
-      reject: 0xf44336, // 红色
-      pending: 0x9e9e9e, // 灰色
+      pass: 0x00ff80, // 青绿色，与头部组件呼应
+      reject: 0xff3366, // 红色
+      pending: 0x6688cc, // 蓝灰色，与主题协调
     },
     retry: {
-      pass: 0xffc107, // 黄色
-      reject: 0xf44336, // 红色
+      pass: 0x00ffff, // 青色，科技感
+      reject: 0xff6464, // 亮红色
       pending: 0x9e9e9e, // 灰色
     },
   },
   // 动画颜色
   animation: {
-    teleportNode: 0x9c27b0, // 紫色瞬移节点
+    teleportNode: 0x00ffff, // 青色瞬移节点，与头部主题色一致
     teleportEdge: 0xff00ff, // 亮紫色边缘
-    teleportEmissive: 0xd500f9, // 亮紫色发光
-    electricArc: 0x00aaff, // 电弧颜色
-    electricParticle: 0x00ffff, // 电弧粒子颜色
-    highlightRing: 0x9c27b0, // 高亮环颜色
-    highlightSphere: 0x9c27b0, // 高亮球颜色
+    teleportEmissive: 0x00ffff, // 青色发光
+    electricArc: 0x00ffff, // 电弧颜色，青色
+    electricParticle: 0x00ff80, // 电弧粒子颜色，青绿色
+    highlightRing: 0x00ffff, // 高亮环颜色，青色
+    highlightSphere: 0x00ffff, // 高亮球颜色，青色
   }
 }
 

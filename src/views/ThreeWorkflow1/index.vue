@@ -1,83 +1,20 @@
 <template>
   <div class="workflow-container">
-    <!-- 添加项目头部 -->
-    <ProjectHeader />
-
-    <!-- 项目任务标题和管理区域 -->
-    <div class="project-task-header">
-      <div class="project-task-info">
-        <h1 class="project-title">任丘市2025年农村公路建设工程施工第一标段 </h1>
-        <div class="project-info-container">
-          <div class="task-info-area">
-            <div class="task-name-display">{{ currentTask?.name || '未选择任务' }}</div>
-            <div class="task-actions">
-              <button class="task-action-btn add-btn" @click="handleAddTask">
-                <svg viewBox="0 0 24 24" class="action-icon">
-                  <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-                </svg>
-                <span>新增</span>
-              </button>
-              <button
-                class="task-action-btn view-btn"
-                @click="handleViewTask"
-                :disabled="!currentTask"
-              >
-                <svg viewBox="0 0 24 24" class="action-icon">
-                  <path
-                    d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"
-                  />
-                </svg>
-                <span>查看</span>
-              </button>
-              <button
-                class="task-action-btn delete-btn"
-                @click="handleDeleteTask"
-                :disabled="!currentTask"
-              >
-                <svg viewBox="0 0 24 24" class="action-icon">
-                  <path
-                    d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"
-                  />
-                </svg>
-                <span>删除</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 任务选择器 -->
-      <div class="task-selector-container">
-        <div class="task-selector">
-          <div class="current-task" @click="toggleTaskList">
-            <span class="task-name">{{ currentTask?.name || '选择任务' }}</span>
-            <span class="task-arrow">
-              <svg viewBox="0 0 24 24" class="arrow-icon">
-                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
-              </svg>
-            </span>
-          </div>
-          <div class="task-dropdown" v-if="showTaskList">
-            <div
-              v-for="(task, index) in tasksList"
-              :key="index"
-              class="task-item"
-              :class="{ active: currentTask?.id === task.id }"
-              @click="selectTask(task)"
-            >
-              {{ task.name }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 添加控制按钮 -->
-    <div class="workflow-side-controls-panel">
-      <button class="workflow-control-button" @click="toggleRotationLimits">
-        {{ isRotationLimited ? '开启自由视角' : '锁定视角' }}
-      </button>
-    </div>
+    <!-- 使用新的头部组件 -->
+    <WorkflowHeader
+      :project-title="'任丘市2025年农村公路建设工程施工第一标段'"
+      :current-task="currentTask"
+      :tasks-list="tasksList"
+      :show-task-list="showTaskList"
+      @add-task="handleAddTask"
+      @view-task="handleViewTask"
+      @delete-task="handleDeleteTask"
+      @select-task="selectTask"
+      @toggle-task-list="toggleTaskList"
+      @user-info="handleUserInfo"
+      @logout="handleLogout"
+      @toggle-rotation="toggleRotationLimits"
+    />
 
     <!-- 信息展示区域 -->
     <div class="info-panel">
@@ -133,7 +70,6 @@
             v-if="taskDialogType !== 'view'"
             type="primary"
             @click="submitForm"
-            :type="taskDialogType === 'delete' ? 'danger' : 'primary'"
             class="confirm-btn"
           >
             {{ taskDialogType === 'add' ? '保存' : '确认' }}
@@ -151,6 +87,7 @@ import ProjectHeader from '@/components/ProjectHeader.vue'
 import { getWorkflowData } from '@/api/workflow' // 导入API方法、
 import { ElMessage } from 'element-plus'
 import TaskForm from './components/TaskForm.vue'
+import WorkflowHeader from './components/WorkflowHeader.vue'
 import { useTask } from './useTask'
 import { useInitFetch } from './useInitFetch'
 
@@ -160,9 +97,9 @@ const cssContainer = ref<HTMLElement | null>(null)
 
 // 工作流数据
 const workflowData = reactive({
-  reviewers: [],
-  timePoints: [],
-  workflowNodes: [],
+  reviewers: [] as any[],
+  timePoints: [] as any[],
+  workflowNodes: [] as any[],
 })
 
 // 数据状态
@@ -199,6 +136,7 @@ const {
   handleDialogClosed,
   handleViewTask,
   handleDeleteTask,
+  submitForm,
 } = useTask()
 
 const { taskBaseDocMap, initialized, initAllData } = useInitFetch()
@@ -212,6 +150,17 @@ const isRotationLimited = ref(true)
 // 切换旋转限制
 function toggleRotationLimits() {
   isRotationLimited.value = workflow.toggleRotationLimits()
+}
+
+// 处理用户信息
+function handleUserInfo() {
+  ElMessage.info('个人信息功能开发中...')
+}
+
+// 处理退出登录
+function handleLogout() {
+  ElMessage.warning('确认退出登录？')
+  // 这里可以添加实际的退出登录逻辑
 }
 
 // 加载工作流数据
@@ -284,106 +233,6 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-/* 项目任务标题和管理区域 */
-.project-task-header {
-  padding: 12px 20px;
-  background: linear-gradient(90deg, #0a1535 0%, #152253 50%, #0a1535 100%);
-  border-bottom: 1px solid rgba(100, 150, 255, 0.3);
-  color: #fff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.project-task-info {
-  flex: 1;
-}
-
-.project-title {
-  font-size: 18px;
-  margin: 0 0 5px 0;
-  color: #00ccff;
-  font-weight: 600;
-  text-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
-}
-
-.project-info-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.project-name {
-  font-size: 14px;
-  color: #ffffff;
-  margin-bottom: 5px;
-}
-
-.task-info-area {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.task-name-display {
-  font-size: 16px;
-  font-weight: 500;
-  color: #00ffcc;
-  text-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
-}
-
-.task-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.task-action-btn {
-  display: flex;
-  align-items: center;
-  background: rgba(30, 40, 100, 0.5);
-  border: 1px solid rgba(100, 150, 255, 0.3);
-  border-radius: 4px;
-  padding: 4px 10px;
-  color: #ffffff;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.task-action-btn:hover {
-  background: rgba(40, 60, 120, 0.7);
-  border-color: rgba(100, 150, 255, 0.5);
-  box-shadow: 0 0 10px rgba(100, 150, 255, 0.2);
-}
-
-.task-action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.action-icon {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
-  margin-right: 5px;
-}
-
-.add-btn {
-  color: #00ffcc;
-}
-
-.view-btn {
-  color: #00ccff;
-}
-
-.delete-btn {
-  color: #ff6b6b;
-}
-
-.task-selector-container {
-  min-width: 250px;
-  margin-left: 20px;
-}
-
 /* 加载中样式 */
 .loading-container {
   position: absolute;
@@ -429,7 +278,10 @@ onUnmounted(() => {
 
 /* 信息展示区域 */
 .info-panel {
-  position: relative;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   width: 100%;
   height: 40px;
   display: flex;
@@ -438,7 +290,7 @@ onUnmounted(() => {
   background: linear-gradient(90deg, #0a1535 0%, #152253 50%, #0a1535 100%);
   border-top: 1px solid rgba(100, 150, 255, 0.3);
   border-bottom: 1px solid rgba(100, 150, 255, 0.3);
-  z-index: 90;
+  z-index: 190;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
@@ -511,82 +363,6 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* 任务选择器 */
-.task-selector {
-  position: relative;
-  width: 100%;
-  z-index: 20;
-}
-
-.current-task {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(30, 40, 100, 0.5);
-  border: 1px solid rgba(100, 150, 255, 0.3);
-  border-radius: 4px;
-  padding: 5px 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.current-task:hover {
-  background: rgba(40, 50, 120, 0.5);
-  border-color: rgba(100, 150, 255, 0.5);
-  box-shadow: 0 0 10px rgba(100, 150, 255, 0.2);
-}
-
-.task-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.arrow-icon {
-  width: 16px;
-  height: 16px;
-  fill: #00ccff;
-  transition: transform 0.3s ease;
-  flex-shrink: 0;
-  margin-left: 5px;
-}
-
-.task-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  background: rgba(20, 30, 80, 0.95);
-  border: 1px solid rgba(100, 150, 255, 0.3);
-  border-radius: 4px;
-  margin-top: 5px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 30;
-  animation: fadeIn 0.2s ease-out;
-}
-
-.task-item {
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid rgba(100, 150, 255, 0.1);
-  font-size: 13px;
-}
-
-.task-item:hover {
-  background: rgba(100, 150, 255, 0.2);
-}
-
-.task-item.active {
-  background: rgba(100, 150, 255, 0.3);
-  color: #00ccff;
-}
-
 /* 场景容器 */
 .three-container {
   flex: 1;
@@ -602,57 +378,8 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-/* 控制面板样式 - 使用唯一类名 */
-.workflow-side-controls-panel {
-  position: absolute;
-  top: 200px; /* 使用固定的精确数值 */
-  left: 30px; /* 使用固定的精确数值 */
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.workflow-control-button {
-  background: rgba(40, 60, 100, 0.7);
-  color: white;
-  border: 1px solid rgba(100, 150, 255, 0.5);
-  border-radius: 4px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-family: 'Microsoft YaHei', sans-serif;
-  font-size: 14px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-  width: 100px;
-  text-align: center;
-}
-
-.workflow-control-button:hover {
-  background: rgba(60, 90, 150, 0.8);
-  border-color: rgba(120, 180, 255, 0.8);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .project-task-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .task-selector-container {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .task-info-area {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
   .info-panel {
     height: auto;
     flex-direction: column;
