@@ -159,6 +159,10 @@ export interface ColorConfig {
 
 // 节点状态
 export type NodeStatus = 'pending' | 'pass' | 'reject' | 'end'
+
+// 节点类型
+export type NodeType = 'reviewNode' | 'reviewStatus' | 'document' | 'milestone'
+
 /**
  * 工作流节点数据结构
  * 用于表示工作流中的各个节点及其关系
@@ -169,6 +173,15 @@ export interface WorkflowNode {
    * 用于在系统中唯一标识一个节点，通常格式为"nodeX"，其中X为数字
    */
   id: string
+
+  /**
+   * 节点类型
+   * reviewNode: 审核节点 - 可以进行审核操作
+   * reviewStatus: 审核状态 - 显示审核结果和状态信息
+   * document: 文档节点 - 表示文档或文件
+   * milestone: 里程碑节点 - 表示重要的时间节点
+   */
+  type: NodeType
 
   /**
    * 审核人ID
@@ -220,4 +233,35 @@ export interface WorkflowNode {
    * 用于构建节点之间的连接关系和流程走向
    */
   to?: string
+
+  /**
+   * 审核相关数据（仅当type为reviewNode时有效）
+   */
+  reviewData?: {
+    files?: Array<{
+      name: string
+      url: string
+      size?: string
+      uploadTime?: string
+      type?: string
+    }>
+    comments?: Array<{
+      author: string
+      content: string
+      time: string
+      type?: 'approve' | 'reject' | 'comment'
+    }>
+    deadline?: string // 审核截止时间
+    priority?: 'low' | 'medium' | 'high' // 优先级
+  }
+
+  /**
+   * 状态详情数据（仅当type为reviewStatus时有效）
+   */
+  statusData?: {
+    duration?: string // 耗时
+    result?: string // 审核结果
+    reason?: string // 原因或备注
+    timestamp?: string // 时间戳
+  }
 }

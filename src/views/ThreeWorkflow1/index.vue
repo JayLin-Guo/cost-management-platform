@@ -81,6 +81,12 @@
         </div>
       </template>
     </LargeScreenDialog>
+
+    <!-- 状态详情弹窗 -->
+    <StatusDetailsDialog
+      v-model:visible="showStatusDialog"
+      :node-data="currentStatusData"
+    />
   </div>
 </template>
 
@@ -95,6 +101,7 @@ import WorkflowHeader from './components/WorkflowHeader.vue'
 import { useTask } from './useTask'
 import { useInitFetch } from './useInitFetch'
 import { LargeScreenDialog } from '@/components/LargeScreen'
+import StatusDetailsDialog from './components/StatusDetailsDialog.vue'
 
 // DOM引用
 const threeContainer = ref<HTMLElement | null>(null)
@@ -151,6 +158,18 @@ const workflow = useThreeWorkflow1()
 
 // 旋转限制状态
 const isRotationLimited = ref(true)
+
+// 弹窗状态
+const reviewNodeDialogVisible = ref(false)
+const showStatusDialog = ref(false)
+const currentStatusData = ref<any>(null)
+
+// 审核操作表单数据
+const reviewFormData = reactive({
+  comment: '',
+  status: '',
+  files: [] as any[]
+})
 
 // 切换旋转限制
 function toggleRotationLimits() {
@@ -221,10 +240,133 @@ onBeforeMount(async () => {
   }
 })
 
+// 组件挂载后添加事件监听器
+onMounted(() => {
+  // 监听审核节点点击事件
+  document.addEventListener('workflow-review-node-click', handleReviewNodeClick)
+  // 监听状态节点点击事件
+  document.addEventListener('workflow-status-node-click', handleStatusNodeClick)
+  // 监听状态标签点击事件
+  document.addEventListener('workflow-status-label-click', handleStatusLabelClick)
+})
+
 // 组件卸载时清理资源
 onUnmounted(() => {
   workflow.cleanup()
+  // 移除事件监听器
+  document.removeEventListener('workflow-review-node-click', handleReviewNodeClick)
+  document.removeEventListener('workflow-status-node-click', handleStatusNodeClick)
+  document.removeEventListener('workflow-status-label-click', handleStatusLabelClick)
 })
+
+// 处理审核节点点击
+function handleReviewNodeClick(event: any) {
+  const { nodeData, userData } = event.detail
+  console.log('审核节点被点击:', nodeData)
+  console.log('审核节点被点击userData:', userData)
+  
+  currentStatusData.value = nodeData
+  reviewFormData.comment = ''
+  reviewFormData.status = ''
+  reviewFormData.files = nodeData.reviewData?.files || []
+    // reviewNodeDialogVisible.value = true
+  window.open('https://www.baidu.com', '_blank')
+}
+
+// 处理状态节点点击
+function handleStatusNodeClick(event: any) {
+  console.log('状态节点点击事件:', event.detail)
+  
+  const { nodeData, fromNodeData, toNodeData, connectionInfo } = event.detail
+  
+  console.log('节点数据:', nodeData)
+  console.log('前一个节点数据:', fromNodeData)
+  console.log('后一个节点数据:', toNodeData)
+  console.log('连接信息:', connectionInfo)
+  
+  // 准备状态对话框数据
+  currentStatusData.value = {
+    ...nodeData,
+    fromNodeData,
+    toNodeData,
+    connectionInfo
+  }
+  
+  showStatusDialog.value = true
+}
+
+// 处理状态标签点击
+function handleStatusLabelClick(event: any) {
+  const { labelData, nodeData, fromNodeData, toNodeData, connectionInfo } = event.detail
+  
+  console.log('状态标签被点击 - 详细信息:', {
+    标签数据: labelData,
+    当前节点数据: nodeData,
+    上一个节点数据: fromNodeData,
+    下一个节点数据: toNodeData,
+    连接信息: connectionInfo
+  })
+  
+  // 构建扩展的节点数据，包含上一个和下一个节点信息
+  const extendedNodeData = {
+    ...nodeData,
+    connectionDetails: {
+      previousNode: fromNodeData,
+      nextNode: toNodeData,
+      connectionStatus: connectionInfo?.status,
+      connectionFrom: connectionInfo?.from,
+      connectionTo: connectionInfo?.to
+    }
+  }
+  
+  currentStatusData.value = extendedNodeData
+  showStatusDialog.value = true
+}
+
+// 提交审核
+function submitReview(action: 'approve' | 'reject') {
+  if (!currentStatusData.value) return
+  
+  const nodeId = currentStatusData.value.id
+  const comment = reviewFormData.comment
+  
+  console.log(`${action === 'approve' ? '通过' : '驳回'}审核:`, {
+    nodeId,
+    comment,
+    action
+  })
+  
+  // 这里可以调用API提交审核结果
+  ElMessage.success(`${action === 'approve' ? '审核通过' : '审核驳回'}操作已提交`)
+  
+  // 这里可以调用API更新审核状态
+  // await updateReviewStatus(nodeId, action, comment)
+  // await loadWorkflowData(currentTask.value.id.toString())
+}
+
+// 关闭弹窗
+function closeDialogs() {
+  reviewNodeDialogVisible.value = false
+  showStatusDialog.value = false
+  currentStatusData.value = null
+}
+
+// 获取状态文本
+function getStatusText(status: string) {
+  const statusMap: Record<string, string> = {
+    'pending': '待处理',
+    'in-progress': '进行中',
+    'completed': '已完成',
+    'approved': '已通过',
+    'rejected': '已驳回',
+    'cancelled': '已取消',
+    'waiting': '等待中',
+    'reviewing': '审核中',
+    'failed': '失败',
+    'success': '成功'
+  }
+  return statusMap[status] || status
+}
 </script>
 
 <style scoped>
@@ -480,5 +622,353 @@ onUnmounted(() => {
 .large-screen-button.secondary:hover .button-glow {
   opacity: 1;
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+/* 弹窗内容样式 */
+.review-dialog-content,
+.status-dialog-content {
+  padding: 20px;
+  color: #ffffff;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #00ccff;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 200, 255, 0.3);
+  text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(0, 50, 100, 0.2);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 200, 255, 0.2);
+}
+
+.info-item .label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 8px;
+  min-width: 80px;
+}
+
+.info-item .value {
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.info-item .value.status {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.info-item .value.status.pending {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.info-item .value.status.in-progress,
+.info-item .value.status.reviewing {
+  background: rgba(0, 123, 255, 0.2);
+  color: #007bff;
+  border: 1px solid rgba(0, 123, 255, 0.3);
+}
+
+.info-item .value.status.completed,
+.info-item .value.status.approved,
+.info-item .value.status.success {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.info-item .value.status.rejected,
+.info-item .value.status.failed {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.info-item .value.status.cancelled {
+  background: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+  border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.comment-section {
+  margin-bottom: 20px;
+}
+
+.comment-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  background: rgba(0, 50, 100, 0.2);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 14px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.comment-textarea:focus {
+  border-color: #00ccff;
+  box-shadow: 0 0 10px rgba(0, 200, 255, 0.3);
+}
+
+.comment-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.files-section {
+  margin-bottom: 20px;
+}
+
+.files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(0, 50, 100, 0.2);
+  border: 1px solid rgba(0, 200, 255, 0.2);
+  border-radius: 6px;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.file-name {
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.file-size {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.download-btn {
+  padding: 4px 12px;
+  background: rgba(0, 200, 255, 0.2);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  border-radius: 4px;
+  color: #00ccff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.download-btn:hover {
+  background: rgba(0, 200, 255, 0.3);
+  box-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
+}
+
+.history-section {
+  margin-top: 20px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.history-item {
+  padding: 12px;
+  background: rgba(0, 50, 100, 0.2);
+  border: 1px solid rgba(0, 200, 255, 0.2);
+  border-radius: 6px;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.history-header .author {
+  font-size: 13px;
+  color: #00ccff;
+  font-weight: 500;
+}
+
+.history-header .time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.history-header .comment-type {
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.history-header .comment-type.approve {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.history-header .comment-type.reject {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.history-content {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+}
+
+/* 滚动条样式 */
+.history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: rgba(0, 50, 100, 0.2);
+  border-radius: 3px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 200, 255, 0.3);
+  border-radius: 3px;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 200, 255, 0.5);
+}
+
+/* 连接关系样式 */
+.connection-info-section {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.connection-flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: rgba(26, 31, 58, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 204, 255, 0.3);
+}
+
+.connection-node {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: rgba(0, 204, 255, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 204, 255, 0.3);
+}
+
+.node-header {
+  font-size: 12px;
+  font-weight: bold;
+  color: #00ccff;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.node-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.node-id {
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+}
+
+.node-title {
+  font-size: 11px;
+  color: #cccccc;
+  text-align: center;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.node-status {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.connection-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 16px;
+  min-width: 80px;
+}
+
+.arrow-line {
+  width: 40px;
+  height: 2px;
+  background: #00ccff;
+  margin-bottom: 4px;
+}
+
+.arrow-head {
+  font-size: 16px;
+  color: #00ccff;
+  margin-bottom: 4px;
+}
+
+.connection-status {
+  font-size: 10px;
+  color: #ffffff;
+  font-weight: 500;
+  text-align: center;
+  background: rgba(255, 193, 7, 0.2);
+  padding: 2px 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 193, 7, 0.5);
 }
 </style>

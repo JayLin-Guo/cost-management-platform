@@ -1067,16 +1067,69 @@ class WorkflowScene {
     // 检查射线与节点的交叉
     const intersects = this.raycaster.intersectObjects(this.nodeGroup.children, true)
 
+    
     if (intersects.length > 0) {
       const intersectedObject = intersects[0].object
+      const userData = intersectedObject.userData
 
-      // 检查是否点击了工作流节点
-      if (intersectedObject.userData && intersectedObject.userData.type === 'workflowNode') {
-        const nodeId = intersectedObject.userData.nodeId
-        // console.log(`点击了节点: ${nodeId}`)
-        // 这里不再显示节点信息浮窗
+      // 检查是否点击了工作流节点 - 使用 sequenceInfo.type 判断
+      if (userData && userData.sequenceInfo?.type === 'node' && userData.nodeId && userData.nodeData) {
+        const nodeId = userData.nodeId
+        const nodeData = userData.nodeData
+        
+        // 调用节点渲染器的点击处理方法
+        if (this.nodeRenderer && nodeData) {
+          this.nodeRenderer.handleNodeClick(event, nodeId, nodeData, userData)
+        }
+      }
+      // 检查是否点击了连接线标签（状态标签） - 使用现有的 type 字段
+      else if (userData && userData.type === 'connectionLabel') {
+        const labelData = userData
+        const nodeData = labelData.nodeData
+        
+        // 查找上一个节点和下一个节点的数据
+        const fromNodeData = this.findNodeById(labelData.fromNodeId)
+        const toNodeData = this.findNodeById(labelData.toNodeId)
+
+        console.log('点击状态标签:', {
+          标签信息: labelData,
+          当前连接: `${labelData.fromNodeId} -> ${labelData.toNodeId}`,
+          上一个节点: fromNodeData,
+          下一个节点: toNodeData
+        })
+        
+        // 触发状态标签点击事件，包含上一个和下一个节点信息
+        const clickEvent = new CustomEvent('workflow-status-label-click', {
+          detail: {
+            labelData,
+            nodeData,
+            fromNodeData,  // 上一个节点数据
+            toNodeData,    // 下一个节点数据
+            connectionInfo: {
+              from: labelData.fromNodeId,
+              to: labelData.toNodeId,
+              status: labelData.status
+            },
+            originalEvent: event,
+          },
+        })
+        document.dispatchEvent(clickEvent)
+      }
+      // 检查是否点击了连接线或箭头 - 使用 sequenceInfo.type 判断
+      else if (userData && userData.sequenceInfo?.type === 'connection') {
+        console.log('点击了连接线:', userData)
+        // 可以在这里添加连接线点击的处理逻辑
       }
     }
+  }
+
+  /**
+   * 根据节点ID查找节点数据
+   * @param nodeId 节点ID
+   * @returns 节点数据或undefined
+   */
+  private findNodeById(nodeId: string): WorkflowNode | undefined {
+    return this.workflowNodes.find(node => node.id === nodeId)
   }
 
   /**

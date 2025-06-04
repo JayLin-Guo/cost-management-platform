@@ -419,7 +419,6 @@ export default class WorkflowNodeRenderer {
 
     // 设置节点的用户数据（用于点击交互）
     nodeMesh.userData = {
-      type: 'workflowNode',
       nodeId: node.id,
       nodeData: node,
       flowType: DEFAULT_FLOW_TYPE, // 记录流程类型
@@ -775,7 +774,8 @@ export default class WorkflowNodeRenderer {
 
       // 为节点添加点击事件监听器
       nodeMesh.userData.onClick = (event: MouseEvent) => {
-        this.handleNodeClick(event, node.id, node)
+  
+        this.handleNodeClick(event, node.id, node, nodeMesh.userData)
       }
     }
 
@@ -1286,6 +1286,13 @@ export default class WorkflowNodeRenderer {
         fromNodeId: nodeData.id,
         toNodeId: nodeData.to,
         status,
+        nodeData: nodeData, // 添加节点数据引用
+      }
+
+      // 为标签添加点击事件处理
+      sprite.onBeforeRender = () => {
+        // 检查鼠标是否悬停在标签上
+        // 这里可以添加悬停效果
       }
 
       // 添加到场景
@@ -1411,7 +1418,6 @@ export default class WorkflowNodeRenderer {
       ]
     } else {
 
-
       // 通过比较起始和结束位置的Z坐标来判断方向
       const deltaZ = endPosition.z - startPosition.z
 
@@ -1465,18 +1471,44 @@ export default class WorkflowNodeRenderer {
    * @param nodeId 节点ID
    * @param nodeData 节点数据
    */
-  public handleNodeClick(event: MouseEvent, nodeId: string, nodeData: WorkflowNode): void {
-    // console.log(`节点被点击: ID=${nodeId}, 标题=${nodeData.title}`, nodeData)
+  public handleNodeClick(event: MouseEvent, nodeId: string, nodeData: WorkflowNode, userData: any): void {
+    // console.log(`节点被点击: ID=${nodeId}, 标题=${nodeData.title}, 类型=${nodeData.type}`, nodeData)
 
-    // 触发自定义事件，通知外部组件节点被点击
-    const clickEvent = new CustomEvent('workflow-node-click', {
-      detail: {
-        nodeId,
-        nodeData,
-        originalEvent: event,
-      },
-    })
-    document.dispatchEvent(clickEvent)
+    // 根据节点数据中的 type 字段触发不同的自定义事件
+    const nodeType = nodeData.type || 'reviewNode'
+    
+    if (nodeType === 'reviewNode') {
+      // 审核节点点击 - 打开审核操作弹窗
+      const clickEvent = new CustomEvent('workflow-review-node-click', {
+        detail: {
+          nodeId,
+          nodeData,
+          userData,
+          originalEvent: event,
+        },
+      })
+      document.dispatchEvent(clickEvent)
+    } else if (nodeType === 'reviewStatus') {
+      // 审核状态点击 - 打开状态详情弹窗
+      const clickEvent = new CustomEvent('workflow-status-node-click', {
+        detail: {
+          nodeId,
+          nodeData,
+          originalEvent: event,
+        },
+      })
+      document.dispatchEvent(clickEvent)
+    } else {
+      // 其他类型节点 - 触发通用点击事件
+      const clickEvent = new CustomEvent('workflow-node-click', {
+        detail: {
+          nodeId,
+          nodeData,
+          originalEvent: event,
+        },
+      })
+      document.dispatchEvent(clickEvent)
+    }
 
     // 这里可以添加其他点击效果，例如高亮显示节点
     // 可以在将来实现
