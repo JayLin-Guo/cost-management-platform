@@ -168,6 +168,15 @@ export type NodeType = 'reviewNode' | 'reviewStatus' | 'document' | 'milestone'
  * 用于表示工作流中的各个节点及其关系
  */
 export interface WorkflowNode {
+  /** 右上角操作按钮 */
+  rightAction: Array<{
+    /** 按钮类型 */
+    type: 'uploadFile' | 'deleteFile' | 'assignManager' | 'submitReview' | 'submitBatch' | 'auditFile' | 'viewFile' | 'downloadFile'
+    /** 按钮文本 */
+    name: string
+  }>
+  /** 文件id */
+  fileId: string
   /**
    * 节点唯一标识符
    * 用于在系统中唯一标识一个节点，通常格式为"nodeX"，其中X为数字
