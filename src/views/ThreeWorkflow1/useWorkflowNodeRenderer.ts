@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
-import type {  WorkflowConnection, FlowType } from './useMockData'
+import type { WorkflowConnection, FlowType } from './useMockData'
 import {
   NODE_CONFIGS,
   CONNECTION_CONFIGS,
@@ -142,18 +142,18 @@ export default class WorkflowNodeRenderer {
    */
   private getTimeIntervalPosition(timeInterval: TimeInterval, index: number): number {
     // console.log(`计算时间间隔位置: 索引=${index}, id=${timeInterval.id}, date=${timeInterval.date}`)
-    
+
     // 从左侧固定区域右边界开始
     let position = this.config.leftOffset;
-    
+
     // 计算前面所有时间点的宽度总和
     for (let i = 0; i < index; i++) {
       const prevInterval = this.timeIntervals[i];
       const prevTimePointId = prevInterval.id || '';
-      
+
       // 计算每个审核人在该时间点的节点数量
       const nodeCountPerReviewer = new Map<string, number>();
-      
+
       // 统计每个审核人的节点数量
       for (const [nodeId, node] of this.nodesMap.entries()) {
         if (node.timePointId === prevTimePointId) {
@@ -162,7 +162,7 @@ export default class WorkflowNodeRenderer {
           nodeCountPerReviewer.set(reviewerId, currentCount + 1);
         }
       }
-      
+
       // 找出最大的节点数量
       let maxNodesPerReviewer = 0;
       nodeCountPerReviewer.forEach((count) => {
@@ -170,14 +170,14 @@ export default class WorkflowNodeRenderer {
           maxNodesPerReviewer = count;
         }
       });
-      
+
       // 使用calculateCellWidth函数计算该时间点的宽度
       const cellWidth = calculateCellWidth(maxNodesPerReviewer, this.config.cellWidth);
-      
+
       // 累加宽度
       position += cellWidth;
     }
-    
+
     // console.log(`  计算的位置: ${position}`)
     return position;
   }
@@ -188,7 +188,7 @@ export default class WorkflowNodeRenderer {
    */
   private calculateCellNodeCount(): Map<string, { count: number; nodes: WorkflowNode[] }> {
     const cellNodeCount = new Map<string, { count: number; nodes: WorkflowNode[] }>()
-    
+
     // 遍历所有节点，统计每个单元格内的节点数量
     for (const [nodeId, node] of this.nodesMap.entries()) {
       const cellKey = `${node.timePointId}-${node.reviewerId}`
@@ -197,7 +197,7 @@ export default class WorkflowNodeRenderer {
       currentData.nodes.push(node)
       cellNodeCount.set(cellKey, currentData)
     }
-    
+
     // console.log('单元格节点计数:', Array.from(cellNodeCount.entries()))
     return cellNodeCount
   }
@@ -211,7 +211,7 @@ export default class WorkflowNodeRenderer {
    */
   private getNodeIndexInCell(timePointId: string, reviewerId: string, nodeId: string): number {
     let index = 0
-    
+
     // 遍历所有节点，找出同一单元格内的节点，并确定当前节点的索引
     for (const [id, node] of this.nodesMap.entries()) {
       if (node.timePointId === timePointId && node.reviewerId === reviewerId) {
@@ -221,7 +221,7 @@ export default class WorkflowNodeRenderer {
         index++
       }
     }
-    
+
     return 0
   }
 
@@ -249,27 +249,27 @@ export default class WorkflowNodeRenderer {
 
     // 获取时间间隔
     const timeInterval = this.timeIntervals[timePointIndex];
-    
+
     // 使用getTimeIntervalPosition获取时间点的X坐标
     const baseX = this.getTimeIntervalPosition(timeInterval, timePointIndex);
-    
+
     // 获取当前节点信息
     const currentNode = this.nodesMap.get(nodeId)
     if (!currentNode) {
       return baseX + this.config.cellWidth / 2 // 默认居中
     }
-    
+
     // 计算单元格内节点数量和索引
     const cellKey = `${timePointId}-${currentNode.reviewerId}`
     const cellData = this.cellNodeCount.get(cellKey)
     const nodeCount = cellData ? cellData.count : 1
     const nodeIndex = this.getNodeIndexInCell(timePointId, currentNode.reviewerId, nodeId)
-    
+
     // console.log(`单元格 ${cellKey} 内有 ${nodeCount} 个节点，当前节点索引: ${nodeIndex}`)
-    
+
     // 计算单元格宽度 - 使用calculateCellWidth函数
     const cellWidth = calculateCellWidth(nodeCount, this.config.cellWidth);
-    
+
     if (nodeCount === 1) {
       // 单元格内只有一个节点，居中放置
       const finalX = baseX + cellWidth / 2
@@ -279,32 +279,32 @@ export default class WorkflowNodeRenderer {
       // 单元格内有多个节点，水平排列
       // 节点间距为节点宽度的1.5倍，确保有足够的间距
       let nodeSpacing = FIXED_NODE_WIDTH * 1.8
-      
+
       // 计算所有节点占用的总宽度
       let totalWidth = nodeCount * FIXED_NODE_WIDTH + (nodeCount - 1) * nodeSpacing
-      
+
       // 检查是否超出单元格宽度
       if (totalWidth > cellWidth) {
         // console.log(`警告: 节点总宽度(${totalWidth})超过单元格宽度(${cellWidth})，自动调整间距`)
-        
+
         // 计算可用于间距的空间
         const availableSpaceForGaps = cellWidth - (nodeCount * FIXED_NODE_WIDTH)
-        
+
         // 计算每个间隙的宽度，但保持最小间距为节点宽度的0.8倍
         const minSpacing = FIXED_NODE_WIDTH * 0.8
         nodeSpacing = Math.max(availableSpaceForGaps / (nodeCount - 1), minSpacing)
-        
+
         // 重新计算总宽度
         totalWidth = nodeCount * FIXED_NODE_WIDTH + (nodeCount - 1) * nodeSpacing
       }
-      
+
       // 计算起始X坐标（使节点组居中）
       const startX = baseX + (cellWidth - totalWidth) / 2
-      
+
       // 计算当前节点X坐标
       // 每个节点的位置 = 起始位置 + 节点索引 * (节点宽度 + 节点间距) + 节点宽度/2
       const finalX = startX + nodeIndex * (FIXED_NODE_WIDTH + nodeSpacing) + FIXED_NODE_WIDTH / 2
-      
+
       // console.log(`多节点排列: 总宽度=${totalWidth}, 起始位置=${startX}, 节点位置=${finalX}, 间距=${nodeSpacing}`)
       return finalX
     }
@@ -739,7 +739,7 @@ export default class WorkflowNodeRenderer {
         this.nodesMap.set(node.id, node)
       }
     }
-    
+
     // 第二步：计算每个单元格内的节点数量
     this.cellNodeCount = this.calculateCellNodeCount()
 
@@ -1063,15 +1063,15 @@ export default class WorkflowNodeRenderer {
     // 计算箭头位置和方向 - 箭头应该指向目标节点
     // 将箭头位置稍微向后移动，不要贴在节点上
     const arrowDirection = new THREE.Vector3().subVectors(
-      adjustedEndPosition, 
+      adjustedEndPosition,
       points[points.length - 2]
     ).normalize()
-    
+
     // 箭头位置向后偏移一点距离
     const arrowPosition = adjustedEndPosition.clone().sub(arrowDirection.clone().multiplyScalar(8))
 
     // 创建箭头指示方向
-    const arrow = this.createArrow(arrowPosition, arrowDirection, color)
+    const arrow = this.createArrow(arrowPosition, arrowDirection, color, primaryDirection, adjustedStartPosition, adjustedEndPosition)
 
     // 为箭头设置相同的connectionId
     if (arrow) {
@@ -1087,20 +1087,20 @@ export default class WorkflowNodeRenderer {
    * 创建连接线段 - 分别处理水平段和垂直段
    */
   private createConnectionSegments(
-    points: THREE.Vector3[], 
-    primaryDirection: string, 
-    color: number, 
+    points: THREE.Vector3[],
+    primaryDirection: string,
+    color: number,
     sourceNodeData: WorkflowNode
   ): void {
     const connectionId = `${sourceNodeData.id}->${sourceNodeData.to}`
 
     if (primaryDirection === 'x') {
       // 水平方向为主：第一段是水平线（虚线），第二段是垂直线（实线）
-      
+
       // 第一段：水平线（虚线带动画）
       const horizontalPoints = [points[0], points[1]]
       const horizontalGeometry = new THREE.BufferGeometry().setFromPoints(horizontalPoints)
-      
+
       const horizontalMaterial = new THREE.LineDashedMaterial({
         color: color,
         linewidth: 3,
@@ -1109,13 +1109,13 @@ export default class WorkflowNodeRenderer {
         dashSize: 8,
         gapSize: 4,
       })
-      
+
       const horizontalLine = new THREE.Line(horizontalGeometry, horizontalMaterial)
       horizontalLine.computeLineDistances() // 计算虚线距离
-      
+
       // 添加动画效果
       this.addDashAnimation(horizontalLine, horizontalMaterial)
-      
+
       horizontalLine.userData = {
         curvePoints: horizontalPoints,
         connectionType: 'horizontal',
@@ -1123,23 +1123,23 @@ export default class WorkflowNodeRenderer {
         connectionId: connectionId,
         type: 'connectionLine'
       }
-      
+
       this.nodeGroup.add(horizontalLine)
-      
+
       // 第二段：垂直线（实线）
       if (points.length > 2) {
         const verticalPoints = [points[1], points[2]]
         const verticalGeometry = new THREE.BufferGeometry().setFromPoints(verticalPoints)
-        
+
         const verticalMaterial = new THREE.LineBasicMaterial({
           color: color,
           linewidth: 3,
           transparent: true,
           opacity: 0.8,
         })
-        
+
         const verticalLine = new THREE.Line(verticalGeometry, verticalMaterial)
-        
+
         verticalLine.userData = {
           curvePoints: verticalPoints,
           connectionType: 'vertical',
@@ -1147,25 +1147,25 @@ export default class WorkflowNodeRenderer {
           connectionId: connectionId,
           type: 'connectionLine'
         }
-        
+
         this.nodeGroup.add(verticalLine)
       }
     } else {
       // 垂直方向为主：第一段是垂直线（实线），第二段是水平线（虚线）
-      
+
       // 第一段：垂直线（实线）
       const verticalPoints = [points[0], points[1]]
       const verticalGeometry = new THREE.BufferGeometry().setFromPoints(verticalPoints)
-      
+
       const verticalMaterial = new THREE.LineBasicMaterial({
         color: color,
         linewidth: 3,
         transparent: true,
         opacity: 0.8,
       })
-      
+
       const verticalLine = new THREE.Line(verticalGeometry, verticalMaterial)
-      
+
       verticalLine.userData = {
         curvePoints: verticalPoints,
         connectionType: 'vertical',
@@ -1173,14 +1173,14 @@ export default class WorkflowNodeRenderer {
         connectionId: connectionId,
         type: 'connectionLine'
       }
-      
+
       this.nodeGroup.add(verticalLine)
-      
+
       // 第二段：水平线（虚线带动画）
       if (points.length > 2) {
         const horizontalPoints = [points[1], points[2]]
         const horizontalGeometry = new THREE.BufferGeometry().setFromPoints(horizontalPoints)
-        
+
         const horizontalMaterial = new THREE.LineDashedMaterial({
           color: color,
           linewidth: 3,
@@ -1189,13 +1189,13 @@ export default class WorkflowNodeRenderer {
           dashSize: 8,
           gapSize: 4,
         })
-        
+
         const horizontalLine = new THREE.Line(horizontalGeometry, horizontalMaterial)
         horizontalLine.computeLineDistances() // 计算虚线距离
-        
+
         // 添加动画效果
         this.addDashAnimation(horizontalLine, horizontalMaterial)
-        
+
         horizontalLine.userData = {
           curvePoints: horizontalPoints,
           connectionType: 'horizontal',
@@ -1203,7 +1203,7 @@ export default class WorkflowNodeRenderer {
           connectionId: connectionId,
           type: 'connectionLine'
         }
-        
+
         this.nodeGroup.add(horizontalLine)
       }
     }
@@ -1220,22 +1220,22 @@ export default class WorkflowNodeRenderer {
     const originalDashSize = material.dashSize
     const originalGapSize = material.gapSize
     let animationPhase = 0
-    
+
     const animate = () => {
       animationPhase += 0.05 // 控制动画速度
-      
+
       // 通过改变 dashSize 和 gapSize 来创建流动效果
       const offset = Math.sin(animationPhase) * 2
       material.dashSize = originalDashSize + offset
       material.gapSize = originalGapSize - offset * 0.5
-      
+
       // 重新计算线段距离以应用新的虚线参数
       line.computeLineDistances()
-      
+
       // 继续动画
       requestAnimationFrame(animate)
     }
-    
+
     animate()
   }
 
@@ -1381,77 +1381,75 @@ export default class WorkflowNodeRenderer {
    * @param position 箭头位置
    * @param direction 箭头方向（指向目标节点）
    * @param color 颜色
+   * @param primaryDirection 主要连接方向 ('x' 或 'z')
+   * @param startPosition 连接起始位置
+   * @param endPosition 连接结束位置
    */
   private createArrow(
     position: THREE.Vector3,
     direction: THREE.Vector3,
     color: number,
+    primaryDirection: string,
+    startPosition: THREE.Vector3,
+    endPosition: THREE.Vector3,
   ): THREE.Mesh | null {
     // 创建简单的三角形箭头几何体
     const arrowGeometry = new THREE.BufferGeometry()
-    
+
     // 标准化方向向量
-    const normalizedDirection = direction.clone().normalize()
-    
-    // 判断主要方向
-    const absX = Math.abs(normalizedDirection.x)
-    const absZ = Math.abs(normalizedDirection.z)
-    
-    let vertices: number[]
-    
-    if (absX > absZ) {
-      // 横向箭头 - 沿X轴方向
-      if (normalizedDirection.x > 0) {
-        // 向右的箭头
-        vertices = [
-          0, 0, 0,      // 箭头尖端
-          -8, 4, 0,     // 左上角
-          -8, -4, 0     // 左下角
-        ]
-      } else {
-        // 向左的箭头
-        vertices = [
-          0, 0, 0,      // 箭头尖端
-          8, 4, 0,      // 右上角
-          8, -4, 0      // 右下角
-        ]
-      }
+    // const normalizedDirection = direction.clone().normalize()
+
+    let vertices: number[] = [] // 初始化为空数组
+
+    // 使用primaryDirection来判断箭头类型，而不是依赖方向向量的大小比较
+    if (primaryDirection === 'x') {
+
+      vertices = [
+        0, 0, 0,      // 箭头尖端
+        -16, 0, 5,    // 左后角 - 增加长度，减小宽度使其更尖锐
+        -16, 0, -5    // 左前角 - 增加长度，减小宽度使其更尖锐
+      ]
     } else {
-      // 纵向箭头 - 沿Z轴方向
-      if (normalizedDirection.z > 0) {
-        // 向前（下方）的箭头
+
+
+      // 通过比较起始和结束位置的Z坐标来判断方向
+      const deltaZ = endPosition.z - startPosition.z
+
+      if (deltaZ > 0) {
+        // 向下的箭头 (正Z方向)
         vertices = [
           0, 0, 0,      // 箭头尖端
-          -4, 0, -8,    // 左后角
-          4, 0, -8      // 右后角
+          -5, 0, -16,   // 左后角 - 在X轴方向展开，向后延伸
+          5, 0, -16     // 右后角 - 在X轴方向展开，向后延伸
         ]
       } else {
-        // 向后（上方）的箭头
+
+        // 向上的箭头 (负Z方向)
         vertices = [
           0, 0, 0,      // 箭头尖端
-          -4, 0, 8,     // 左前角
-          4, 0, 8       // 右前角
+          -5, 0, 16,    // 左前角 - 在X轴方向展开，向前延伸
+          5, 0, 16      // 右前角 - 在X轴方向展开，向前延伸
         ]
       }
     }
-    
+
     // 设置顶点数据
     arrowGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
-    
+
     // 计算法向量
     arrowGeometry.computeVertexNormals()
-    
+
     // 创建材质
-    const arrowMaterial = new THREE.MeshBasicMaterial({ 
+    const arrowMaterial = new THREE.MeshBasicMaterial({
       color: color,
       transparent: true,
       opacity: 0.9,
       side: THREE.DoubleSide // 双面材质，确保从各个角度都能看到
     })
-    
+
     // 创建箭头网格
     const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial)
-    
+
     // 设置箭头位置
     arrow.position.copy(position)
 
