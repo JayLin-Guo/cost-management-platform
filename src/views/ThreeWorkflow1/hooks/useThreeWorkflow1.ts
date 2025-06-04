@@ -4,8 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
 import WorkflowNodeRenderer, { calculateCellWidth } from './useWorkflowNodeRenderer'
 import { DEFAULT_CONFIG, COLORS, FONT_HEADER, FONT_CELL, FIXED_NODE_WIDTH } from './config'
-import type { SceneConfig, TimeInterval, WorkflowNode } from './types'
-import type { Reviewer, TimePoint } from './useMockData' // 仍然需要类型定义
+import type { SceneConfig, TimeInterval, WorkflowNode, Reviewer, TimePoint } from '../types'
 
 /**
  * 工作流程图场景类

@@ -6,7 +6,7 @@ import {
   ANIMATION_CONFIG,
   COLORS,
 } from './config'
-import type { WorkflowNode } from './types'
+import type { WorkflowNode } from '../types'
 import {
   calculateAnimationSequence,
   type AnimationSequenceItem,

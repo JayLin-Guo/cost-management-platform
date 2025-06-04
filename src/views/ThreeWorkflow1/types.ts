@@ -159,9 +159,28 @@ export interface ColorConfig {
 
 // 节点状态
 export type NodeStatus = 'pending' | 'pass' | 'reject' | 'end'
-
+// 流程类型
+export type FlowType = 'main' | 'retry'
 // 节点类型
 export type NodeType = 'reviewNode' | 'reviewStatus' | 'document' | 'milestone'
+
+// 审核人接口
+export interface Reviewer {
+  id: string // 审核人ID
+  name: string // 审核人姓名
+  position: number // 审核人位置（用于可视化）
+  role?: string // 审核人角色
+  department?: string // 部门
+}
+
+// 时间点接口
+export interface TimePoint {
+  id: string // 时间点ID
+  date: string // 日期，格式：YYYY-MM-DD
+  label: string // 显示标签，如"6月4日"
+  isInterval?: boolean // 是否是间隔区间
+}
+
 
 /**
  * 工作流节点数据结构

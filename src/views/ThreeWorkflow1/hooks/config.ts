@@ -3,7 +3,7 @@ import type {
   ConnectionRenderConfig,
   ColorConfig,
   AnimationConfig,
-} from './types'
+} from '../types'
 
 // 固定尺寸常量
 export const FIXED_COLUMN_WIDTH = 180 // 固定列宽度（审核人员和文件状态列）

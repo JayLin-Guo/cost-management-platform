@@ -89,14 +89,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, watch, onBeforeMount } from 'vue'
-import useThreeWorkflow1 from './useThreeWorkflow1'
-import ProjectHeader from '@/components/ProjectHeader.vue'
+import useThreeWorkflow1 from './hooks/useThreeWorkflow1'
 import { getWorkflowData } from '@/api/workflow' // 导入API方法、
 import { ElMessage } from 'element-plus'
 import TaskForm from './components/TaskForm.vue'
 import WorkflowHeader from './components/WorkflowHeader.vue'
-import { useTask } from './useTask'
-import { useInitFetch } from './useInitFetch'
+import { useTask } from './hooks/useTask'
+import { useInitFetch } from './hooks/useInitFetch'
 import { LargeScreenDialog } from '@/components/LargeScreen'
 import StatusDetailsDialog from './components/StatusDetailsDialog.vue'
 
@@ -116,11 +115,6 @@ const isLoading = ref(true)
 const hasData = ref(false)
 const loadError = ref('')
 
-// 项目信息
-const projectInfo = reactive({
-  code: 'PRJ-2025-001',
-  startDate: '2025-01-01',
-})
 
 // 当前选中的任务
 const currentTask = ref()
@@ -320,52 +314,6 @@ function handleStatusLabelClick(event: any) {
   showStatusDialog.value = true
 }
 
-// 提交审核
-function submitReview(action: 'approve' | 'reject') {
-  if (!currentStatusData.value) {
-    return
-  }
-
-  const nodeId = currentStatusData.value.id
-  const comment = reviewFormData.comment
-
-  console.log(`${action === 'approve' ? '通过' : '驳回'}审核:`, {
-    nodeId,
-    comment,
-    action,
-  })
-
-  // 这里可以调用API提交审核结果
-  ElMessage.success(`${action === 'approve' ? '审核通过' : '审核驳回'}操作已提交`)
-
-  // 这里可以调用API更新审核状态
-  // await updateReviewStatus(nodeId, action, comment)
-  // await loadWorkflowData(currentTask.value.id.toString())
-}
-
-// 关闭弹窗
-function closeDialogs() {
-  reviewNodeDialogVisible.value = false
-  showStatusDialog.value = false
-  currentStatusData.value = null
-}
-
-// 获取状态文本
-function getStatusText(status: string) {
-  const statusMap: Record<string, string> = {
-    pending: '待处理',
-    'in-progress': '进行中',
-    completed: '已完成',
-    approved: '已通过',
-    rejected: '已驳回',
-    cancelled: '已取消',
-    waiting: '等待中',
-    reviewing: '审核中',
-    failed: '失败',
-    success: '成功',
-  }
-  return statusMap[status] || status
-}
 </script>
 
 <style scoped>

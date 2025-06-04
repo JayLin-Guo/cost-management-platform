@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { WorkflowNode } from './types'
+import type { WorkflowNode } from '../types'
 
 /**
  * 流程颜色配置

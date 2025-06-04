@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
-import type { WorkflowConnection, FlowType } from './useMockData'
+
 import {
   NODE_CONFIGS,
   CONNECTION_CONFIGS,
@@ -16,7 +16,8 @@ import type {
   NodeRendererConfig,
   TimeInterval,
   WorkflowNode,
-} from './types'
+  FlowType
+} from '../types'
 import { TeleportAnimationController2 } from './useTeleportAnimation2'
 import {
   calculateAnimationSequence,
