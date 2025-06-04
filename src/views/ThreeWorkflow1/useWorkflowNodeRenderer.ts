@@ -141,7 +141,7 @@ export default class WorkflowNodeRenderer {
    * @returns X坐标位置
    */
   private getTimeIntervalPosition(timeInterval: TimeInterval, index: number): number {
-    console.log(`计算时间间隔位置: 索引=${index}, id=${timeInterval.id}, date=${timeInterval.date}`)
+    // console.log(`计算时间间隔位置: 索引=${index}, id=${timeInterval.id}, date=${timeInterval.date}`)
     
     // 从左侧固定区域右边界开始
     let position = this.config.leftOffset;
@@ -178,7 +178,7 @@ export default class WorkflowNodeRenderer {
       position += cellWidth;
     }
     
-    console.log(`  计算的位置: ${position}`)
+    // console.log(`  计算的位置: ${position}`)
     return position;
   }
 
@@ -198,7 +198,7 @@ export default class WorkflowNodeRenderer {
       cellNodeCount.set(cellKey, currentData)
     }
     
-    console.log('单元格节点计数:', Array.from(cellNodeCount.entries()))
+    // console.log('单元格节点计数:', Array.from(cellNodeCount.entries()))
     return cellNodeCount
   }
 
@@ -232,18 +232,18 @@ export default class WorkflowNodeRenderer {
    * @returns X坐标
    */
   private getNodeX(timePointId: string, nodeId: string): number {
-    console.log(`查找时间点位置: ${timePointId}, 节点ID: ${nodeId}`)
+    // console.log(`查找时间点位置: ${timePointId}, 节点ID: ${nodeId}`)
 
     // 查找时间点在时间间隔数组中的索引
     const timePointIndex = this.timeIntervals.findIndex(
       (interval) => interval.date === timePointId || interval.id === timePointId,
     )
 
-    console.log(`时间点索引: ${timePointIndex}`)
+    // console.log(`时间点索引: ${timePointIndex}`)
 
     // 如果找不到索引，使用左侧偏移
     if (timePointIndex === -1) {
-      console.warn(`找不到时间点: ${timePointId}，使用默认位置`)
+      // console.warn(`找不到时间点: ${timePointId}，使用默认位置`)
       return this.config.leftOffset
     }
 
@@ -265,7 +265,7 @@ export default class WorkflowNodeRenderer {
     const nodeCount = cellData ? cellData.count : 1
     const nodeIndex = this.getNodeIndexInCell(timePointId, currentNode.reviewerId, nodeId)
     
-    console.log(`单元格 ${cellKey} 内有 ${nodeCount} 个节点，当前节点索引: ${nodeIndex}`)
+    // console.log(`单元格 ${cellKey} 内有 ${nodeCount} 个节点，当前节点索引: ${nodeIndex}`)
     
     // 计算单元格宽度 - 使用calculateCellWidth函数
     const cellWidth = calculateCellWidth(nodeCount, this.config.cellWidth);
@@ -273,7 +273,7 @@ export default class WorkflowNodeRenderer {
     if (nodeCount === 1) {
       // 单元格内只有一个节点，居中放置
       const finalX = baseX + cellWidth / 2
-      console.log(`单节点居中: ${finalX}`)
+      // console.log(`单节点居中: ${finalX}`)
       return finalX
     } else {
       // 单元格内有多个节点，水平排列
@@ -285,7 +285,7 @@ export default class WorkflowNodeRenderer {
       
       // 检查是否超出单元格宽度
       if (totalWidth > cellWidth) {
-        console.log(`警告: 节点总宽度(${totalWidth})超过单元格宽度(${cellWidth})，自动调整间距`)
+        // console.log(`警告: 节点总宽度(${totalWidth})超过单元格宽度(${cellWidth})，自动调整间距`)
         
         // 计算可用于间距的空间
         const availableSpaceForGaps = cellWidth - (nodeCount * FIXED_NODE_WIDTH)
@@ -305,7 +305,7 @@ export default class WorkflowNodeRenderer {
       // 每个节点的位置 = 起始位置 + 节点索引 * (节点宽度 + 节点间距) + 节点宽度/2
       const finalX = startX + nodeIndex * (FIXED_NODE_WIDTH + nodeSpacing) + FIXED_NODE_WIDTH / 2
       
-      console.log(`多节点排列: 总宽度=${totalWidth}, 起始位置=${startX}, 节点位置=${finalX}, 间距=${nodeSpacing}`)
+      // console.log(`多节点排列: 总宽度=${totalWidth}, 起始位置=${startX}, 节点位置=${finalX}, 间距=${nodeSpacing}`)
       return finalX
     }
   }
@@ -348,25 +348,25 @@ export default class WorkflowNodeRenderer {
    * @returns Three.js网格对象
    */
   public createNodeMesh(node: WorkflowNode, reviewerPosition: number): THREE.Mesh {
-    console.log(`创建节点网格: ID=${node.id}, 标题=${node.title}, 审核人位置=${reviewerPosition}`)
+    // console.log(`创建节点网格: ID=${node.id}, 标题=${node.title}, 审核人位置=${reviewerPosition}`)
 
     // 计算节点的位置
     const startX = this.getNodeX(node.timePointId, node.id)
-    console.log(`节点起始 X 坐标=${startX} (基于时间点ID=${node.timePointId})`)
+    // console.log(`节点起始 X 坐标=${startX} (基于时间点ID=${node.timePointId})`)
 
     // 使用固定节点尺寸常量
     const width = FIXED_NODE_WIDTH
     const height = FIXED_NODE_HEIGHT
     const depth = FIXED_NODE_DEPTH
-    console.log(`节点尺寸: 宽=${width}, 高=${height}, 深=${depth}`)
+    // console.log(`节点尺寸: 宽=${width}, 高=${height}, 深=${depth}`)
 
     // 计算节点的Z位置（对应审核人）
     const z = this.getNodeZ(reviewerPosition)
-    console.log(`节点 Z 坐标=${z} (基于审核人位置=${reviewerPosition})`)
+    // console.log(`节点 Z 坐标=${z} (基于审核人位置=${reviewerPosition})`)
 
     // 创建节点几何体
     const nodeGeometry = new THREE.BoxGeometry(width, height, depth)
-    console.log(`创建节点几何体 - 尺寸: ${width}x${height}x${depth}`)
+    // console.log(`创建节点几何体 - 尺寸: ${width}x${height}x${depth}`)
 
     // 获取节点颜色 - 根据流程类型，不再考虑状态
     let nodeColor = 0x4caf50
@@ -415,7 +415,7 @@ export default class WorkflowNodeRenderer {
       height / 2, // Y轴高度为高度的一半，使节点底部贴合平面
       z,
     )
-    console.log(`最终节点位置: X=${startX}, Y=${height / 2}, Z=${z}`)
+    // console.log(`最终节点位置: X=${startX}, Y=${height / 2}, Z=${z}`)
 
     // 设置节点的用户数据（用于点击交互）
     nodeMesh.userData = {
@@ -428,7 +428,7 @@ export default class WorkflowNodeRenderer {
     // 添加电弧效果
     this.addElectricArcEffect(nodeMesh, width, depth)
 
-    console.log(`节点网格创建完成: ID=${node.id}`)
+    // console.log(`节点网格创建完成: ID=${node.id}`)
     return nodeMesh
   }
 
@@ -704,7 +704,7 @@ export default class WorkflowNodeRenderer {
    * @param nodes 节点数据数组
    */
   public createNodesAndConnections(nodes: WorkflowNode[]): void {
-    console.log(`开始创建${nodes.length}个节点和连接`)
+    // console.log(`开始创建${nodes.length}个节点和连接`)
 
     // 停止当前动画（如果有）
     if (this.isAnimationPlaying) {
@@ -747,19 +747,19 @@ export default class WorkflowNodeRenderer {
     for (const node of nodes) {
       // 检查节点是否在时间间隔中，如果是则跳过
       if (this.isTimeInterval(node.timePointId)) {
-        console.log(`跳过节点 ${node.id}：位于时间间隔 ${node.timePointId} 中`)
+        // console.log(`跳过节点 ${node.id}：位于时间间隔 ${node.timePointId} 中`)
         continue
       }
 
       // 查找审核人位置
       const reviewer = this.getReviewer(node.reviewerId)
       if (!reviewer) {
-        console.warn(`未找到审核人: ID=${node.reviewerId}, 节点=${node.id}`)
+        // console.warn(`未找到审核人: ID=${node.reviewerId}, 节点=${node.id}`)
         continue
       }
 
       const reviewerPosition = reviewer.position
-      console.log(`为节点${node.id}找到审核人${node.reviewerId}，位置=${reviewerPosition}`)
+      // console.log(`为节点${node.id}找到审核人${node.reviewerId}，位置=${reviewerPosition}`)
 
       // 创建节点网格
       const nodeMesh = this.createNodeMesh(node, reviewerPosition)
@@ -779,7 +779,7 @@ export default class WorkflowNodeRenderer {
       }
     }
 
-    console.log(`已创建${renderedNodeIds.size}个节点`)
+    // console.log(`已创建${renderedNodeIds.size}个节点`)
 
     // 第二步：构建连接映射
     const connectionMap = this.buildConnectionMap(nodes, renderedNodeIds)
@@ -791,7 +791,7 @@ export default class WorkflowNodeRenderer {
       const toNode = this.nodesMap.get(toNodeId)
 
       if (!fromNode || !toNode) {
-        console.warn(`无法创建连接: 找不到节点 ${fromNodeId} -> ${toNodeId}`)
+        // console.warn(`无法创建连接: 找不到节点 ${fromNodeId} -> ${toNodeId}`)
         continue
       }
 
@@ -804,14 +804,14 @@ export default class WorkflowNodeRenderer {
       ) as THREE.Mesh
 
       if (!fromMesh || !toMesh) {
-        console.warn(`无法创建连接: 找不到节点网格 ${fromNodeId} -> ${toNodeId}`)
+        // console.warn(`无法创建连接: 找不到节点网格 ${fromNodeId} -> ${toNodeId}`)
         continue
       }
 
       // 获取源节点的状态和流程类型
       const sourceNodeData = this.nodesMap.get(fromNodeId)
       if (!sourceNodeData) {
-        console.warn(`无法创建连接: 找不到源节点数据 ${fromNodeId}`)
+        // console.warn(`无法创建连接: 找不到源节点数据 ${fromNodeId}`)
         continue
       }
 
@@ -825,10 +825,10 @@ export default class WorkflowNodeRenderer {
       )
     }
 
-    console.log('节点和连接创建完成')
-    console.log(
-      `记录了${this.nodePositions.length}个节点位置和${this.labelPositions.length}个标签位置`,
-    )
+    // console.log('节点和连接创建完成')
+    // console.log(
+    //   `记录了${this.nodePositions.length}个节点位置和${this.labelPositions.length}个标签位置`,
+    // )
 
     // 计算动画序列
     this.calculateAndBindAnimationSequence(nodes)
@@ -884,7 +884,7 @@ export default class WorkflowNodeRenderer {
         }
 
         if (!targetFound) {
-          console.log(`无法为节点 ${nodeId} 找到有效的连接目标`)
+          // console.log(`无法为节点 ${nodeId} 找到有效的连接目标`)
         }
       }
     })
@@ -922,9 +922,9 @@ export default class WorkflowNodeRenderer {
       this.isAnimationPlaying = true
       this.startAnimation()
 
-      console.log('直接移动动画已启动')
+      // console.log('直接移动动画已启动')
     } else {
-      console.warn('没有可用的节点位置，无法创建动画')
+      // console.warn('没有可用的节点位置，无法创建动画')
     }
   }
 
@@ -958,7 +958,7 @@ export default class WorkflowNodeRenderer {
     this.nodePositions = []
     this.labelPositions = []
 
-    console.log('工作流节点渲染器已释放资源')
+    // console.log('工作流节点渲染器已释放资源')
   }
 
   /**
@@ -1054,37 +1054,24 @@ export default class WorkflowNodeRenderer {
       )
     }
 
-    // 创建线几何体
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
-
     // 根据流程类型选择颜色，不再考虑状态
     let color = 0x4caf50
 
-    // 创建线材质
-    const material = new THREE.LineBasicMaterial({
-      color: color,
-      linewidth: 3, // 增加线宽，使连接线更明显
-      transparent: true,
-      opacity: 0.8,
-    })
+    // 创建连接线段 - 分别处理水平段和垂直段
+    this.createConnectionSegments(points, primaryDirection, color, sourceNodeData)
 
-    // 创建线对象
-    const line = new THREE.Line(geometry, material)
-
-    // 保存直角连接点用于动画
-    line.userData.curvePoints = points
-    line.userData.connectionType = status
-    line.userData.flowType = DEFAULT_FLOW_TYPE // 记录流程类型
-    line.userData.connectionId = `${sourceNodeData.id}->${sourceNodeData.to}` // 设置连接线ID，用于绑定序列
-
-    // 将直角连接点添加到连接路径集合中，用于瞬移动画
-    this.connectionPaths.push(points)
-
-    // 添加到场景
-    this.nodeGroup.add(line)
+    // 计算箭头位置和方向 - 箭头应该指向目标节点
+    // 将箭头位置稍微向后移动，不要贴在节点上
+    const arrowDirection = new THREE.Vector3().subVectors(
+      adjustedEndPosition, 
+      points[points.length - 2]
+    ).normalize()
+    
+    // 箭头位置向后偏移一点距离
+    const arrowPosition = adjustedEndPosition.clone().sub(arrowDirection.clone().multiplyScalar(8))
 
     // 创建箭头指示方向
-    const arrow = this.createArrow(adjustedEndPosition, direction, color)
+    const arrow = this.createArrow(arrowPosition, arrowDirection, color)
 
     // 为箭头设置相同的connectionId
     if (arrow) {
@@ -1094,6 +1081,162 @@ export default class WorkflowNodeRenderer {
 
     // 添加连接线标签
     this.createConnectionLabel(midPoint, sourceNodeData, status)
+  }
+
+  /**
+   * 创建连接线段 - 分别处理水平段和垂直段
+   */
+  private createConnectionSegments(
+    points: THREE.Vector3[], 
+    primaryDirection: string, 
+    color: number, 
+    sourceNodeData: WorkflowNode
+  ): void {
+    const connectionId = `${sourceNodeData.id}->${sourceNodeData.to}`
+
+    if (primaryDirection === 'x') {
+      // 水平方向为主：第一段是水平线（虚线），第二段是垂直线（实线）
+      
+      // 第一段：水平线（虚线带动画）
+      const horizontalPoints = [points[0], points[1]]
+      const horizontalGeometry = new THREE.BufferGeometry().setFromPoints(horizontalPoints)
+      
+      const horizontalMaterial = new THREE.LineDashedMaterial({
+        color: color,
+        linewidth: 3,
+        transparent: true,
+        opacity: 0.8,
+        dashSize: 8,
+        gapSize: 4,
+      })
+      
+      const horizontalLine = new THREE.Line(horizontalGeometry, horizontalMaterial)
+      horizontalLine.computeLineDistances() // 计算虚线距离
+      
+      // 添加动画效果
+      this.addDashAnimation(horizontalLine, horizontalMaterial)
+      
+      horizontalLine.userData = {
+        curvePoints: horizontalPoints,
+        connectionType: 'horizontal',
+        flowType: DEFAULT_FLOW_TYPE,
+        connectionId: connectionId,
+        type: 'connectionLine'
+      }
+      
+      this.nodeGroup.add(horizontalLine)
+      
+      // 第二段：垂直线（实线）
+      if (points.length > 2) {
+        const verticalPoints = [points[1], points[2]]
+        const verticalGeometry = new THREE.BufferGeometry().setFromPoints(verticalPoints)
+        
+        const verticalMaterial = new THREE.LineBasicMaterial({
+          color: color,
+          linewidth: 3,
+          transparent: true,
+          opacity: 0.8,
+        })
+        
+        const verticalLine = new THREE.Line(verticalGeometry, verticalMaterial)
+        
+        verticalLine.userData = {
+          curvePoints: verticalPoints,
+          connectionType: 'vertical',
+          flowType: DEFAULT_FLOW_TYPE,
+          connectionId: connectionId,
+          type: 'connectionLine'
+        }
+        
+        this.nodeGroup.add(verticalLine)
+      }
+    } else {
+      // 垂直方向为主：第一段是垂直线（实线），第二段是水平线（虚线）
+      
+      // 第一段：垂直线（实线）
+      const verticalPoints = [points[0], points[1]]
+      const verticalGeometry = new THREE.BufferGeometry().setFromPoints(verticalPoints)
+      
+      const verticalMaterial = new THREE.LineBasicMaterial({
+        color: color,
+        linewidth: 3,
+        transparent: true,
+        opacity: 0.8,
+      })
+      
+      const verticalLine = new THREE.Line(verticalGeometry, verticalMaterial)
+      
+      verticalLine.userData = {
+        curvePoints: verticalPoints,
+        connectionType: 'vertical',
+        flowType: DEFAULT_FLOW_TYPE,
+        connectionId: connectionId,
+        type: 'connectionLine'
+      }
+      
+      this.nodeGroup.add(verticalLine)
+      
+      // 第二段：水平线（虚线带动画）
+      if (points.length > 2) {
+        const horizontalPoints = [points[1], points[2]]
+        const horizontalGeometry = new THREE.BufferGeometry().setFromPoints(horizontalPoints)
+        
+        const horizontalMaterial = new THREE.LineDashedMaterial({
+          color: color,
+          linewidth: 3,
+          transparent: true,
+          opacity: 0.8,
+          dashSize: 8,
+          gapSize: 4,
+        })
+        
+        const horizontalLine = new THREE.Line(horizontalGeometry, horizontalMaterial)
+        horizontalLine.computeLineDistances() // 计算虚线距离
+        
+        // 添加动画效果
+        this.addDashAnimation(horizontalLine, horizontalMaterial)
+        
+        horizontalLine.userData = {
+          curvePoints: horizontalPoints,
+          connectionType: 'horizontal',
+          flowType: DEFAULT_FLOW_TYPE,
+          connectionId: connectionId,
+          type: 'connectionLine'
+        }
+        
+        this.nodeGroup.add(horizontalLine)
+      }
+    }
+
+    // 将连接点添加到连接路径集合中，用于瞬移动画
+    this.connectionPaths.push(points)
+  }
+
+  /**
+   * 为虚线添加动画效果
+   */
+  private addDashAnimation(line: THREE.Line, material: THREE.LineDashedMaterial): void {
+    // 存储原始的 dashSize 和 gapSize
+    const originalDashSize = material.dashSize
+    const originalGapSize = material.gapSize
+    let animationPhase = 0
+    
+    const animate = () => {
+      animationPhase += 0.05 // 控制动画速度
+      
+      // 通过改变 dashSize 和 gapSize 来创建流动效果
+      const offset = Math.sin(animationPhase) * 2
+      material.dashSize = originalDashSize + offset
+      material.gapSize = originalGapSize - offset * 0.5
+      
+      // 重新计算线段距离以应用新的虚线参数
+      line.computeLineDistances()
+      
+      // 继续动画
+      requestAnimationFrame(animate)
+    }
+    
+    animate()
   }
 
   /**
@@ -1234,9 +1377,9 @@ export default class WorkflowNodeRenderer {
   }
 
   /**
-   * 创建箭头指示方向
+   * 创建箭头
    * @param position 箭头位置
-   * @param direction 方向向量
+   * @param direction 箭头方向（指向目标节点）
    * @param color 颜色
    */
   private createArrow(
@@ -1244,45 +1387,73 @@ export default class WorkflowNodeRenderer {
     direction: THREE.Vector3,
     color: number,
   ): THREE.Mesh | null {
-    // 创建一个圆锥作为箭头，增大尺寸
-    const arrowGeometry = new THREE.ConeGeometry(8, 16, 8)
-    const arrowMaterial = new THREE.MeshBasicMaterial({ color: color })
-    const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial)
-
-    // 设置箭头位置
-    arrow.position.copy(position)
-
-    // 计算主要移动方向（X、Y或Z）
-    const absX = Math.abs(direction.x)
-    const absY = Math.abs(direction.y)
-    const absZ = Math.abs(direction.z)
-
-    // 确定主要移动方向
-    let primaryDirection = 'x'; // 默认为水平方向
-    if (absZ > absX) {
-      primaryDirection = 'z'; // 垂直方向
-    }
-
-    // 计算欧拉角使箭头指向正确的方向
-    const arrowDirection = direction.clone().negate() // 箭头应该指向来源方向的反方向
-
-    // 使箭头指向正确的方向
-    arrow.lookAt(position.clone().add(arrowDirection))
-
-    // 根据主要移动方向进行旋转调整
-    if (primaryDirection === 'x') {
-      // 水平方向，箭头需要旋转90度使尖端指向正确方向
-      arrow.rotateX(Math.PI / 2)
-    } else {
-      // 垂直方向，箭头需要不同的旋转
-      if (direction.z > 0) {
-        // 向Z轴正方向，箭头需要旋转-90度
-        arrow.rotateX(-Math.PI / 2)
+    // 创建简单的三角形箭头几何体
+    const arrowGeometry = new THREE.BufferGeometry()
+    
+    // 标准化方向向量
+    const normalizedDirection = direction.clone().normalize()
+    
+    // 判断主要方向
+    const absX = Math.abs(normalizedDirection.x)
+    const absZ = Math.abs(normalizedDirection.z)
+    
+    let vertices: number[]
+    
+    if (absX > absZ) {
+      // 横向箭头 - 沿X轴方向
+      if (normalizedDirection.x > 0) {
+        // 向右的箭头
+        vertices = [
+          0, 0, 0,      // 箭头尖端
+          -8, 4, 0,     // 左上角
+          -8, -4, 0     // 左下角
+        ]
       } else {
-        // 向Z轴负方向，箭头需要旋转90度
-        arrow.rotateX(Math.PI / 2)
+        // 向左的箭头
+        vertices = [
+          0, 0, 0,      // 箭头尖端
+          8, 4, 0,      // 右上角
+          8, -4, 0      // 右下角
+        ]
+      }
+    } else {
+      // 纵向箭头 - 沿Z轴方向
+      if (normalizedDirection.z > 0) {
+        // 向前（下方）的箭头
+        vertices = [
+          0, 0, 0,      // 箭头尖端
+          -4, 0, -8,    // 左后角
+          4, 0, -8      // 右后角
+        ]
+      } else {
+        // 向后（上方）的箭头
+        vertices = [
+          0, 0, 0,      // 箭头尖端
+          -4, 0, 8,     // 左前角
+          4, 0, 8       // 右前角
+        ]
       }
     }
+    
+    // 设置顶点数据
+    arrowGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    
+    // 计算法向量
+    arrowGeometry.computeVertexNormals()
+    
+    // 创建材质
+    const arrowMaterial = new THREE.MeshBasicMaterial({ 
+      color: color,
+      transparent: true,
+      opacity: 0.9,
+      side: THREE.DoubleSide // 双面材质，确保从各个角度都能看到
+    })
+    
+    // 创建箭头网格
+    const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial)
+    
+    // 设置箭头位置
+    arrow.position.copy(position)
 
     // 添加到场景
     this.nodeGroup.add(arrow)
@@ -1297,7 +1468,7 @@ export default class WorkflowNodeRenderer {
    * @param nodeData 节点数据
    */
   public handleNodeClick(event: MouseEvent, nodeId: string, nodeData: WorkflowNode): void {
-    console.log(`节点被点击: ID=${nodeId}, 标题=${nodeData.title}`, nodeData)
+    // console.log(`节点被点击: ID=${nodeId}, 标题=${nodeData.title}`, nodeData)
 
     // 触发自定义事件，通知外部组件节点被点击
     const clickEvent = new CustomEvent('workflow-node-click', {
@@ -1324,7 +1495,7 @@ export default class WorkflowNodeRenderer {
       this.labelPositions,
     )
 
-    console.log(`计算得到${this.animationSequenceItems.length}个动画序列项`)
+    // console.log(`计算得到${this.animationSequenceItems.length}个动画序列项`)
 
     // 构建映射关系
     for (const item of this.animationSequenceItems) {
@@ -1355,9 +1526,9 @@ export default class WorkflowNodeRenderer {
             this.applyNodeFlowColorConfig(child, sequenceItem.flowColorConfig)
           }
 
-          console.log(
-            `为节点${nodeId}绑定序列值: ${sequenceItem.sequence}, 流程颜色索引: ${sequenceItem.flowColorIndex}`,
-          )
+          // console.log(
+          //   `为节点${nodeId}绑定序列值: ${sequenceItem.sequence}, 流程颜色索引: ${sequenceItem.flowColorIndex}`,
+          // )
         }
       } else if (child.userData?.connectionId) {
         const connectionId = child.userData.connectionId
@@ -1377,9 +1548,9 @@ export default class WorkflowNodeRenderer {
             this.applyConnectionFlowColorConfig(child, sequenceItem.flowColorConfig)
           }
 
-          console.log(
-            `为连接线${connectionId}绑定序列值: ${sequenceItem.sequence}, 流程颜色索引: ${sequenceItem.flowColorIndex}`,
-          )
+          // console.log(
+          //   `为连接线${connectionId}绑定序列值: ${sequenceItem.sequence}, 流程颜色索引: ${sequenceItem.flowColorIndex}`,
+          // )
         }
       }
     }
@@ -1412,7 +1583,7 @@ export default class WorkflowNodeRenderer {
       nodeMesh.material.emissive.setHex(flowConfig.emissiveColor)
       nodeMesh.material.emissiveIntensity = flowConfig.emissiveIntensity * 0.6 // 稍微降低强度
 
-      console.log(`应用节点颜色: 0x${flowConfig.nodeColor.toString(16)}`)
+      // console.log(`应用节点颜色: 0x${flowConfig.nodeColor.toString(16)}`)
     } else if (Array.isArray(nodeMesh.material)) {
       // 如果节点使用了材质数组，应用到每个面（除了顶面，顶面是文本贴图）
       for (let i = 0; i < nodeMesh.material.length; i++) {
@@ -1426,7 +1597,7 @@ export default class WorkflowNodeRenderer {
           mat.emissiveIntensity = flowConfig.emissiveIntensity * 0.6
         }
       }
-      console.log(`应用节点颜色到材质数组: 0x${flowConfig.nodeColor.toString(16)}`)
+      // console.log(`应用节点颜色到材质数组: 0x${flowConfig.nodeColor.toString(16)}`)
     }
   }
 
@@ -1440,20 +1611,23 @@ export default class WorkflowNodeRenderer {
     flowConfig: FlowColorConfig,
   ): void {
     // 对于连接线（Line对象）
-    if (
-      connection instanceof THREE.Line &&
-      connection.material instanceof THREE.LineBasicMaterial
-    ) {
-      // 应用连接线颜色
-      connection.material.color.setHex(flowConfig.edgeColor) // 使用edgeColor来匹配边缘颜色
-      console.log(`应用连接线颜色: 0x${flowConfig.edgeColor.toString(16)}`)
+    if (connection instanceof THREE.Line) {
+      if (connection.material instanceof THREE.LineBasicMaterial) {
+        // 应用连接线颜色
+        connection.material.color.setHex(flowConfig.edgeColor)
+        // console.log(`应用连接线颜色: 0x${flowConfig.edgeColor.toString(16)}`)
+      } else if (connection.material instanceof THREE.LineDashedMaterial) {
+        // 应用虚线连接线颜色
+        connection.material.color.setHex(flowConfig.edgeColor)
+        // console.log(`应用虚线连接线颜色: 0x${flowConfig.edgeColor.toString(16)}`)
+      }
     }
     // 对于箭头（Mesh对象，使用ConeGeometry）
     else if (connection instanceof THREE.Mesh && connection.userData?.type === 'connectionArrow') {
       // 应用箭头颜色
       if (connection.material instanceof THREE.MeshBasicMaterial) {
-        connection.material.color.setHex(flowConfig.edgeColor) // 使用edgeColor来匹配边缘颜色
-        console.log(`应用箭头颜色: 0x${flowConfig.edgeColor.toString(16)}`)
+        connection.material.color.setHex(flowConfig.edgeColor)
+        // console.log(`应用箭头颜色: 0x${flowConfig.edgeColor.toString(16)}`)
       }
     }
     // 对于连接线标签（Sprite对象）
@@ -1464,7 +1638,7 @@ export default class WorkflowNodeRenderer {
       // 标签使用的是纹理，无法直接修改颜色
       // 这里我们可以记录颜色配置，以便后续可能的重新创建
       connection.userData.flowColorConfig = flowConfig
-      console.log(`记录标签的流程颜色配置: 0x${flowConfig.edgeColor.toString(16)}`)
+      // console.log(`记录标签的流程颜色配置: 0x${flowConfig.edgeColor.toString(16)}`)
     }
   }
 }

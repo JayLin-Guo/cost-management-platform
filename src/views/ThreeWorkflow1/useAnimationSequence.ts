@@ -147,11 +147,11 @@ export function calculateAnimationSequence(
   
   // 如果没有节点数据，返回空数组
   if (!nodes.length) {
-    console.warn('没有工作流节点数据，无法计算动画序列');
+    // console.warn('没有工作流节点数据，无法计算动画序列');
     return sequenceItems;
   }
   
-  console.log(`开始计算${nodes.length}个工作流节点的动画序列`);
+  // console.log(`开始计算${nodes.length}个工作流节点的动画序列`);
   
   // 构建节点ID到位置的映射
   const nodeIdToPositionMap = new Map<string, THREE.Vector3>();
@@ -168,7 +168,7 @@ export function calculateAnimationSequence(
     return numA - numB;
   });
   
-  console.log('排序后的节点顺序:', sortedNodes.map(n => n.id).join(', '));
+  // console.log('排序后的节点顺序:', sortedNodes.map(n => n.id).join(', '));
   
   // 初始序列值和流程颜色索引
   let currentSequence = 1;
@@ -180,7 +180,7 @@ export function calculateAnimationSequence(
     const nodePosition = nodeIdToPositionMap.get(node.id);
     
     if (!nodePosition) {
-      console.warn(`找不到节点${node.id}的位置信息`);
+      // console.warn(`找不到节点${node.id}的位置信息`);
       continue;
     }
     
@@ -198,7 +198,7 @@ export function calculateAnimationSequence(
       status: node.status
     });
     
-    console.log(`添加节点 ${node.id}, 状态: ${node.status}, 序列值: ${currentSequence}, 流程颜色索引: ${currentFlowColorIndex}`);
+    // console.log(`添加节点 ${node.id}, 状态: ${node.status}, 序列值: ${currentSequence}, 流程颜色索引: ${currentFlowColorIndex}`);
     
     // 如果不是最后一个节点且当前节点状态不是end，添加连接线
     if (i < sortedNodes.length - 1 && node.status !== 'end') {
@@ -222,9 +222,9 @@ export function calculateAnimationSequence(
           flowColorConfig: flowColorConfig
         });
         
-        console.log(`添加连接线 ${connectionId}, 序列值: ${currentSequence}, 流程颜色索引: ${currentFlowColorIndex}`);
+        // console.log(`添加连接线 ${connectionId}, 序列值: ${currentSequence}, 流程颜色索引: ${currentFlowColorIndex}`);
       } else {
-        console.log(`未找到节点${node.id}到${nextNode.id}之间的连接线标签`);
+        // console.log(`未找到节点${node.id}到${nextNode.id}之间的连接线标签`);
         
         // 如果找不到标签，但两个节点都有位置，则创建一个虚拟连接线
         if (nodeIdToPositionMap.has(nextNode.id)) {
@@ -240,7 +240,7 @@ export function calculateAnimationSequence(
             flowColorConfig: flowColorConfig
           });
           
-          console.log(`创建虚拟连接线 ${connectionId}, 序列值: ${currentSequence}, 流程颜色索引: ${currentFlowColorIndex}`);
+          // console.log(`创建虚拟连接线 ${connectionId}, 序列值: ${currentSequence}, 流程颜色索引: ${currentFlowColorIndex}`);
         }
       }
       
@@ -253,7 +253,7 @@ export function calculateAnimationSequence(
         currentSequence++;
         // 当遇到end状态节点时，切换到下一个颜色
         currentFlowColorIndex = (currentFlowColorIndex + 1) % FLOW_COLOR_CONFIGS.length;
-        console.log(`节点 ${node.id} 状态为end，切换流程颜色索引到: ${currentFlowColorIndex}`);
+        // console.log(`节点 ${node.id} 状态为end，切换流程颜色索引到: ${currentFlowColorIndex}`);
       } else {
         // 如果是最后一个节点且状态为end，序列值仍然增加
         currentSequence++;
@@ -264,7 +264,7 @@ export function calculateAnimationSequence(
     }
   }
   
-  console.log(`计算完成，共生成${sequenceItems.length}个动画序列项`);
+  // console.log(`计算完成，共生成${sequenceItems.length}个动画序列项`);
   return sequenceItems;
 }
 

@@ -26,8 +26,6 @@ export const useTask = () => {
   const initLoadProjectList = async () => {
     const response = await getProjectList()
     tasksList.value = response.data
-
-    console.log(response, 'response===========>>>')
   }
 
   const handleDeleteTask = () => {}

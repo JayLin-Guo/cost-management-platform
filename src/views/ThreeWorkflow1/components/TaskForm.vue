@@ -1,91 +1,72 @@
 <template>
   <div class="task-form">
-    <el-form
-      :model="taskForm"
-      label-width="100px"
-      :disabled="mode === 'view'"
-      class="task-form-container"
-    >
-      <el-form-item label="任务名称" prop="name" required>
-        <el-input v-model="taskForm.name" placeholder="请输入任务名称" />
-      </el-form-item>
+    <LargeScreenForm :label-width="'120px'" label-position="left" :disabled="mode === 'view'">
+      <LargeScreenFormItem
+        type="input"
+        label="任务名称"
+        v-model="taskForm.name"
+        placeholder="请输入任务名称"
+        :required="true"
+      />
 
-      <el-form-item label="任务分类" prop="category" required>
-        <el-select v-model="taskForm.category" placeholder="请选择分类" style="width: 100%">
-          <el-option
-            v-for="item in taskCategories"
-            :key="item.id"
-            :label="item.name"
-            :value="item.id"
-          />
-        </el-select>
-      </el-form-item>
+      <LargeScreenFormItem
+        type="select"
+        label="任务分类"
+        v-model="taskForm.category"
+        placeholder="请选择分类"
+        :options="taskCategoryOptions"
+        :required="true"
+      />
 
-      <el-form-item label="参与人员" prop="participants" required>
-        <el-select v-model="taskForm.participants" placeholder="请选择人员" style="width: 100%">
-          <el-option
-            v-for="item in participants"
-            :key="item.id"
-            :label="item.name"
-            :value="item.id"
-          />
-        </el-select>
-      </el-form-item>
+      <LargeScreenFormItem
+        type="select"
+        label="参与人员"
+        v-model="taskForm.participants"
+        placeholder="请选择人员"
+        :options="participantOptions"
+        :required="true"
+      />
 
-      <el-form-item label="任务负责人" prop="responsible" required>
-        <el-select v-model="taskForm.responsible" placeholder="请选择负责人" style="width: 100%">
-          <el-option
-            v-for="item in responsibles"
-            :key="item.id"
-            :label="item.name"
-            :value="item.id"
-          />
-        </el-select>
-      </el-form-item>
+      <LargeScreenFormItem
+        type="select"
+        label="任务负责人"
+        v-model="taskForm.responsible"
+        placeholder="请选择负责人"
+        :options="responsibleOptions"
+        :required="true"
+      />
 
-      <el-form-item label="是否审核" prop="needReview" required>
-        <el-select v-model="taskForm.needReview" placeholder="请选择审核级别" style="width: 100%">
-          <el-option
-            v-for="item in reviewLevels"
-            :key="item.id"
-            :label="item.name"
-            :value="item.id"
-          />
-        </el-select>
-      </el-form-item>
+      <LargeScreenFormItem
+        type="select"
+        label="是否审核"
+        v-model="taskForm.needReview"
+        placeholder="请选择审核级别"
+        :options="reviewLevelOptions"
+        :required="true"
+      />
 
-      <!-- <el-form-item label="审核人员" prop="reviewers" required>
-                <div class="reviewer-list">
-                    {{ reviewLevels }}
-                    <div v-for="(level, index) in reviewLevels" :key="level.id" class="reviewer-item"
-                        v-if="taskForm.needReview && (index < parseInt(taskForm.needReview.charAt(0)))">
-                        <span class="reviewer-label">{{ level.name }}：</span>
-                        <span class="reviewer-name">{{ taskForm.reviewers[index]?.name || '未选择' }}</span>
-                        <span class="reviewer-action" @click="selectReviewer(index)">[选择]</span>
-                    </div>
-                </div>
-            </el-form-item> -->
+      <LargeScreenFormItem
+        type="textarea"
+        label="任务说明"
+        v-model="taskForm.description"
+        placeholder="请输入描述内容"
+        :rows="3"
+      />
 
-      <el-form-item label="任务说明" prop="description">
-        <el-input
-          v-model="taskForm.description"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入描述内容"
-          class="task-description"
-        />
-      </el-form-item>
-
-      <el-form-item label="附件">
-        <el-button type="primary" class="upload-btn">上传文件</el-button>
-      </el-form-item>
-    </el-form>
+      <LargeScreenFormItem
+        type="button"
+        label="附件"
+        button-type="primary"
+        button-text="上传文件"
+        @click="handleUpload"
+      />
+    </LargeScreenForm>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, defineProps, defineEmits, watch, onBeforeMount, computed } from 'vue'
-
+import { LargeScreenForm, LargeScreenFormItem } from '@/components/LargeScreen'
 
 // 定义组件属性
 const props = defineProps({
@@ -142,6 +123,40 @@ const reviewers = computed(() => {
   return mapOptions.reviewers
 })
 
+// 转换选项格式
+const taskCategoryOptions = computed(() => {
+  return taskCategories.value?.map(item => ({
+    label: item.name,
+    value: item.id
+  })) || []
+})
+
+const participantOptions = computed(() => {
+  return participants.value?.map(item => ({
+    label: item.name,
+    value: item.id
+  })) || []
+})
+
+const responsibleOptions = computed(() => {
+  return responsibles.value?.map(item => ({
+    label: item.name,
+    value: item.id
+  })) || []
+})
+
+const reviewLevelOptions = computed(() => {
+  return reviewLevels.value?.map(item => ({
+    label: item.name,
+    value: item.id
+  })) || []
+})
+
+// 处理文件上传
+const handleUpload = () => {
+  console.log('上传文件功能开发中...')
+}
+
 // 选择审核人员
 // const selectReviewer = (index: number) => {
 //   if (dialogType.value === 'view') return
@@ -164,120 +179,114 @@ const reviewers = computed(() => {
 //     })
 // }
 
-
 </script>
 
 <style scoped>
-.task-dialog {
-  :deep(.el-dialog__header) {
-    background-color: #f2f6fc;
-    padding: 15px 20px;
-    margin-right: 0;
-    border-bottom: 1px solid #e4e7ed;
-  }
-
-  :deep(.el-dialog__title) {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-  }
-
-  :deep(.el-dialog__body) {
-    padding: 20px 30px;
-  }
-
-  :deep(.el-dialog__footer) {
-    padding: 10px 20px;
-    border-top: 1px solid #e4e7ed;
-    display: flex;
-    justify-content: center;
-  }
+.task-form {
+  width: 100%;
+  min-height: 400px;
 }
 
-.task-form-container {
-  .el-form-item {
-    margin-bottom: 20px;
-  }
-
-  :deep(.el-form-item__label) {
-    font-weight: normal;
-    color: #333;
-  }
-
-  :deep(.el-form-item__label::before) {
-    color: #f56c6c;
-  }
-
-  :deep(.el-input__inner) {
-    border-radius: 4px;
-  }
-
-  :deep(.el-textarea__inner) {
-    border-radius: 4px;
-    font-family: 'Microsoft YaHei', sans-serif;
-  }
+/* 大屏表单样式覆盖 */
+:deep(.large-screen-form) {
+  background: transparent;
+  border: none;
 }
 
-.reviewer-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+:deep(.form-bg) {
+  background: linear-gradient(135deg,
+    rgba(0, 255, 255, 0.02) 0%,
+    rgba(0, 255, 255, 0.05) 50%,
+    rgba(0, 255, 255, 0.02) 100%);
 }
 
-.reviewer-item {
-  display: flex;
-  align-items: center;
+:deep(.large-screen-form-item) {
+  margin-bottom: 28px;
 }
 
-.reviewer-label {
-  font-size: 14px;
-  color: #606266;
-  width: 50px;
-}
-
-.reviewer-name {
-  font-size: 14px;
-  color: #303133;
-  margin-right: 10px;
-}
-
-.reviewer-action {
-  color: #409eff;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.reviewer-action:hover {
-  text-decoration: underline;
-}
-
-.upload-btn {
-  width: 160px;
-  height: 36px;
-  border-radius: 4px;
-}
-
-.dialog-footer {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.cancel-btn,
-.confirm-btn {
-  min-width: 100px;
-}
-
-.task-description {
-  :deep(.el-textarea__inner) {
-    background-color: #f9f9f9;
-  }
-}
-
-.delete-confirm {
-  text-align: center;
-  padding: 20px 0;
-  color: #ff6b6b;
+:deep(.label-text) {
+  font-size: 15px;
   font-weight: 500;
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+}
+
+:deep(.required-mark) {
+  color: #ff3366;
+  text-shadow: 0 0 8px rgba(255, 51, 102, 0.5);
+}
+
+/* 输入框样式增强 */
+:deep(.large-screen-input),
+:deep(.large-screen-textarea) {
+  font-size: 14px;
+  color: #ffffff;
+  background: transparent;
+}
+
+:deep(.large-screen-input::placeholder),
+:deep(.large-screen-textarea::placeholder) {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* 选择器样式增强 */
+:deep(.select-value) {
+  font-size: 14px;
+  color: #ffffff;
+}
+
+:deep(.select-option) {
+  font-size: 14px;
+  color: #ffffff;
+}
+
+:deep(.select-option:hover) {
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+}
+
+/* 按钮样式增强 */
+:deep(.large-screen-button) {
+  min-width: 140px;
+  font-size: 14px;
+}
+
+:deep(.large-screen-button.primary) {
+  background: linear-gradient(135deg, #00ffff 0%, #0080ff 100%);
+}
+
+:deep(.large-screen-button.primary:hover) {
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+/* 表单项悬停效果 */
+:deep(.large-screen-form-item:hover .form-item-bg) {
+  opacity: 1;
+  background: linear-gradient(135deg,
+    rgba(0, 255, 255, 0.05) 0%,
+    rgba(0, 255, 255, 0.08) 50%,
+    rgba(0, 255, 255, 0.05) 100%);
+}
+
+/* 焦点状态增强 */
+:deep(.large-screen-input:focus + .input-border),
+:deep(.large-screen-textarea:focus + .textarea-border) {
+  border-color: #00ffff;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.3),
+    inset 0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+/* 禁用状态样式 */
+:deep(.is-disabled) {
+  opacity: 0.6;
+}
+
+:deep(.is-disabled .large-screen-input),
+:deep(.is-disabled .large-screen-textarea),
+:deep(.is-disabled .large-screen-select) {
+  cursor: not-allowed;
+  color: rgba(255, 255, 255, 0.5);
 }
 </style>

@@ -35,7 +35,7 @@ httpService.getAxios().interceptors.request.use(
     
     // 记录API请求（仅在开发环境）
     if (import.meta.env.DEV) {
-      console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config)
+      // console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config)
     }
     
     return config

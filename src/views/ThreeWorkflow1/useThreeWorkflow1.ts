@@ -112,7 +112,7 @@ class WorkflowScene {
    * 将时间点转换为时间间隔
    */
   private convertTimePointsToIntervals(): TimeInterval[] {
-    console.log('原始timePoints数据:', this.timePoints)
+    // console.log('原始timePoints数据:', this.timePoints)
 
     // 转换并保留原始timePoint.id
     const intervals = this.timePoints.map((tp) => ({
@@ -122,7 +122,7 @@ class WorkflowScene {
       id: tp.id, // 保留原始ID
     }))
 
-    console.log('转换后的timeIntervals数据:', intervals)
+    // console.log('转换后的timeIntervals数据:', intervals)
 
     return intervals
   }
@@ -1073,7 +1073,7 @@ class WorkflowScene {
       // 检查是否点击了工作流节点
       if (intersectedObject.userData && intersectedObject.userData.type === 'workflowNode') {
         const nodeId = intersectedObject.userData.nodeId
-        console.log(`点击了节点: ${nodeId}`)
+        // console.log(`点击了节点: ${nodeId}`)
         // 这里不再显示节点信息浮窗
       }
     }

@@ -53,30 +53,34 @@
     <!-- CSS2D渲染器容器 - 用于HTML标签 -->
     <div ref="cssContainer" class="css-container" v-show="!isLoading && hasData"></div>
 
-    <!-- 使用任务管理对话框组件 -->
-    <el-dialog
-      v-model="taskDialogVisible"
+    <!-- 使用大屏任务管理对话框组件 -->
+    <LargeScreenDialog
+      v-model:visible="taskDialogVisible"
       :title="taskDialogType === 'add' ? '新建任务' : '查看任务'"
-      width="600px"
+      width="800px"
+      height="700px"
       :close-on-click-modal="false"
-      :destroy-on-close="true"
-      class="task-dialog"
     >
       <TaskForm v-model="formData" :mapOptions="taskBaseDocMap" />
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="handleDialogClosed" class="cancel-btn">取消</el-button>
-          <el-button
+        <div class="dialog-footer-actions">
+          <button class="large-screen-button secondary" @click="handleDialogClosed">
+            <div class="button-bg"></div>
+            <span class="button-text">取消</span>
+            <div class="button-glow"></div>
+          </button>
+          <button
             v-if="taskDialogType !== 'view'"
-            type="primary"
+            class="large-screen-button primary"
             @click="submitForm"
-            class="confirm-btn"
           >
-            {{ taskDialogType === 'add' ? '保存' : '确认' }}
-          </el-button>
-        </span>
+            <div class="button-bg"></div>
+            <span class="button-text">{{ taskDialogType === 'add' ? '保存' : '确认' }}</span>
+            <div class="button-glow"></div>
+          </button>
+        </div>
       </template>
-    </el-dialog>
+    </LargeScreenDialog>
   </div>
 </template>
 
@@ -90,6 +94,7 @@ import TaskForm from './components/TaskForm.vue'
 import WorkflowHeader from './components/WorkflowHeader.vue'
 import { useTask } from './useTask'
 import { useInitFetch } from './useInitFetch'
+import { LargeScreenDialog } from '@/components/LargeScreen'
 
 // DOM引用
 const threeContainer = ref<HTMLElement | null>(null)
@@ -398,5 +403,82 @@ onUnmounted(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* 大屏对话框按钮样式 */
+.dialog-footer-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.large-screen-button {
+  position: relative;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Microsoft YaHei', sans-serif;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  min-width: 120px;
+}
+
+.button-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: all 0.3s ease;
+}
+
+.button-text {
+  position: relative;
+  z-index: 2;
+}
+
+.button-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+/* 主要按钮 */
+.large-screen-button.primary .button-bg {
+  background: linear-gradient(135deg, #00ffff 0%, #0080ff 100%);
+}
+
+.large-screen-button.primary .button-text {
+  color: #000000;
+}
+
+.large-screen-button.primary:hover .button-glow {
+  opacity: 1;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+}
+
+/* 次要按钮 */
+.large-screen-button.secondary .button-bg {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.large-screen-button.secondary .button-text {
+  color: #ffffff;
+}
+
+.large-screen-button.secondary:hover .button-glow {
+  opacity: 1;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 }
 </style>

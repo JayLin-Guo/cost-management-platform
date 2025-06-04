@@ -75,7 +75,7 @@ export class TeleportAnimationController2 {
    */
   public setWorkflowNodes(nodes: ExtendedWorkflowNode[]): void {
     this.workflowNodes = nodes
-    console.log(`设置了${nodes.length}个工作流节点数据`)
+    // console.log(`设置了${nodes.length}个工作流节点数据`)
   }
 
   /**
@@ -98,7 +98,7 @@ export class TeleportAnimationController2 {
     // 合并所有停留点
     this.mergeStopPositions()
     
-    console.log(`设置了${nodePositions.length}个节点位置和${labelPositions.length}个标签位置，共${this.allStopPositions.length}个停留点`)
+    // console.log(`设置了${nodePositions.length}个节点位置和${labelPositions.length}个标签位置，共${this.allStopPositions.length}个停留点`)
   }
   
   /**
@@ -109,7 +109,7 @@ export class TeleportAnimationController2 {
     
     // 如果没有工作流节点数据，则无法构建映射
     if (!this.workflowNodes.length) {
-      console.warn('没有工作流节点数据，无法构建节点ID到位置的映射')
+      // console.warn('没有工作流节点数据，无法构建节点ID到位置的映射')
       return
     }
     
@@ -121,7 +121,7 @@ export class TeleportAnimationController2 {
       }
     }
     
-    console.log(`构建了${this.nodeIdToPositionMap.size}个节点ID到位置的映射`)
+    // console.log(`构建了${this.nodeIdToPositionMap.size}个节点ID到位置的映射`)
   }
   
   /**
@@ -136,7 +136,7 @@ export class TeleportAnimationController2 {
       this.labelPositions
     )
     
-    console.log(`计算得到${this.animationSequenceItems.length}个动画序列项`)
+    // console.log(`计算得到${this.animationSequenceItems.length}个动画序列项`)
     
     // 将动画序列项转换为节点位置信息
     this.nodePositionInfos = this.animationSequenceItems.map(item => ({
@@ -151,7 +151,7 @@ export class TeleportAnimationController2 {
     // 按序列值排序
     this.nodePositionInfos.sort((a, b) => a.sequence - b.sequence)
     
-    console.log(`转换得到${this.nodePositionInfos.length}个节点位置信息`)
+    // console.log(`转换得到${this.nodePositionInfos.length}个节点位置信息`)
   }
   
   /**
@@ -183,7 +183,7 @@ export class TeleportAnimationController2 {
     // 提取排序后的位置
     this.allStopPositions = this.nodePositionInfos.map(info => info.position)
     
-    console.log(`根据序列值排序后的停留点数量: ${this.allStopPositions.length}`)
+    // console.log(` 序列值排序后的停留点数量: ${this.allStopPositions.length}`)
   }
   
   /**
@@ -270,9 +270,9 @@ export class TeleportAnimationController2 {
     this.nodeGroup.add(this.teleportNode)
     
     if (initialFlowConfig) {
-      console.log(`创建了瞬移节点，应用初始流程颜色配置: 动画节点颜色 0x${initialFlowConfig.animationColor.toString(16)}`)
+      // console.log(`创建了瞬移节点，应用初始流程颜色配置: 动画节点颜色 0x${initialFlowConfig.animationColor.toString(16)}`)
     } else {
-      console.log('创建了瞬移节点，使用默认颜色配置')
+      // console.log('创建了瞬移节点，使用默认颜色配置')
     }
     
     return this.teleportNode
@@ -294,9 +294,9 @@ export class TeleportAnimationController2 {
       
       this.teleportNode.position.copy(initialPosition)
       
-      console.log(`设置瞬移节点初始位置: x=${initialPosition.x}, y=${initialPosition.y}, z=${initialPosition.z}`)
+      // console.log(`设置瞬移节点初始位置: x=${initialPosition.x}, y=${initialPosition.y}, z=${initialPosition.z}`)
     } else {
-      console.warn('没有可用的停留点位置，无法设置瞬移节点初始位置')
+      // console.warn('没有可用的停留点位置，无法设置瞬移节点初始位置')
     }
   }
   
@@ -307,7 +307,7 @@ export class TeleportAnimationController2 {
   public startAnimation(): void {
     // 如果没有停留点位置或瞬移节点，不执行动画
     if (this.allStopPositions.length === 0 || !this.teleportNode) {
-      console.warn('没有可用的停留点位置或瞬移节点')
+      // console.warn('没有可用的停留点位置或瞬移节点')
       return
     }
     
@@ -325,7 +325,7 @@ export class TeleportAnimationController2 {
       if (initialFlowConfig) {
         // 应用初始流程颜色配置
         this.applyFlowColorConfig(initialFlowConfig)
-        console.log(`应用初始流程颜色配置: 动画节点颜色 0x${initialFlowConfig.animationColor.toString(16)}`)
+        // console.log(`应用初始流程颜色配置: 动画节点颜色 0x${initialFlowConfig.animationColor.toString(16)}`)
       }
     }
     
@@ -338,7 +338,7 @@ export class TeleportAnimationController2 {
     // 启动动画循环
     this.updateAnimation()
     
-    console.log(`瞬移动画已启动，速度因子: ${config.speedFactor}，间隔: ${this.teleportInterval.toFixed(2)}秒`)
+    // console.log(`瞬移动画已启动，速度因子: ${config.speedFactor}  隔: ${this.teleportInterval.toFixed(2)}秒`)
   }
   
   /**
@@ -352,7 +352,7 @@ export class TeleportAnimationController2 {
       this.animationLoopId = null
     }
     
-    console.log('瞬移动画已停止')
+    // console.log('瞬移动画已停止')
   }
   
   /**
@@ -384,7 +384,7 @@ export class TeleportAnimationController2 {
       // 如果已经到达最后一个位置，则回到第一个位置
       if (nextPositionIndex >= this.allStopPositions.length) {
         nextPositionIndex = 0
-        console.log('动画完成一个完整循环，回到第一个位置')
+        // console.log('动画完成一个完整循环，回到第一个位置')
       }
       
       this.currentPositionIndex = nextPositionIndex
@@ -418,7 +418,7 @@ export class TeleportAnimationController2 {
         this.teleportInterval = config.interval * config.nodeStayRatio * config.speedFactor
       }
       
-      console.log(`紫色节点移动到停留点索引 ${this.currentPositionIndex}, 序列值: ${currentPosInfo?.sequence}, 流程颜色索引: ${currentPosInfo?.flowColorIndex}, 是标签位置: ${isLabelPosition}`)
+      // console.log(`紫色节点移动到停留点索引 ${this.currentPositionIndex}, 序列值: ${currentPosInfo?.sequence}, 流程颜色索引: ${currentPosInfo?.flowColorIndex}, 是标签位置: ${isLabelPosition}`)
     }
     
     // 添加悬浮效果 - 只修改Y坐标，不影响X和Z坐标
@@ -493,7 +493,7 @@ export class TeleportAnimationController2 {
       edges.material.color.setHex(flowConfig.edgeColor)
     }
     
-    console.log(`应用流程颜色配置: 动画节点颜色 0x${flowConfig.animationColor.toString(16)}, 边缘颜色 0x${flowConfig.edgeColor.toString(16)}`)
+    // console.log(`应用流程颜色配置: 动画节点颜色 0x${flowConfig.animationColor.toString(16)}, 边缘颜色 0x${flowConfig.edgeColor.toString(16)}`)
   }
   
   /**
@@ -558,7 +558,7 @@ export class TeleportAnimationController2 {
     this.workflowNodes = []
     this.nodeIdToPositionMap.clear()
     
-    console.log('瞬移动画控制器已释放资源')
+    // console.log('瞬移动画控制器已释放资源')
   }
 
   /**
