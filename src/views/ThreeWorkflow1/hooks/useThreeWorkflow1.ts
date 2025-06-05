@@ -1229,6 +1229,13 @@ class WorkflowScene {
   }
 
   /**
+   * 获取渲染器对象
+   */
+  getRenderer(): THREE.WebGLRenderer {
+    return this.renderer
+  }
+
+  /**
    * 获取控制器对象
    */
   getControls(): OrbitControls {
@@ -1478,6 +1485,13 @@ class WorkflowScene {
     ctx.fillRect(iconX - 1, iconY - 3, 2, 4)
     ctx.fillRect(iconX - 1, iconY + 3, 2, 2)
   }
+
+  /**
+   * 获取节点组对象
+   */
+  getNodeGroup(): THREE.Group {
+    return this.nodeGroup
+  }
 }
 /**
  * 工作流程图Hook
@@ -1579,15 +1593,36 @@ export default function useThreeWorkflow1() {
     return true
   }
 
+  // 添加获取 Three.js 对象的方法
+  const getCamera = () => {
+    return workflowScene.value?.getCamera() || null
+  }
+
+  const getRenderer = () => {
+    return workflowScene.value?.getRenderer() || null
+  }
+
+  const getScene = () => {
+    return workflowScene.value?.getScene() || null
+  }
+
+  const getNodeGroup = () => {
+    return workflowScene.value?.getNodeGroup() || null
+  }
+
   return {
     initialize,
     cleanup,
     getSceneInfo,
     changeViewpoint,
     getNodeRenderer,
-    toggleRotationLimits, // 添加切换旋转限制的方法
-    setRotationLimits, // 添加设置旋转限制的方法
-    getRotationLimitState, // 添加获取旋转限制状态的方法
-    isLoading, // 暴露加载状态
+    toggleRotationLimits,
+    setRotationLimits,
+    getRotationLimitState,
+    isLoading,
+    getCamera,
+    getRenderer,
+    getScene,
+    getNodeGroup
   }
 }

@@ -84,6 +84,16 @@
 
     <!-- 状态详情弹窗 -->
     <StatusDetailsDialog v-model:visible="showStatusDialog" :node-data="currentStatusData" />
+    
+    <!-- 右键菜单管理器 -->
+    <ContextMenuManager
+      :camera="workflow.getCamera()"
+      :renderer="workflow.getRenderer()"
+      :scene="workflow.getScene()"
+      :node-group="workflow.getNodeGroup()"
+      :enabled="true"
+      @menu-action="handleMenuAction"
+    />
   </div>
 </template>
 
@@ -98,6 +108,7 @@ import { useTask } from './hooks/useTask'
 import { useInitFetch } from './hooks/useInitFetch'
 import { LargeScreenDialog } from '@/components/LargeScreen'
 import StatusDetailsDialog from './components/StatusDetailsDialog.vue'
+import { ContextMenuManager } from './components/ContextMenu'
 
 // DOM引用
 const threeContainer = ref<HTMLElement | null>(null)
@@ -161,6 +172,12 @@ const reviewFormData = reactive({
   status: '',
   files: [] as any[],
 })
+
+// 禁用浏览器默认右键菜单的函数
+const disableContextMenu = (event: MouseEvent) => {
+  event.preventDefault()
+  return false
+}
 
 // 切换旋转限制
 function toggleRotationLimits() {
@@ -233,6 +250,9 @@ onBeforeMount(async () => {
 
 // 组件挂载后添加事件监听器
 onMounted(() => {
+  // 在整个文档上禁用右键菜单
+  document.addEventListener('contextmenu', disableContextMenu)
+  
   // 监听审核节点点击事件
   document.addEventListener('workflow-review-node-click', handleReviewNodeClick)
   // 监听状态节点点击事件
@@ -240,20 +260,22 @@ onMounted(() => {
   // 监听状态标签点击事件
   document.addEventListener('workflow-status-label-click', handleStatusLabelClick)
   
-  // 禁用右键菜单
-  document.addEventListener('contextmenu', handleContextMenu)
+  // 注意：右键菜单现在由 ContextMenuManager 组件处理，不需要在这里添加监听器
 })
 
 // 组件卸载时清理资源
 onUnmounted(() => {
   workflow.cleanup()
+  
+  // 移除禁用右键菜单的事件监听器
+  document.removeEventListener('contextmenu', disableContextMenu)
+  
   // 移除事件监听器
   document.removeEventListener('workflow-review-node-click', handleReviewNodeClick)
   document.removeEventListener('workflow-status-node-click', handleStatusNodeClick)
   document.removeEventListener('workflow-status-label-click', handleStatusLabelClick)
   
-  // 移除右键菜单禁用
-  document.removeEventListener('contextmenu', handleContextMenu)
+  // 注意：右键菜单现在由 ContextMenuManager 组件处理，不需要在这里移除监听器
 })
 
 // 处理审核节点点击
@@ -320,16 +342,75 @@ function handleStatusLabelClick(event: any) {
   showStatusDialog.value = true
 }
 
-// 处理右键菜单事件
-function handleContextMenu(event: MouseEvent) {
-  // 阻止默认的右键菜单显示
-  event.preventDefault()
+// 节点数据查找函数
+function findNodeDataById(nodeId: string) {
+  return workflowData.workflowNodes.find(node => node.id === nodeId)
+}
+
+// 菜单操作处理
+function handleMenuAction(action: string, nodeData: any) {
+  console.log(`执行菜单操作: ${action}`, nodeData)
   
-  // 这里可以添加自定义右键菜单逻辑
-  console.log('右键点击位置:', { x: event.clientX, y: event.clientY })
-  
-  // 可以在这里触发自定义右键菜单
-  // showCustomContextMenu(event.clientX, event.clientY)
+  switch (action) {
+    case 'approve':
+      handleApproveNode(nodeData)
+      break
+    case 'reject':
+      handleRejectNode(nodeData)
+      break
+    case 'view-details':
+      handleViewNodeDetails(nodeData)
+      break
+    case 'add-comment':
+      handleAddNodeComment(nodeData)
+      break
+    case 'assign-reviewer':
+      handleAssignNodeReviewer(nodeData)
+      break
+    case 'view-history':
+      handleViewNodeHistory(nodeData)
+      break
+    default:
+      console.warn('未知的菜单操作:', action)
+  }
+}
+
+// 审核通过
+function handleApproveNode(nodeData: any) {
+  ElMessage.success(`审核节点 "${nodeData?.name || nodeData?.title || '未知节点'}" 已通过`)
+  // 这里可以调用 API 来更新节点状态
+  // await approveReviewNode(nodeData.id)
+}
+
+// 审核驳回
+function handleRejectNode(nodeData: any) {
+  ElMessage.warning(`审核节点 "${nodeData?.name || nodeData?.title || '未知节点'}" 已驳回`)
+  // 这里可以调用 API 来更新节点状态
+  // await rejectReviewNode(nodeData.id)
+}
+
+// 查看详情
+function handleViewNodeDetails(nodeData: any) {
+  currentStatusData.value = nodeData
+  showStatusDialog.value = true
+}
+
+// 添加备注
+function handleAddNodeComment(nodeData: any) {
+  ElMessage.info('添加备注功能开发中...')
+  // 这里可以打开备注对话框
+}
+
+// 指派审核人
+function handleAssignNodeReviewer(nodeData: any) {
+  ElMessage.info('指派审核人功能开发中...')
+  // 这里可以打开指派对话框
+}
+
+// 查看历史
+function handleViewNodeHistory(nodeData: any) {
+  ElMessage.info('查看历史功能开发中...')
+  // 这里可以打开历史记录对话框
 }
 
 </script>
