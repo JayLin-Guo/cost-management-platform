@@ -239,6 +239,9 @@ onMounted(() => {
   document.addEventListener('workflow-status-node-click', handleStatusNodeClick)
   // 监听状态标签点击事件
   document.addEventListener('workflow-status-label-click', handleStatusLabelClick)
+  
+  // 禁用右键菜单
+  document.addEventListener('contextmenu', handleContextMenu)
 })
 
 // 组件卸载时清理资源
@@ -248,6 +251,9 @@ onUnmounted(() => {
   document.removeEventListener('workflow-review-node-click', handleReviewNodeClick)
   document.removeEventListener('workflow-status-node-click', handleStatusNodeClick)
   document.removeEventListener('workflow-status-label-click', handleStatusLabelClick)
+  
+  // 移除右键菜单禁用
+  document.removeEventListener('contextmenu', handleContextMenu)
 })
 
 // 处理审核节点点击
@@ -312,6 +318,18 @@ function handleStatusLabelClick(event: any) {
 
   currentStatusData.value = extendedNodeData
   showStatusDialog.value = true
+}
+
+// 处理右键菜单事件
+function handleContextMenu(event: MouseEvent) {
+  // 阻止默认的右键菜单显示
+  event.preventDefault()
+  
+  // 这里可以添加自定义右键菜单逻辑
+  console.log('右键点击位置:', { x: event.clientX, y: event.clientY })
+  
+  // 可以在这里触发自定义右键菜单
+  // showCustomContextMenu(event.clientX, event.clientY)
 }
 
 </script>
