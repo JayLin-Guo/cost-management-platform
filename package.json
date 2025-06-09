@@ -17,6 +17,7 @@
     "axios": "^1.9.0",
     "dayjs": "^1.11.13",
     "element-plus": "^2.9.10",
+    "panzoom": "^9.4.3",
     "pinia": "^2.3.1",
     "pinia-plugin-persistedstate": "^2.4.0",
     "three": "^0.176.0",
