@@ -100,7 +100,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, watch, onBeforeMount } from 'vue'
 import useThreeWorkflow1 from './hooks/useThreeWorkflow1'
-import { getWorkflowData } from '@/api/newWorkflow' // 导入API方法、
+import { getWorkflowData } from '@/api/workflow' // 导入API方法、
 import { ElMessage } from 'element-plus'
 import TaskForm from './components/TaskForm.vue'
 import WorkflowHeader from './components/WorkflowHeader.vue'
