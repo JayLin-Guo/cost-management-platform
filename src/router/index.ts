@@ -5,6 +5,7 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
+<<<<<<< HEAD
     name: 'Root',
     redirect: '/home',
     meta: {
@@ -50,6 +51,29 @@ const routes: Array<RouteRecordRaw> = [
       keepAlive: true,
       requireAuth: false,
     },
+=======
+    name: 'Home',
+    component: () => import('@/views/Examples/LargeScreenExample.vue'),
+    meta: {
+      title: '首页'
+    }
+  },
+  {
+    path: '/threeworkflow1',
+    name: 'ThreeWorkflow1',
+    component: () => import('@/views/ThreeWorkflow1/index.vue'),
+    meta: {
+      title: '三维工作流1'
+    }
+  },
+  {
+    path: '/workflow-animation',
+    name: 'WorkflowAnimation',
+    component: () => import('@/views/WorkflowAnimation/index.vue'),
+    meta: {
+      title: '控制价审核工作流动画'
+    }
+>>>>>>> b47ac77b7d0c5f82b1a6064ade020ebaaa72013b
   },
 
   // {
@@ -71,13 +95,11 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('../views/NotFound.vue'),
+    component: () => import('@/views/NotFound.vue'),
     meta: {
-      title: '404',
-      keepAlive: true,
-      requireAuth: false,
-    },
-  },
+      title: '页面未找到'
+    }
+  }
 ]
 
 const router = createRouter({
@@ -86,10 +108,15 @@ const router = createRouter({
 })
 
 // 全局前置守卫
+<<<<<<< HEAD
 router.beforeEach((to, _from, next) => {
+=======
+router.beforeEach((to) => {
+>>>>>>> b47ac77b7d0c5f82b1a6064ade020ebaaa72013b
   // 设置页面标题
-  document.title = `${to.meta.title} | 业务管理平台`
-  next()
+  if (to.meta?.title) {
+    document.title = `${to.meta.title} - 成本管理平台`
+  }
 })
 
 export default router
