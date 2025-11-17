@@ -1,0 +1,413 @@
+/**
+ * 时间轴计算引擎
+ * 根据后端数据和前端配置，计算所有元素的精确位置
+ */
+
+import { computed, type Ref } from 'vue'
+import type { TaskWorkflowData } from '@/api/workflow'
+import type { TimelineConfig } from '../config/timeline.config'
+import { getDayWidth, getNodeWidth } from '../config/timeline.config'
+
+// ========== 计算结果类型定义 ==========
+
+/**
+ * 计算后的月份信息
+ */
+export interface CalculatedMonth {
+  id: string
+  name: string
+  year: number
+  month: number
+  startDate: string
+  endDate: string
+  // 位置信息
+  position: {
+    x: number // 起始 X 坐标
+    width: number // 宽度
+  }
+  // 包含的日期数
+  daysCount: number
+}
+
+/**
+ * 计算后的日期信息
+ */
+export interface CalculatedDay {
+  date: string
+  day: number
+  weekday: string
+  isWeekend: boolean
+  isToday: boolean
+  maxFlowCount: number
+  description?: string
+  holiday?: {
+    name: string
+    type: 'holiday' | 'solar_term'
+  }
+  // 位置信息
+  position: {
+    x: number // 起始 X 坐标
+    width: number // 实际宽度（基于 maxFlowCount）
+  }
+  // 在整个时间轴中的索引
+  dayIndex: number
+}
+
+/**
+ * 计算后的泳道信息
+ */
+export interface CalculatedSwimlane {
+  id: string
+  userName: string
+  role: string
+  position: {
+    y: number // Y 坐标
+    height: number // 高度
+  }
+}
+
+/**
+ * 计算后的节点信息
+ */
+export interface CalculatedNode {
+  // 原始数据
+  id: string
+  swimlaneId: string
+  name: string
+  type:
+    | 'initial_file' // 初步成果文件
+    | 'submit_review' // 送审文件
+    | 'reject' // 驳回
+    | 'rework' // 重新修改
+    | 'approved' // 审核通过
+    | 'placeholder' // 占位符
+  status: string
+  startDate: string
+  endDate: string
+  assigneeName: string
+  progress: number
+  sortOrder: number
+  zLevel?: number
+  description?: string
+  reviewers?: string[]
+
+  // 计算后的位置
+  position: {
+    x: number // 起始 X 坐标
+    y: number // Y 坐标（相对于泳道）
+    width: number // 宽度
+    height: number // 高度
+    columnIndex: number // 在同一天内的列索引（0-based）
+  }
+
+  // 样式信息
+  style: {
+    backgroundColor: string
+    borderColor: string
+    icon: string
+  }
+}
+
+/**
+ * 计算后的连线信息
+ */
+export interface CalculatedConnection {
+  id: string
+  fromNodeId: string
+  toNodeId: string
+  label?: string
+  path: Array<{ x: number; y: number }>
+  style: {
+    color: string
+    width: number
+  }
+}
+
+// ========== 主计算函数 ==========
+
+export function useTimelineCalculator(
+  rawData: Ref<TaskWorkflowData | null>,
+  config: TimelineConfig,
+) {
+  // ========== 1. 基础计算 ==========
+
+  /**
+   * 总天数
+   */
+  const totalDays = computed(() => {
+    if (!rawData.value) return 0
+    return rawData.value.months.reduce((sum, m) => sum + m.days.length, 0)
+  })
+
+  /**
+   * 计算所有日期（扁平化）
+   */
+  const allDays = computed(() => {
+    if (!rawData.value) return []
+    return rawData.value.months.flatMap((m) => m.days)
+  })
+
+  /**
+   * 获取某个日期在时间轴上的索引（从 0 开始）
+   */
+  const getDayIndex = (date: string): number => {
+    return allDays.value.findIndex((d) => d.date === date)
+  }
+
+  // ========== 2. 计算日期位置 ==========
+
+  /**
+   * 计算每个日期的位置和宽度
+   */
+  const calculatedDays = computed<CalculatedDay[]>(() => {
+    if (!rawData.value) return []
+
+    let currentX = 0
+    const result: CalculatedDay[] = []
+
+    rawData.value.months.forEach((month) => {
+      month.days.forEach((day, _index) => {
+        const width = getDayWidth(day.maxFlowCount, config)
+
+        result.push({
+          ...day,
+          position: {
+            x: currentX,
+            width,
+          },
+          dayIndex: result.length,
+        })
+
+        currentX += width
+      })
+    })
+
+    return result
+  })
+
+  /**
+   * 时间轴总宽度
+   */
+  const totalWidth = computed(() => {
+    if (calculatedDays.value.length === 0) return 0
+    const lastDay = calculatedDays.value[calculatedDays.value.length - 1]
+    return lastDay.position.x + lastDay.position.width
+  })
+
+  // ========== 3. 计算月份位置 ==========
+
+  /**
+   * 计算每个月份的位置和宽度
+   */
+  const calculatedMonths = computed<CalculatedMonth[]>(() => {
+    if (!rawData.value) return []
+
+    return rawData.value.months.map((month, _index) => {
+      // 找到该月的第一天和最后一天在 calculatedDays 中的索引
+      const firstDay = calculatedDays.value.find((d) => d.date === month.days[0].date)
+      const lastDay = calculatedDays.value.find(
+        (d) => d.date === month.days[month.days.length - 1].date,
+      )
+
+      if (!firstDay || !lastDay) {
+        return {
+          ...month,
+          position: { x: 0, width: 0 },
+          daysCount: month.days.length,
+        }
+      }
+
+      return {
+        ...month,
+        position: {
+          x: firstDay.position.x,
+          width: lastDay.position.x + lastDay.position.width - firstDay.position.x,
+        },
+        daysCount: month.days.length,
+      }
+    })
+  })
+
+  // ========== 4. 计算泳道位置 ==========
+
+  /**
+   * 计算每个泳道的位置
+   */
+  const calculatedSwimlanes = computed<CalculatedSwimlane[]>(() => {
+    if (!rawData.value) return []
+
+    const headerHeight = config.HEADER_HEIGHT + config.DAY_ROW_HEIGHT
+
+    return rawData.value.users.map((user, index) => ({
+      id: user.id,
+      userName: user.name,
+      role: user.role,
+      position: {
+        y: headerHeight + index * config.SWIMLANE_HEIGHT,
+        height: config.SWIMLANE_HEIGHT,
+      },
+    }))
+  })
+
+  // ========== 5. 计算节点位置（核心逻辑）==========
+
+  /**
+   * 计算节点位置
+   */
+  const calculatedNodes = computed<CalculatedNode[]>(() => {
+    if (!rawData.value) return []
+
+    // 按泳道分组节点
+    const nodesBySwimlane = new Map<string, typeof rawData.value.nodes>()
+    rawData.value.nodes.forEach((node) => {
+      if (!nodesBySwimlane.has(node.swimlaneId)) {
+        nodesBySwimlane.set(node.swimlaneId, [])
+      }
+      nodesBySwimlane.get(node.swimlaneId)!.push(node)
+    })
+
+    const result: CalculatedNode[] = []
+
+    // 遍历每个泳道
+    nodesBySwimlane.forEach((nodes, _swimlaneId) => {
+      // 按 sortOrder 排序
+      const sortedNodes = [...nodes].sort((a, b) => a.sortOrder - b.sortOrder)
+
+      // 为每个节点计算位置
+      sortedNodes.forEach((node) => {
+        const startDayIndex = getDayIndex(node.startDate)
+        const endDayIndex = getDayIndex(node.endDate)
+
+        if (startDayIndex === -1 || endDayIndex === -1) {
+          console.warn(`节点 ${node.id} 的日期范围无效`)
+          return
+        }
+
+        // 获取节点跨越的所有日期
+        const coveredDays = calculatedDays.value.slice(startDayIndex, endDayIndex + 1)
+
+        // 计算节点的起始 X 坐标（第一天的 X）
+        const startX = coveredDays[0].position.x
+
+        // 计算节点的宽度（所有天的宽度之和）
+        const totalWidth = coveredDays.reduce((sum, day) => sum + day.position.width, 0)
+
+        // 计算节点在当天的列索引（columnIndex）
+        // 找出在同一泳道、同一天有重叠的其他节点，按 sortOrder 排序后确定列索引
+        const overlappingNodes = sortedNodes.filter((other) => {
+          if (other.id === node.id) return false
+          const otherStart = getDayIndex(other.startDate)
+          const otherEnd = getDayIndex(other.endDate)
+          // 检查日期范围是否有重叠
+          return !(endDayIndex < otherStart || startDayIndex > otherEnd)
+        })
+
+        // 按 sortOrder 排序，找出当前节点的列索引
+        const allNodesInRange = [node, ...overlappingNodes].sort(
+          (a, b) => a.sortOrder - b.sortOrder,
+        )
+        const columnIndex = allNodesInRange.findIndex((n) => n.id === node.id)
+
+        // 根据列索引调整X坐标和宽度
+        // 找出该日期范围内 maxFlowCount 最大的那天
+        const maxFlowCount = Math.max(...coveredDays.map((d) => d.maxFlowCount))
+        const dayCount = coveredDays.length
+        const nodeWidth = getNodeWidth(dayCount, maxFlowCount, config)
+        const adjustedX = startX + columnIndex * (nodeWidth + config.NODE_GAP)
+
+        result.push({
+          ...node,
+          position: {
+            x: adjustedX,
+            y: (config.SWIMLANE_HEIGHT - config.NODE_HEIGHT) / 2, // 垂直居中
+            width:
+              totalWidth -
+              columnIndex * (nodeWidth + config.NODE_GAP) -
+              (maxFlowCount - columnIndex - 1) * (nodeWidth + config.NODE_GAP),
+            height: config.NODE_HEIGHT,
+            columnIndex,
+          },
+          style: getNodeStyle(node.status, node.type),
+        })
+      })
+    })
+
+    return result
+  })
+
+  // ========== 6. 辅助函数 ==========
+
+  /**
+   * 获取节点样式（基于状态和类型）
+   */
+  function getNodeStyle(status: string, type: string) {
+    // 根据类型定义样式
+    const typeStyles: Record<string, any> = {
+      initial_file: {
+        backgroundColor: 'rgba(64, 158, 255, 0.15)',
+        borderColor: 'rgba(64, 158, 255, 0.6)',
+        icon: 'Document',
+      },
+      submit_review: {
+        backgroundColor: 'rgba(230, 162, 60, 0.15)',
+        borderColor: 'rgba(230, 162, 60, 0.6)',
+        icon: 'Upload',
+      },
+      reject: {
+        backgroundColor: 'rgba(245, 108, 108, 0.15)',
+        borderColor: 'rgba(245, 108, 108, 0.6)',
+        icon: 'Close',
+      },
+      rework: {
+        backgroundColor: 'rgba(144, 147, 153, 0.15)',
+        borderColor: 'rgba(144, 147, 153, 0.5)',
+        icon: 'Edit',
+      },
+      approved: {
+        backgroundColor: 'rgba(103, 194, 58, 0.15)',
+        borderColor: 'rgba(103, 194, 58, 0.6)',
+        icon: 'Check',
+      },
+      placeholder: {
+        backgroundColor: 'rgba(144, 147, 153, 0.1)',
+        borderColor: 'rgba(144, 147, 153, 0.3)',
+        icon: 'Upload',
+      },
+    }
+
+    // 根据状态调整透明度
+    let style = typeStyles[type] || typeStyles.initial_file
+
+    if (status === 'in_progress') {
+      style = { ...style, backgroundColor: style.backgroundColor.replace('0.15', '0.25') }
+    }
+
+    return style
+  }
+
+  /**
+   * 获取泳道内的节点
+   */
+  const getNodesInLane = (laneId: string) => {
+    return calculatedNodes.value.filter((n) => n.swimlaneId === laneId)
+  }
+
+  // ========== 返回所有计算结果 ==========
+
+  return {
+    // 基础
+    totalDays,
+    totalWidth,
+    getDayIndex,
+
+    // 计算结果
+    calculatedMonths,
+    calculatedDays,
+    calculatedSwimlanes,
+    calculatedNodes,
+
+    // 辅助方法
+    getNodesInLane,
+    getNodeStyle,
+  }
+}

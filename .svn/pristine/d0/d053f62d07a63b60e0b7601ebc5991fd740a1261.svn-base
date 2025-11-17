@@ -1,0 +1,125 @@
+/**
+ * 工作流网格布局计算器
+ * 根据后端数据计算棋盘的精确布局
+ */
+
+import type { TaskWorkflowData, Month, Day } from '@/api/workflow'
+import type { GridConfig } from '../config/grid.config'
+import { getDayWidth } from '../config/grid.config'
+
+// ========== 计算结果类型 ==========
+
+/**
+ * 计算后的月份
+ */
+export interface CalculatedMonth extends Month {
+  position: {
+    x: number // X 坐标
+    width: number // 宽度
+  }
+}
+
+/**
+ * 计算后的日期
+ */
+export interface CalculatedDay extends Day {
+  position: {
+    x: number // X 坐标
+    width: number // 宽度
+  }
+}
+
+/**
+ * 计算后的泳道
+ */
+export interface CalculatedSwimlane {
+  id: string
+  userName: string
+  role: string
+  position: {
+    y: number // Y 坐标
+    height: number // 高度
+  }
+}
+
+/**
+ * 网格计算结果
+ */
+export interface GridLayoutData {
+  months: CalculatedMonth[]
+  days: CalculatedDay[]
+  swimlanes: CalculatedSwimlane[]
+  totalWidth: number
+  totalHeight: number
+}
+
+/**
+ * 网格布局计算器
+ * @param data 后端返回的原始数据
+ * @param config 网格配置
+ */
+export function useGridCalculator(data: TaskWorkflowData, config: GridConfig): GridLayoutData {
+  // ========== 1. 计算日期列 ==========
+  const calculatedDays: CalculatedDay[] = []
+  let currentX = 0
+
+  data.months.forEach((month) => {
+    month.days.forEach((day) => {
+      const width = getDayWidth(day.maxFlowCount)
+
+      calculatedDays.push({
+        ...day,
+        position: {
+          x: currentX,
+          width: width,
+        },
+      })
+
+      currentX += width
+    })
+  })
+
+  // ========== 2. 计算月份块 ==========
+  const calculatedMonths: CalculatedMonth[] = []
+
+  data.months.forEach((month) => {
+    // 找到该月第一天和最后一天在 calculatedDays 中的位置
+    const firstDay = calculatedDays.find((d) => d.date === month.days[0].date)
+    const lastDay = calculatedDays.find((d) => d.date === month.days[month.days.length - 1].date)
+
+    if (firstDay && lastDay) {
+      const x = firstDay.position.x
+      const width = lastDay.position.x + lastDay.position.width - x
+
+      calculatedMonths.push({
+        ...month,
+        position: { x, width },
+      })
+    }
+  })
+
+  // ========== 3. 计算泳道 ==========
+  const headerHeight = config.MONTH_ROW_HEIGHT + config.DATE_ROW_HEIGHT
+
+  const calculatedSwimlanes: CalculatedSwimlane[] = data.users.map((user, index) => ({
+    id: user.id,
+    userName: user.name,
+    role: user.role,
+    position: {
+      y: headerHeight + index * config.SWIMLANE_HEIGHT,
+      height: config.SWIMLANE_HEIGHT,
+    },
+  }))
+
+  // ========== 4. 计算总尺寸 ==========
+  const totalWidth = currentX
+  const totalHeight = headerHeight + data.users.length * config.SWIMLANE_HEIGHT
+
+  return {
+    months: calculatedMonths,
+    days: calculatedDays,
+    swimlanes: calculatedSwimlanes,
+    totalWidth,
+    totalHeight,
+  }
+}

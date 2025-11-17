@@ -1,0 +1,147 @@
+/**
+ * 工作流时间轴 API
+ */
+
+import { mockGetWorkflowTimeline } from '@/mock/workflow'
+
+// ========== 基础类型定义 ==========
+
+/**
+ * 时间范围
+ */
+export interface TimeRange {
+  startDate: string // 'YYYY-MM-DD'
+  endDate: string // 'YYYY-MM-DD'
+}
+
+/**
+ * 单个日期（第二排的每一格）
+ */
+export interface Day {
+  date: string // 完整日期 'YYYY-MM-DD'
+  day: number // 日期数字 1-31
+  weekday: string // 周几：'一', '二', '三', '四', '五', '六', '日'
+  isWeekend: boolean // 是否周末
+  isToday: boolean // 是否今天
+  maxFlowCount: number // 该天水平方向最多并排几个节点（用于动态计算该天的宽度，确保节点边界与日期边界对齐）
+  description?: string // 节假日/节气名称（如果有）
+  holiday?: {
+    // 节假日/节气详细信息（如果有）
+    name: string // 例如：'立春'、'清明'、'春节'
+    type: 'holiday' | 'solar_term' // 节假日 or 节气
+  }
+}
+
+/**
+ * 月份（第一排的每一块）
+ */
+export interface Month {
+  id: string
+  name: string // 例如：'1月'、'2月'
+  year: number // 年份
+  month: number // 月份数字 1-12
+  startDate: string // 该月在时间轴上的起始日期
+  endDate: string // 该月在时间轴上的结束日期
+  days: Day[] // 该月包含的所有日期
+}
+
+/**
+ * 业务阶段标记（可选，用于标注业务流程）
+ */
+export interface BusinessPhase {
+  id: string
+  name: string // 例如：'准备阶段'、'审核录入'、'三级审核'
+  startDate: string
+  endDate: string
+  color?: string // 可选的颜色标识
+  description?: string
+}
+
+/**
+ * 用户（泳道）
+ */
+export interface User {
+  id: string
+  name: string
+  role: string // 角色：造价工程师、审核员、审核主管等
+  avatar?: string
+}
+
+/**
+ * 节点（任务/活动）
+ */
+export interface WorkflowNode {
+  id: string
+  swimlaneId: string // 所属泳道（用户ID）
+  name: string // 节点名称
+  type:
+    | 'initial_file' // 初步成果文件（造价工程师创建）
+    | 'submit_review' // 送审文件（提交给审核人）
+    | 'reject' // 驳回文件（审核人驳回）
+    | 'rework' // 重新修改（造价工程师修改）
+    | 'approved' // 审核通过（终态节点）
+    | 'placeholder' // 占位符（未上传）
+  status: 'pending' | 'in_progress' | 'completed' | 'rejected' // 状态
+  startDate: string // 节点所在日期（格式：YYYY-MM-DD）
+  endDate: string // 节点所在日期（通常与 startDate 相同，因为节点是瞬时操作）
+  assigneeName: string // 负责人姓名
+  progress: number // 进度 0-100
+  sortOrder: number // 排序优先级（后端自增，数字越小越靠前）
+  zLevel?: number // Z轴层级，用于重叠时的显示优先级
+  description?: string // 描述
+  reviewers?: string[] // 审核人
+}
+
+/**
+ * 连线（节点之间的依赖关系）
+ */
+export interface Connection {
+  id: string
+  fromNodeId: string // 起始节点ID
+  toNodeId: string // 目标节点ID
+  type: 'normal' | 'important' | 'weak' // 类型：普通、重要、弱依赖
+  label?: string // 连线上的标签文字
+}
+
+/**
+ * 事件（重要节点标记）
+ */
+export interface Event {
+  id: string
+  date: string
+  name: string
+  type: 'milestone' | 'warning' | 'info' // 类型：里程碑、警告、信息
+  icon?: string
+}
+
+/**
+ * 任务工作流完整数据
+ * 包含时间轴、泳道、节点、连线等所有渲染所需的数据
+ */
+export interface TaskWorkflowData {
+  taskId: number // 任务ID
+  taskName: string // 任务名称
+  projectName: string // 所属项目名称
+  timeRange: TimeRange // 工作流时间范围
+  // 时间轴数据（月份 + 日期）
+  months: Month[] // 月份列表，每个月包含其下的所有日期
+  // 业务阶段标记（可选）
+  businessPhases?: BusinessPhase[] // 用于在时间轴上标注业务阶段（如"准备阶段"、"审核录入"等）
+  // 泳道和流程数据
+  users: User[] // 泳道列表（造价工程师、审核员等）
+  nodes: WorkflowNode[] // 流程节点列表（文件、审核、驳回等）
+  connections: Connection[] // 节点之间的连线关系
+  events: Event[] // 重要事件标记（里程碑、警告等）
+}
+
+// ========== API 函数 ==========
+
+/**
+ * 获取任务的工作流完整数据
+ * @param taskId 任务ID
+ * @returns 包含时间轴、泳道、节点、连线等完整数据的 Promise
+ */
+export function getTaskWorkflowData(taskId: number): Promise<TaskWorkflowData> {
+  // 目前使用 Mock 数据
+  return mockGetWorkflowTimeline(taskId)
+}

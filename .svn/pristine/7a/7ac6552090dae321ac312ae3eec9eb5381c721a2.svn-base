@@ -1,0 +1,128 @@
+/**
+ * 时间轴前端配置文件
+ * 定义基准单位、响应式调整、辅助计算函数
+ */
+
+/**
+ * 时间轴基础配置
+ */
+export const TIMELINE_BASE_CONFIG = {
+  DAY_BASE_UNIT: 80, // 每天的基准宽度（当 maxFlowCount = 1 时）
+  HEADER_HEIGHT: 50, // 月份行高度
+  DAY_ROW_HEIGHT: 80, // 日期行高度
+  SWIMLANE_HEIGHT: 120, // 每个泳道的高度
+  NODE_HEIGHT: 90, // 节点高度
+  NODE_GAP: 8, // 同一天内，节点之间的水平间隙
+  NODE_PADDING_X: 12, // 节点内部左右内边距
+  NODE_MIN_WIDTH: 60, // 节点最小宽度
+  CONNECTION_WIDTH: 2, // 连线宽度
+  ARROW_SIZE: 8, // 箭头大小
+  MIN_ZOOM: 0.5,
+  MAX_ZOOM: 2,
+  DEFAULT_ZOOM: 1,
+}
+
+export type TimelineConfig = typeof TIMELINE_BASE_CONFIG
+
+/**
+ * 根据屏幕宽度获取响应式配置
+ * @param screenWidth 当前屏幕宽度
+ */
+export function getResponsiveConfig(screenWidth: number): TimelineConfig {
+  let dayBaseUnit = TIMELINE_BASE_CONFIG.DAY_BASE_UNIT
+
+  if (screenWidth < 1200) {
+    dayBaseUnit = 60 // 小屏幕下缩小
+  } else if (screenWidth > 1920) {
+    dayBaseUnit = 100 // 大屏幕下放大
+  }
+
+  return {
+    ...TIMELINE_BASE_CONFIG,
+    DAY_BASE_UNIT: dayBaseUnit,
+  }
+}
+
+/**
+ * 计算某一天的实际宽度
+ * @param maxFlowCount 该天水平方向最多并排几个节点
+ * @param config 时间轴配置
+ */
+export function getDayWidth(maxFlowCount: number, config: TimelineConfig): number {
+  if (maxFlowCount <= 1) {
+    return config.DAY_BASE_UNIT
+  }
+  // 宽度 = 基准宽度 * 节点数量 + 节点间隙 * (节点数量 - 1)
+  return config.DAY_BASE_UNIT * maxFlowCount + config.NODE_GAP * (maxFlowCount - 1)
+}
+
+/**
+ * 计算节点的实际宽度
+ * @param dayCount 节点跨越的天数
+ * @param maxFlowCount 节点所在天最大并排节点数
+ * @param config 时间轴配置
+ */
+export function getNodeWidth(
+  dayCount: number,
+  maxFlowCount: number,
+  config: TimelineConfig,
+): number {
+  if (dayCount <= 0) return config.NODE_MIN_WIDTH
+
+  // 如果只跨越一天
+  if (dayCount === 1) {
+    // 节点宽度 = (总天宽度 - 总间隙) / maxFlowCount
+    const totalDayWidth = getDayWidth(maxFlowCount, config)
+    const totalGap = config.NODE_GAP * (maxFlowCount - 1)
+    return (totalDayWidth - totalGap) / maxFlowCount
+  }
+
+  // 如果跨越多天，简化处理：BASE_UNIT * dayCount
+  return config.DAY_BASE_UNIT * dayCount
+}
+
+/**
+ * 计算节点在某一天内的 X 偏移量
+ * @param columnIndex 该节点在当天的列索引（0-based）
+ * @param maxFlowCount 该天最大并排节点数
+ * @param config 时间轴配置
+ */
+export function getNodeOffsetInDay(
+  columnIndex: number,
+  maxFlowCount: number,
+  config: TimelineConfig,
+): number {
+  if (columnIndex === 0) return 0
+
+  // 每个节点的宽度
+  const nodeWidth = getNodeWidth(1, maxFlowCount, config)
+
+  // 偏移量 = (节点宽度 + 间隙) * 列索引
+  return (nodeWidth + config.NODE_GAP) * columnIndex
+}
+
+/**
+ * 辅助函数：格式化日期范围
+ * @param startDate 开始日期
+ * @param endDate 结束日期
+ */
+export function formatDateRange(startDate: string, endDate: string): string {
+  const start = startDate.slice(5) // MM-DD
+  const end = endDate.slice(5)
+
+  if (start === end) {
+    return start
+  }
+
+  return `${start} ~ ${end}`
+}
+
+/**
+ * 辅助函数：判断日期是否在范围内
+ * @param date 目标日期
+ * @param startDate 开始日期
+ * @param endDate 结束日期
+ */
+export function isDateInRange(date: string, startDate: string, endDate: string): boolean {
+  return date >= startDate && date <= endDate
+}

@@ -1,0 +1,151 @@
+<template>
+  <div class="workflow-container">
+    <div class="workflow-header">
+      <el-page-header @back="handleBack">
+        <template #content>
+          <div class="header-content">
+            <h2>{{ projectInfo?.projectName || '流程页面' }}</h2>
+            <el-tag v-if="projectInfo" type="info" size="large">
+              项目ID: {{ projectInfo.id }}
+            </el-tag>
+          </div>
+        </template>
+      </el-page-header>
+    </div>
+
+    <div v-if="projectInfo" class="workflow-content">
+      <el-card shadow="hover" style="margin-bottom: 20px">
+        <template #header>
+          <div class="card-header">
+            <span>项目信息</span>
+          </div>
+        </template>
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="项目名称">
+            {{ projectInfo.projectName }}
+          </el-descriptions-item>
+          <el-descriptions-item label="委托单位">
+            {{ projectInfo.clientUnit }}
+          </el-descriptions-item>
+          <el-descriptions-item label="创建时间">
+            {{ projectInfo.createTime }}
+          </el-descriptions-item>
+          <el-descriptions-item label="更新时间">
+            {{ projectInfo.updateTime }}
+          </el-descriptions-item>
+          <el-descriptions-item label="设计状态">
+            <el-tag :type="projectInfo.taskStatus.design ? 'success' : 'info'">
+              {{ projectInfo.taskStatus.design ? '已完成' : '未完成' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="审核状态">
+            <el-tag :type="projectInfo.taskStatus.review ? 'success' : 'info'">
+              {{ projectInfo.taskStatus.review ? '已完成' : '未完成' }}
+            </el-tag>
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-card>
+
+      <el-card shadow="hover">
+        <template #header>
+          <div class="card-header">
+            <span>工作流程</span>
+          </div>
+        </template>
+        <el-empty description="工作流程功能开发中..." />
+      </el-card>
+    </div>
+
+    <div v-else class="loading-container">
+      <el-skeleton :rows="8" animated />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { getProjectDetail, type ProjectItem } from '@/api/project'
+
+const router = useRouter()
+const route = useRoute()
+
+const projectInfo = ref<ProjectItem | null>(null)
+
+// 返回
+const handleBack = () => {
+  router.push('/task')
+}
+
+// 获取项目详情
+const fetchProjectDetail = async () => {
+  const projectId = route.query.projectId as string
+  if (!projectId) {
+    ElMessage.warning('缺少项目ID参数')
+    router.push('/task')
+    return
+  }
+
+  try {
+    const result = await getProjectDetail(Number(projectId))
+    if (result) {
+      projectInfo.value = result
+    } else {
+      ElMessage.error('项目不存在')
+      router.push('/task')
+    }
+  } catch (error: any) {
+    ElMessage.error(error.message || '获取项目详情失败')
+    router.push('/task')
+  }
+}
+
+onMounted(() => {
+  fetchProjectDetail()
+})
+</script>
+
+<style scoped lang="scss">
+.workflow-container {
+  padding: 24px;
+  background: var(--body-background);
+  min-height: calc(100vh - 64px);
+
+  .workflow-header {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: var(--component-background);
+    border: 1px solid var(--border-color-light);
+    border-radius: 8px;
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-color);
+      }
+    }
+  }
+
+  .workflow-content {
+    .card-header {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+  }
+
+  .loading-container {
+    padding: 24px;
+    background: var(--component-background);
+    border: 1px solid var(--border-color-light);
+    border-radius: 8px;
+  }
+}
+</style>

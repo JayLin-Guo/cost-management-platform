@@ -1,0 +1,507 @@
+/**
+ * Element Plus 暗色主题全局样式覆盖
+ * 可在此文件统一管理所有 Element Plus 组件的暗色样式
+ */
+
+// ==================== 配色方案选择 ====================
+// 标准深灰色方案（参考 Omni、GitHub、VS Code 等主流暗色主题）
+$dark-bg-primary: #1e1e1e; // 主背景
+$dark-bg-secondary: #252526; // 卡片/组件背景
+$dark-bg-tertiary: #2d2d30; // 三级背景（表头等）
+$dark-bg-hover: #37373d; // 悬停背景
+
+// 通用边框色
+$dark-border: #3e3e42;
+$dark-border-light: #4a4a4e;
+
+// ==================== Element Plus 组件样式覆盖 ====================
+
+html.dark {
+  // 全局背景
+  background: $dark-bg-primary;
+  color-scheme: dark;
+
+  // ========== 表格 Table ==========
+  .el-table {
+    --el-table-bg-color: #{$dark-bg-secondary};
+    --el-table-tr-bg-color: #{$dark-bg-secondary};
+    --el-table-header-bg-color: #{$dark-bg-tertiary};
+    --el-table-row-hover-bg-color: #{$dark-bg-hover};
+    --el-table-border-color: #{$dark-border};
+    --el-table-header-text-color: rgba(255, 255, 255, 0.95);
+    --el-table-text-color: rgba(255, 255, 255, 0.75);
+
+    background: $dark-bg-secondary;
+
+    .el-table__header-wrapper {
+      background: $dark-bg-tertiary;
+
+      th {
+        background: $dark-bg-tertiary !important;
+        border-color: $dark-border;
+        color: rgba(255, 255, 255, 0.95) !important;
+        font-weight: 600;
+
+        .cell {
+          color: rgba(255, 255, 255, 0.95) !important;
+          font-weight: 600;
+        }
+      }
+    }
+
+    .el-table__body-wrapper {
+      .el-table__body {
+        tr {
+          background: $dark-bg-secondary;
+
+          &:hover > td {
+            background: $dark-bg-hover !important;
+          }
+        }
+
+        td {
+          border-color: $dark-border;
+        }
+      }
+    }
+
+    // 斑马纹
+    &.el-table--striped {
+      .el-table__body {
+        tr.el-table__row--striped {
+          td {
+            background: $dark-bg-tertiary;
+          }
+        }
+      }
+    }
+
+    // 空数据状态
+    .el-table__empty-block {
+      background: $dark-bg-secondary;
+    }
+  }
+
+  // ========== 卡片 Card ==========
+  .el-card {
+    --el-card-bg-color: #{$dark-bg-secondary};
+    --el-card-border-color: #{$dark-border};
+
+    background: $dark-bg-secondary;
+    border: 1px solid $dark-border;
+
+    .el-card__header {
+      background: $dark-bg-tertiary;
+      border-bottom-color: $dark-border;
+    }
+
+    .el-card__body {
+      background: $dark-bg-secondary;
+    }
+  }
+
+  // ========== 输入框 Input ==========
+  .el-input {
+    --el-input-bg-color: #{$dark-bg-tertiary};
+    --el-input-border-color: #{$dark-border};
+    --el-input-hover-border-color: #{$dark-border-light};
+    --el-input-focus-border-color: var(--primary-color);
+    --el-input-text-color: rgba(255, 255, 255, 0.85);
+    --el-input-placeholder-color: rgba(255, 255, 255, 0.45);
+
+    .el-input__wrapper {
+      background: $dark-bg-tertiary;
+      border-color: $dark-border;
+      box-shadow: 0 0 0 1px $dark-border inset;
+
+      &:hover {
+        box-shadow: 0 0 0 1px $dark-border-light inset;
+      }
+
+      &.is-focus {
+        box-shadow: 0 0 0 1px var(--primary-color) inset;
+      }
+    }
+
+    .el-input__inner {
+      color: rgba(255, 255, 255, 0.85);
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.45);
+      }
+    }
+  }
+
+  // ========== 按钮 Button ==========
+  .el-button {
+    --el-button-bg-color: #{$dark-bg-tertiary};
+    --el-button-border-color: #{$dark-border};
+    --el-button-text-color: rgba(255, 255, 255, 0.85);
+    --el-button-hover-bg-color: #{$dark-bg-hover};
+    --el-button-hover-border-color: #{$dark-border-light};
+    --el-button-active-bg-color: #{$dark-bg-tertiary};
+
+    &.el-button--default {
+      background: $dark-bg-tertiary;
+      border-color: $dark-border;
+
+      &:hover {
+        background: $dark-bg-hover;
+        border-color: $dark-border-light;
+      }
+    }
+
+    // 主要按钮
+    &.el-button--primary {
+      --el-button-bg-color: var(--primary-color);
+      --el-button-border-color: var(--primary-color);
+
+      &:hover {
+        opacity: 0.9;
+      }
+    }
+  }
+
+  // ========== 分页 Pagination ==========
+  .el-pagination {
+    --el-pagination-bg-color: #{$dark-bg-secondary};
+    --el-pagination-button-bg-color: #{$dark-bg-tertiary};
+    --el-pagination-button-color: rgba(255, 255, 255, 0.85);
+    --el-pagination-hover-color: var(--primary-color);
+    --el-pagination-border-color: #{$dark-border};
+
+    .el-pager {
+      li {
+        background: $dark-bg-tertiary;
+        border: 1px solid $dark-border;
+        color: rgba(255, 255, 255, 0.85);
+
+        &:hover {
+          background: $dark-bg-hover;
+          color: var(--primary-color);
+        }
+
+        &.is-active {
+          background: var(--primary-color);
+          color: #fff;
+          border-color: var(--primary-color);
+        }
+      }
+    }
+
+    .btn-prev,
+    .btn-next {
+      background: $dark-bg-tertiary;
+      border: 1px solid $dark-border;
+      color: rgba(255, 255, 255, 0.85);
+
+      &:hover {
+        background: $dark-bg-hover;
+        color: var(--primary-color);
+      }
+
+      &:disabled {
+        background: $dark-bg-secondary;
+        color: rgba(255, 255, 255, 0.25);
+      }
+    }
+
+    .el-select {
+      .el-input__wrapper {
+        background: $dark-bg-tertiary;
+      }
+    }
+  }
+
+  // ========== 下拉菜单 Dropdown ==========
+  .el-dropdown-menu {
+    background: $dark-bg-secondary;
+    border: 1px solid $dark-border;
+    box-shadow: var(--shadow-2);
+
+    .el-dropdown-menu__item {
+      color: rgba(255, 255, 255, 0.85);
+
+      &:hover {
+        background: $dark-bg-hover;
+        color: var(--primary-color);
+      }
+
+      &.is-disabled {
+        color: rgba(255, 255, 255, 0.25);
+      }
+    }
+
+    .el-dropdown-menu__item--divided {
+      border-top-color: $dark-border;
+    }
+  }
+
+  // ========== 弹出框 Popper ==========
+  .el-popper {
+    background: $dark-bg-secondary;
+    border-color: $dark-border;
+  }
+
+  // ========== 选择器 Select ==========
+  .el-select {
+    .el-input__wrapper {
+      background: $dark-bg-tertiary;
+    }
+  }
+
+  .el-select-dropdown {
+    background: $dark-bg-secondary;
+    border-color: $dark-border;
+
+    .el-select-dropdown__item {
+      color: rgba(255, 255, 255, 0.85);
+
+      &:hover {
+        background: $dark-bg-hover;
+      }
+
+      &.is-selected {
+        color: var(--primary-color);
+        font-weight: 600;
+      }
+    }
+  }
+
+  // ========== 描述列表 Descriptions ==========
+  .el-descriptions {
+    --el-descriptions-item-bordered-label-background: #{$dark-bg-tertiary};
+
+    &.is-bordered {
+      .el-descriptions__body {
+        .el-descriptions__table {
+          border-color: $dark-border;
+
+          .el-descriptions__cell {
+            border-color: $dark-border;
+          }
+
+          .el-descriptions__label {
+            background: $dark-bg-tertiary;
+            color: rgba(255, 255, 255, 0.85);
+          }
+
+          .el-descriptions__content {
+            background: $dark-bg-secondary;
+            color: rgba(255, 255, 255, 0.65);
+          }
+        }
+      }
+    }
+  }
+
+  // ========== 空状态 Empty ==========
+  .el-empty {
+    --el-empty-fill-color-0: #{$dark-bg-tertiary};
+    --el-empty-fill-color-1: #{$dark-bg-hover};
+
+    .el-empty__description {
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
+  // ========== 标签 Tag ==========
+  .el-tag {
+    border-color: transparent;
+
+    &.el-tag--info {
+      --el-tag-bg-color: #{$dark-bg-tertiary};
+      --el-tag-text-color: rgba(255, 255, 255, 0.85);
+      --el-tag-border-color: #{$dark-border};
+      background: $dark-bg-tertiary;
+      border-color: $dark-border;
+    }
+
+    &.el-tag--success {
+      --el-tag-bg-color: rgba(73, 170, 25, 0.15);
+      --el-tag-text-color: var(--success-color);
+    }
+
+    &.el-tag--warning {
+      --el-tag-bg-color: rgba(216, 150, 20, 0.15);
+      --el-tag-text-color: var(--warning-color);
+    }
+
+    &.el-tag--danger {
+      --el-tag-bg-color: rgba(211, 32, 41, 0.15);
+      --el-tag-text-color: var(--error-color);
+    }
+  }
+
+  // ========== 分割线 Divider ==========
+  .el-divider {
+    --el-border-color-lighter: #{$dark-border};
+    border-color: $dark-border;
+
+    .el-divider__text {
+      background: $dark-bg-secondary;
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
+  // ========== 头像 Avatar ==========
+  .el-avatar {
+    background: $dark-bg-tertiary;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  // ========== 复选框 Checkbox ==========
+  .el-checkbox {
+    --el-checkbox-bg-color: #{$dark-bg-tertiary};
+    --el-checkbox-input-border-color: #{$dark-border};
+
+    .el-checkbox__inner {
+      background: $dark-bg-tertiary;
+      border-color: $dark-border;
+    }
+
+    &.is-checked {
+      .el-checkbox__inner {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+    }
+  }
+
+  // ========== 消息提示 Message ==========
+  .el-message {
+    background: $dark-bg-secondary;
+    border-color: $dark-border;
+    box-shadow: var(--shadow-2);
+
+    .el-message__content {
+      color: rgba(255, 255, 255, 0.85);
+    }
+  }
+
+  // ========== 通知 Notification ==========
+  .el-notification {
+    background: $dark-bg-secondary;
+    border-color: $dark-border;
+    box-shadow: var(--shadow-3);
+
+    .el-notification__title {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .el-notification__content {
+      color: rgba(255, 255, 255, 0.65);
+    }
+  }
+
+  // ========== 对话框 Dialog ==========
+  .el-dialog {
+    background: $dark-bg-secondary;
+    border: 1px solid $dark-border;
+    box-shadow: var(--shadow-3);
+
+    .el-dialog__header {
+      background: $dark-bg-tertiary;
+      border-bottom: 1px solid $dark-border;
+    }
+
+    .el-dialog__title {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .el-dialog__body {
+      background: $dark-bg-secondary;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .el-dialog__footer {
+      background: $dark-bg-secondary;
+      border-top: 1px solid $dark-border;
+    }
+  }
+
+  // ========== 抽屉 Drawer ==========
+  .el-drawer {
+    background: $dark-bg-secondary;
+    box-shadow: var(--shadow-3);
+
+    .el-drawer__header {
+      background: $dark-bg-tertiary;
+      border-bottom: 1px solid $dark-border;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .el-drawer__body {
+      background: $dark-bg-secondary;
+    }
+  }
+
+  // ========== 工具提示 Tooltip ==========
+  .el-tooltip__popper {
+    background: $dark-bg-tertiary;
+    border-color: $dark-border;
+
+    .el-tooltip__arrow::before {
+      background: $dark-bg-tertiary;
+      border-color: $dark-border;
+    }
+  }
+
+  // ========== 页面头 Page Header ==========
+  .el-page-header {
+    .el-page-header__content {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .el-page-header__title {
+      color: rgba(255, 255, 255, 0.65);
+    }
+  }
+
+  // ========== 骨架屏 Skeleton ==========
+  .el-skeleton {
+    .el-skeleton__item {
+      background: $dark-bg-tertiary;
+    }
+  }
+
+  // ========== 加载 Loading ==========
+  .el-loading-mask {
+    background-color: rgba(30, 30, 30, 0.8);
+  }
+
+  // ========== 图标 Icon ==========
+  .el-icon {
+    color: rgba(255, 255, 255, 0.65);
+
+    &:hover {
+      color: var(--primary-color);
+    }
+  }
+
+  // ========== 链接 Link ==========
+  .el-link {
+    --el-link-text-color: rgba(255, 255, 255, 0.85);
+    --el-link-hover-text-color: var(--primary-color);
+  }
+
+  // ========== 滚动条美化 ==========
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: $dark-bg-secondary;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: $dark-bg-hover;
+    border-radius: 4px;
+
+    &:hover {
+      background: $dark-border-light;
+    }
+  }
+}

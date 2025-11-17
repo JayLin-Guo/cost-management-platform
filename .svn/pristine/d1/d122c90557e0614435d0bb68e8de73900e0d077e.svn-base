@@ -1,0 +1,463 @@
+<template>
+  <div class="login-container">
+    <!-- 背景装饰 -->
+    <div class="bg-decoration">
+      <div class="circle circle-1"></div>
+      <div class="circle circle-2"></div>
+      <div class="circle circle-3"></div>
+    </div>
+
+    <!-- 登录卡片 -->
+    <div class="login-card">
+      <!-- 左侧：欢迎区域 -->
+      <div class="welcome-section">
+        <div class="welcome-content">
+          <h1 class="system-title">造价管理平台</h1>
+          <p class="system-subtitle">Cost Management Platform</p>
+          <div class="welcome-illustration">
+            <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color: #1890ff; stop-opacity: 1" />
+                  <stop offset="100%" style="stop-color: #096dd9; stop-opacity: 1" />
+                </linearGradient>
+              </defs>
+              <circle cx="200" cy="150" r="80" fill="url(#gradient1)" opacity="0.2" />
+              <circle cx="200" cy="150" r="60" fill="url(#gradient1)" opacity="0.4" />
+              <circle cx="200" cy="150" r="40" fill="url(#gradient1)" opacity="0.6" />
+              <path d="M 160 150 L 200 110 L 240 150 L 200 190 Z" fill="#1890ff" opacity="0.8" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：登录表单 -->
+      <div class="form-section">
+        <div class="form-wrapper">
+          <div class="form-header">
+            <h2>欢迎登录</h2>
+            <p>请输入您的账号和密码</p>
+          </div>
+
+          <el-form
+            ref="loginFormRef"
+            :model="loginForm"
+            :rules="loginRules"
+            class="login-form"
+            @keyup.enter="handleLogin"
+          >
+            <el-form-item prop="username">
+              <el-input
+                v-model="loginForm.username"
+                placeholder="请输入用户名"
+                size="large"
+                clearable
+              >
+                <template #prefix>
+                  <el-icon><User /></el-icon>
+                </template>
+              </el-input>
+            </el-form-item>
+
+            <el-form-item prop="password">
+              <el-input
+                v-model="loginForm.password"
+                type="password"
+                placeholder="请输入密码"
+                size="large"
+                show-password
+                clearable
+              >
+                <template #prefix>
+                  <el-icon><Lock /></el-icon>
+                </template>
+              </el-input>
+            </el-form-item>
+
+            <el-form-item>
+              <div class="form-options">
+                <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
+                <el-link type="primary" :underline="false">忘记密码？</el-link>
+              </div>
+            </el-form-item>
+
+            <el-form-item>
+              <el-button
+                type="primary"
+                size="large"
+                :loading="loading"
+                class="login-button"
+                @click="handleLogin"
+              >
+                {{ loading ? '登录中...' : '登 录' }}
+              </el-button>
+            </el-form-item>
+          </el-form>
+
+          <div class="form-footer">
+            <el-divider>
+              <span class="divider-text">快速登录</span>
+            </el-divider>
+            <div class="quick-login">
+              <el-tooltip content="微信登录" placement="top">
+                <div class="quick-login-item">
+                  <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M664.250054 368.541681c10.015098 0 19.892049 0.732687 29.67281 1.795902-26.647917-122.810047-159.358451-214.077703-310.826188-214.077703-169.353083 0-308.085774 114.232694-308.085774 259.274068 0 83.708494 46.165436 152.460344 123.281791 205.78483l-30.80868 91.730191 107.688651-53.455469c38.558178 7.53665 69.459978 15.308661 107.924012 15.308661 9.66308 0 19.230993-0.470721 28.752858-1.225921-6.025227-20.36584-9.521864-41.723264-9.521864-63.862493C402.328693 476.632491 517.908058 368.541681 664.250054 368.541681zM498.62897 285.87389c23.200398 0 38.557154 15.120372 38.557154 38.061874 0 22.846334-15.356756 38.156018-38.557154 38.156018-23.107277 0-46.260603-15.309684-46.260603-38.156018C452.368366 300.994262 475.522716 285.87389 498.62897 285.87389zM283.016307 362.090758c-23.107277 0-46.402843-15.309684-46.402843-38.156018 0-22.941502 23.295566-38.061874 46.402843-38.061874 23.081695 0 38.46301 15.120372 38.46301 38.061874C321.479317 346.782098 306.098002 362.090758 283.016307 362.090758zM945.448458 606.151333c0-121.888048-123.258255-221.236753-261.683043-221.236753-146.57838 0-262.015505 99.348706-262.015505 221.236753 0 122.06508 115.437126 221.200938 262.015505 221.200938 30.66644 0 61.617359-7.609305 92.423993-15.262612l84.513836 45.786813-23.178909-76.17082C899.379213 735.776599 945.448458 674.90216 945.448458 606.151333zM598.803087 567.994292c-15.332197 0-30.807656-15.096836-30.807656-30.501688 0-15.190981 15.47546-30.477129 30.807656-30.477129 23.295566 0 38.558178 15.286148 38.558178 30.477129C637.361265 552.897456 622.098653 567.994292 598.803087 567.994292zM768.25071 567.994292c-15.213493 0-30.594809-15.096836-30.594809-30.501688 0-15.190981 15.381315-30.477129 30.594809-30.477129 23.107277 0 38.558178 15.286148 38.558178 30.477129C806.808888 552.897456 791.357987 567.994292 768.25071 567.994292z"
+                      fill="#00C800"
+                    />
+                  </svg>
+                </div>
+              </el-tooltip>
+              <el-tooltip content="QQ登录" placement="top">
+                <div class="quick-login-item">
+                  <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M511.09491 63.501037c-131.250682 0-237.686656 135.155236-237.686656 301.769149 0 99.896843 40.020477 187.257545 101.993592 240.030594-5.858149 29.743529-27.539493 87.449711-67.846221 148.132267 0 0 120.890183-14.038161 188.950366-96.989248 24.136812 6.857042 49.555143 10.501045 75.589226 10.501045 131.224148 0 237.660122-135.128703 237.660122-301.742616C809.755419 198.656273 642.319058 63.501037 511.09491 63.501037L511.09491 63.501037zM329.524346 809.755419c0 0-37.402143 96.989248-120.890183 120.336929 0 0 251.645073 29.055154 314.683039-120.336929L329.524346 809.755419 329.524346 809.755419zM329.524346 809.755419"
+                      fill="#4EABF5"
+                    />
+                  </svg>
+                </div>
+              </el-tooltip>
+            </div>
+            <div class="tips">
+              <el-icon><InfoFilled /></el-icon>
+              <span>测试账号：admin / 123456</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { User, Lock, InfoFilled } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
+
+const router = useRouter()
+const userStore = useUserStore()
+
+// 表单引用
+const loginFormRef = ref<FormInstance>()
+
+// 加载状态
+const loading = ref(false)
+
+// 登录表单数据
+const loginForm = reactive({
+  username: 'admin',
+  password: '123456',
+  rememberMe: true,
+})
+
+// 表单验证规则
+const loginRules: FormRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' },
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' },
+  ],
+}
+
+// 登录处理
+const handleLogin = async () => {
+  if (!loginFormRef.value) return
+
+  await loginFormRef.value.validate(async (valid) => {
+    if (!valid) return
+
+    loading.value = true
+    try {
+      await userStore.login({
+        username: loginForm.username,
+        password: loginForm.password,
+      })
+
+      ElMessage.success('登录成功！')
+
+      // 跳转到首页
+      router.push('/home')
+    } catch (error: any) {
+      ElMessage.error(error.message || '登录失败，请检查用户名和密码')
+    } finally {
+      loading.value = false
+    }
+  })
+}
+
+// 组件挂载时的动画
+onMounted(() => {
+  // 可以在这里添加进入动画
+  const loginCard = document.querySelector('.login-card') as HTMLElement
+  if (loginCard) {
+    loginCard.style.opacity = '0'
+    loginCard.style.transform = 'translateY(20px)'
+
+    setTimeout(() => {
+      loginCard.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+      loginCard.style.opacity = '1'
+      loginCard.style.transform = 'translateY(0)'
+    }, 100)
+  }
+})
+</script>
+
+<style scoped lang="scss">
+.login-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// 背景装饰
+.bg-decoration {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+
+  .circle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    animation: float 20s infinite;
+
+    &.circle-1 {
+      width: 300px;
+      height: 300px;
+      top: -100px;
+      left: -100px;
+      animation-delay: 0s;
+    }
+
+    &.circle-2 {
+      width: 400px;
+      height: 400px;
+      bottom: -150px;
+      right: -150px;
+      animation-delay: 5s;
+    }
+
+    &.circle-3 {
+      width: 200px;
+      height: 200px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation-delay: 10s;
+    }
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+}
+
+// 登录卡片
+.login-card {
+  position: relative;
+  display: flex;
+  width: 1000px;
+  max-width: 95%;
+  height: 600px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  z-index: 1;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    height: auto;
+    min-height: 500px;
+  }
+}
+
+// 欢迎区域
+.welcome-section {
+  flex: 1;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  color: #fff;
+
+  @media (max-width: 768px) {
+    padding: 40px 20px;
+  }
+
+  .welcome-content {
+    text-align: center;
+
+    .system-title {
+      font-size: 42px;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+      letter-spacing: 2px;
+
+      @media (max-width: 768px) {
+        font-size: 32px;
+      }
+    }
+
+    .system-subtitle {
+      font-size: 18px;
+      opacity: 0.9;
+      margin: 0 0 40px 0;
+      font-weight: 300;
+
+      @media (max-width: 768px) {
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+    }
+
+    .welcome-illustration {
+      svg {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+      }
+    }
+  }
+}
+
+// 表单区域
+.form-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 50px;
+  background: #fff;
+
+  @media (max-width: 768px) {
+    padding: 40px 30px;
+  }
+
+  .form-wrapper {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .form-header {
+    margin-bottom: 40px;
+
+    h2 {
+      font-size: 32px;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 10px 0;
+    }
+
+    p {
+      font-size: 14px;
+      color: #999;
+      margin: 0;
+    }
+  }
+
+  .login-form {
+    .el-form-item {
+      margin-bottom: 24px;
+    }
+
+    .form-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .login-button {
+      width: 100%;
+      height: 48px;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      border-radius: 8px;
+    }
+  }
+
+  .form-footer {
+    margin-top: 30px;
+
+    .divider-text {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .quick-login {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+
+      .quick-login-item {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #f5f5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+
+        svg {
+          width: 28px;
+          height: 28px;
+        }
+
+        &:hover {
+          background: #e8e8e8;
+          transform: translateY(-2px);
+        }
+      }
+    }
+
+    .tips {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 24px;
+      padding: 12px;
+      background: #f0f9ff;
+      border-radius: 8px;
+      color: #1890ff;
+      font-size: 13px;
+
+      .el-icon {
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+// 登录页面保持渐变背景
+// 其他页面使用暗色主题
+</style>

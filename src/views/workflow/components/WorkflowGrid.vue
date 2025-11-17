@@ -1,0 +1,611 @@
+<template>
+  <div class="workflow-grid-container">
+    <div v-if="!gridData" class="loading">
+      <el-skeleton :rows="8" animated />
+    </div>
+
+    <div v-else class="workflow-grid" ref="gridRef">
+      <!-- 左侧固定：审核人员列表 -->
+      <div class="review-user-list">
+        <!-- 占位：对齐月份行 -->
+        <div class="placeholder-month"></div>
+
+        <!-- 占位：对齐日期行 -->
+        <div class="placeholder-date"></div>
+
+        <!-- 审核人员列表 -->
+        <div
+          v-for="user in rawData?.users"
+          :key="user.id"
+          class="review-user-item"
+          :style="{ height: `${GRID_CONFIG.SWIMLANE_HEIGHT}px` }"
+        >
+          <div class="user-avatar">
+            <span>{{ user.name.charAt(0) }}</span>
+          </div>
+          <div class="user-info">
+            <div class="user-name">{{ user.name }}</div>
+            <div class="user-role">{{ user.role }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧可滚动：棋盘内容 -->
+      <div class="grid-content-wrapper">
+        <div class="grid-content" :style="gridStyle">
+          <!-- 第一行：月份 -->
+          <div class="month-row">
+            <div
+              v-for="month in gridData.months"
+              :key="month.id"
+              class="month-cell"
+              :style="{
+                left: `${month.position.x}px`,
+                width: `${month.position.width}px`,
+              }"
+            >
+              <span class="month-year">{{ month.year }}年</span>
+              <span class="month-text">{{ month.name }}</span>
+            </div>
+          </div>
+
+          <!-- 第二行：日期 -->
+          <div class="date-row">
+            <div
+              v-for="day in gridData.days"
+              :key="day.date"
+              class="date-cell"
+              :class="{
+                'is-today': day.isToday,
+                'is-weekend': day.isWeekend,
+                'has-holiday': day.holiday,
+              }"
+              :style="{
+                left: `${day.position.x}px`,
+                width: `${day.position.width}px`,
+              }"
+            >
+              <div class="date-number">{{ day.day }}</div>
+              <div class="date-weekday">周{{ day.weekday }}</div>
+              <div v-if="day.holiday" class="date-holiday">({{ day.holiday.name }})</div>
+            </div>
+          </div>
+
+          <!-- 网格区域 -->
+          <div class="grid-area">
+            <!-- 垂直网格线（日期列） -->
+            <div
+              v-for="day in gridData.days"
+              :key="`v-line-${day.date}`"
+              class="grid-line-vertical"
+              :style="{
+                left: `${day.position.x}px`,
+                width: `${day.position.width}px`,
+                height: `${gridData.totalHeight - GRID_CONFIG.MONTH_ROW_HEIGHT - GRID_CONFIG.DATE_ROW_HEIGHT}px`,
+              }"
+              :class="{ 'is-today': day.isToday, 'is-weekend': day.isWeekend }"
+            >
+            </div>
+
+            <!-- 水平网格线（泳道行） -->
+            <div
+              v-for="(lane, index) in gridData.swimlanes"
+              :key="`h-line-${lane.id}`"
+              class="grid-line-horizontal"
+              :style="{
+                top: `${index * GRID_CONFIG.SWIMLANE_HEIGHT}px`,
+                height: `${GRID_CONFIG.SWIMLANE_HEIGHT}px`,
+                width: `${gridData.totalWidth}px`,
+              }"
+            ></div>
+
+            <!-- 节点层 -->
+            <div
+              v-for="node in gridData.nodes"
+              :key="node.id"
+              class="workflow-node"
+              :class="[`node-${node.type}`, `status-${node.status}`]"
+              :style="{
+                left: `${node.position.x}px`,
+                top: `${getSwimlaneTopPosition(node.swimlaneId) + node.position.y}px`,
+                width: `${node.position.width}px`,
+                height: `${node.position.height}px`,
+                backgroundColor: node.style.backgroundColor,
+                borderColor: node.style.borderColor,
+                color: node.style.textColor,
+              }"
+              @click="handleNodeClick(node)"
+            >
+              <div class="node-content">
+                <!-- 节点图标 -->
+                <!-- <el-icon class="node-icon">
+                  <component :is="getIconComponent(node.style.icon)" />
+                </el-icon> -->
+
+                <!-- 节点名称 -->
+                <span class="node-name">{{ node.name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { DocumentAdd, Position, Close, Edit, CircleCheck, Document } from '@element-plus/icons-vue'
+import { getTaskWorkflowData, type TaskWorkflowData } from '@/api/workflow'
+import { useGridCalculator, type CalculatedNode } from '../composables/useGridCalculator'
+import { GRID_CONFIG } from '../config/grid.config'
+
+interface Props {
+  taskId: number
+}
+
+const props = defineProps<Props>()
+
+// ========== 数据 ==========
+const rawData = ref<TaskWorkflowData | null>(null)
+const gridRef = ref<HTMLElement>()
+
+// ========== 计算网格布局 ==========
+const gridData = computed(() => {
+  if (!rawData.value) return null
+  return useGridCalculator(rawData.value, GRID_CONFIG)
+})
+
+// 网格样式
+const gridStyle = computed(() => {
+  if (!gridData.value) return {}
+  return {
+    width: `${gridData.value.totalWidth}px`,
+    minHeight: `${gridData.value.totalHeight}px`,
+  }
+})
+
+// ========== 辅助函数 ==========
+
+/**
+ * 获取泳道顶部位置
+ */
+function getSwimlaneTopPosition(swimlaneId: string): number {
+  if (!gridData.value) return 0
+  const lane = gridData.value.swimlanes.find((s) => s.id === swimlaneId)
+  return lane ? lane.position.y - GRID_CONFIG.MONTH_ROW_HEIGHT - GRID_CONFIG.DATE_ROW_HEIGHT : 0
+}
+
+/**
+ * 获取图标组件
+ */
+function getIconComponent(iconName: string) {
+  const iconMap: Record<string, any> = {
+    DocumentAdd,
+    Position,
+    Close,
+    Edit,
+    CircleCheck,
+    Document,
+  }
+  return iconMap[iconName] || Document
+}
+
+/**
+ * 节点点击事件
+ */
+function handleNodeClick(node: CalculatedNode) {
+  console.log('点击节点:', node)
+  ElMessage.info(`节点：${node.name}`)
+}
+
+// ========== 生命周期 ==========
+onMounted(async () => {
+  try {
+    rawData.value = await getTaskWorkflowData(props.taskId)
+    console.log('✅ 工作流数据加载成功:', rawData.value)
+  } catch (error) {
+    console.error('❌ 加载工作流数据失败:', error)
+  }
+})
+</script>
+
+<style scoped lang="scss">
+.workflow-grid-container {
+  width: 100%;
+  height: 100%;
+  background: #2a2d35;
+  overflow: hidden;
+
+  .loading {
+    padding: 40px;
+  }
+
+  // ========== 棋盘主体 ==========
+  .workflow-grid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+
+    // ========== 左侧固定：审核人员列表 ==========
+    .review-user-list {
+      flex-shrink: 0;
+      width: 180px;
+      background: linear-gradient(135deg, #2e3138 0%, #363940 100%);
+      border-right: 2px solid rgba(64, 158, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+
+      // 占位：对齐月份行
+      .placeholder-month {
+        height: 50px;
+        background: linear-gradient(135deg, #363940 0%, #3e4149 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        flex-shrink: 0;
+      }
+
+      // 占位：对齐日期行
+      .placeholder-date {
+        height: 80px;
+        background: #2f3238;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+        flex-shrink: 0;
+      }
+
+      // 审核人员项
+      .review-user-item {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        transition: all 0.3s;
+        flex-shrink: 0;
+
+        &:hover {
+          background: rgba(64, 158, 255, 0.05);
+        }
+
+        .user-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #409eff, #66b1ff);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 16px;
+          font-weight: 600;
+          flex-shrink: 0;
+          box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+        }
+
+        .user-info {
+          margin-left: 12px;
+          flex: 1;
+          overflow: hidden;
+
+          .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .user-role {
+            font-size: 12px;
+            color: rgba(64, 158, 255, 0.8);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+      }
+    }
+
+    // ========== 右侧可滚动：棋盘内容 ==========
+    .grid-content-wrapper {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      position: relative;
+
+      .grid-content {
+        position: relative;
+        padding: 0;
+        min-width: 100%;
+      }
+    }
+
+    // ========== 第一行：月份 ==========
+    .month-row {
+      position: sticky;
+      top: 0;
+      height: 50px;
+      background: linear-gradient(135deg, #363940 0%, #3e4149 100%);
+      border-radius: 8px 8px 0 0;
+      z-index: 20;
+      display: flex;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+      .month-cell {
+        position: absolute;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s;
+
+        &:hover {
+          background: rgba(64, 158, 255, 0.08);
+        }
+
+        .month-year {
+          font-size: 12px;
+          font-weight: 400;
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        .month-text {
+          font-size: 14px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.9);
+        }
+      }
+    }
+
+    // ========== 第二行：日期 ==========
+    .date-row {
+      position: sticky;
+      top: 50px;
+      height: 80px;
+      background: #2f3238;
+      z-index: 19;
+      display: flex;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+
+      .date-cell {
+        position: absolute;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.03);
+        }
+
+        // 今天高亮
+        &.is-today {
+          background: linear-gradient(135deg, rgba(64, 158, 255, 0.2), rgba(64, 158, 255, 0.1));
+          border-left: 2px solid #409eff;
+          border-right: 2px solid #409eff;
+
+          .date-number {
+            color: #409eff;
+            font-size: 20px;
+            font-weight: 700;
+          }
+        }
+
+        // 周末
+        &.is-weekend {
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        // 节假日
+        &.has-holiday {
+          .date-number,
+          .date-weekday,
+          .date-holiday {
+            color: #f56c6c;
+          }
+        }
+
+        .date-number {
+          font-size: 16px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        .date-weekday {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.6);
+          margin-top: 4px;
+        }
+
+        .date-holiday {
+          font-size: 10px;
+          color: rgba(255, 255, 255, 0.5);
+          margin-top: 2px;
+        }
+      }
+    }
+
+    // ========== 网格区域 ==========
+    .grid-area {
+      position: relative;
+      width: 100%;
+
+      // 垂直网格线（日期列）
+      .grid-line-vertical {
+        position: absolute;
+        top: 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+        transition: all 0.3s;
+
+        // 今天列高亮
+        &.is-today {
+          background: rgba(64, 158, 255, 0.03);
+          border-right: 2px solid rgba(64, 158, 255, 0.3);
+          z-index: 1;
+        }
+
+        // 周末列
+        &.is-weekend {
+          background: rgba(255, 255, 255, 0.01);
+        }
+      }
+
+      // 水平网格线（泳道行）
+      .grid-line-horizontal {
+        position: absolute;
+        left: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+
+        &:hover {
+          background: rgba(64, 158, 255, 0.02);
+        }
+      }
+
+      // ========== 节点 ==========
+      .workflow-node {
+        position: absolute;
+        border: 2px solid;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        z-index: 10;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+          z-index: 20;
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+
+        .node-content {
+          height: 100%;
+          padding: 8px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+
+          .node-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+          }
+
+          .node-name {
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+          }
+        }
+
+        // 不同状态的样式
+        &.status-pending {
+          opacity: 0.6;
+          border-style: dashed;
+        }
+
+        &.status-in_progress {
+          animation: pulse 2s ease-in-out infinite;
+        }
+
+        &.status-completed {
+          opacity: 1;
+        }
+
+        &.status-rejected {
+          opacity: 0.8;
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        50% {
+          box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
+        }
+      }
+    }
+
+    // ========== 泳道区域 ==========
+    .swimlanes {
+      margin-top: 16px;
+
+      .swimlane {
+        display: flex;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        position: relative;
+
+        // 泳道标签（左侧固定）
+        .swimlane-label {
+          position: sticky;
+          left: 24px;
+          width: 120px;
+          padding: 20px;
+          background: linear-gradient(90deg, rgba(42, 45, 53, 0.98), rgba(42, 45, 53, 0.85));
+          border-right: 2px solid rgba(64, 158, 255, 0.2);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          z-index: 10;
+          border-radius: 4px;
+          box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+
+          .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 6px;
+          }
+
+          .user-role {
+            font-size: 12px;
+            color: rgba(64, 158, 255, 0.8);
+          }
+        }
+
+        // 泳道内容区（网格背景）
+        .swimlane-content {
+          flex: 1;
+          position: relative;
+          margin-left: 144px; // swimlane-label 宽度 + 间距
+
+          // 垂直网格线
+          .grid-line-vertical {
+            position: absolute;
+            height: 100%;
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
+            pointer-events: none;
+
+            // 高亮今天的列
+            &.is-today {
+              background: rgba(64, 158, 255, 0.05);
+              border-right: 1px solid rgba(64, 158, 255, 0.2);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</style>

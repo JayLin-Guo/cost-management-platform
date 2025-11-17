@@ -1,0 +1,394 @@
+<template>
+  <div class="workflow-timeline-container">
+    <div v-if="!rawData" class="loading">
+      <el-skeleton :rows="8" animated />
+    </div>
+
+    <div v-else class="timeline-wrapper" ref="timelineRef">
+      <!-- 时间轴主体（可滚动） -->
+      <div class="timeline-scroll-area" :style="{ width: `${totalWidth}px` }">
+        <!-- 第一行：月份行 -->
+        <div class="month-row">
+          <div
+            v-for="month in calculatedMonths"
+            :key="month.id"
+            class="month-cell"
+            :style="{
+              left: `${month.position.x}px`,
+              width: `${month.position.width}px`,
+            }"
+          >
+            <span class="month-name">{{ month.name }}</span>
+            <span class="month-info">({{ month.daysCount }}天)</span>
+          </div>
+        </div>
+
+        <!-- 第二行：日期行 -->
+        <div class="day-row">
+          <div
+            v-for="day in calculatedDays"
+            :key="day.date"
+            class="day-cell"
+            :class="{
+              'is-today': day.isToday,
+              'is-weekend': day.isWeekend,
+              'is-holiday': day.holiday,
+            }"
+            :style="{
+              left: `${day.position.x}px`,
+              width: `${day.position.width}px`,
+            }"
+          >
+            <div class="day-number">{{ day.day }}</div>
+            <div class="day-weekday">周{{ day.weekday }}</div>
+            <div v-if="day.description" class="day-description">{{ day.description }}</div>
+          </div>
+        </div>
+
+        <!-- 泳道区域 -->
+        <div class="swimlanes-area">
+          <div
+            v-for="lane in calculatedSwimlanes"
+            :key="lane.id"
+            class="swimlane"
+            :style="{ height: `${lane.position.height}px` }"
+          >
+            <!-- 泳道标签（固定在左侧） -->
+            <div class="lane-label">
+              <div class="lane-name">{{ lane.userName }}</div>
+              <div class="lane-role">{{ lane.role }}</div>
+            </div>
+
+            <!-- 节点容器 -->
+            <div class="lane-content">
+              <div
+                v-for="node in getNodesInLane(lane.id)"
+                :key="node.id"
+                class="flow-node"
+                :class="`status-${node.status}`"
+                :style="{
+                  left: `${node.position.x}px`,
+                  width: `${node.position.width}px`,
+                  top: `${node.position.y}px`,
+                  height: `${node.position.height}px`,
+                  backgroundColor: node.style.backgroundColor,
+                  borderColor: node.style.borderColor,
+                }"
+                @click="handleNodeClick(node)"
+              >
+                <div class="node-content">
+                  <el-icon class="node-icon">
+                    <component :is="icons[node.style.icon]" />
+                  </el-icon>
+                  <div class="node-details">
+                    <span class="node-name">{{ node.name }}</span>
+                    <span class="node-assignee">{{ node.assigneeName }}</span>
+                  </div>
+                </div>
+                <div v-if="node.progress > 0" class="progress-bar">
+                  <div class="progress-fill" :style="{ width: `${node.progress}%` }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { Edit, View, Check, Upload, Download, Document, Close } from '@element-plus/icons-vue'
+import { getTaskWorkflowData, type TaskWorkflowData } from '@/api/workflow'
+import { getResponsiveConfig } from '../config/timeline.config'
+import { useTimelineCalculator } from '../composables/useTimelineCalculator'
+
+interface Props {
+  taskId: number
+}
+
+const props = defineProps<Props>()
+
+// ========== 数据和配置 ==========
+const rawData = ref<TaskWorkflowData | null>(null)
+const timelineRef = ref<HTMLElement>()
+
+// 响应式配置
+const screenWidth = ref(window.innerWidth)
+const config = computed(() => getResponsiveConfig(screenWidth.value))
+
+// ========== 计算引擎 ==========
+const { totalWidth, calculatedMonths, calculatedDays, calculatedSwimlanes, getNodesInLane } =
+  useTimelineCalculator(rawData, config.value)
+
+// ========== 生命周期 ==========
+onMounted(async () => {
+  try {
+    rawData.value = await getTaskWorkflowData(props.taskId)
+  } catch (error) {
+    console.error('加载工作流数据失败:', error)
+  }
+})
+
+// ========== 事件处理 ==========
+const handleNodeClick = (node: any) => {
+  console.log('节点点击:', node)
+  // TODO: 显示节点详情
+}
+
+// ========== Icon 映射 ==========
+const icons = { Edit, View, Check, Upload, Download, Document, Close }
+</script>
+
+<style scoped lang="scss">
+.workflow-timeline-container {
+  width: 100%;
+  height: 100%;
+  background: #2a2d35;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .loading {
+    padding: 40px;
+  }
+
+  .timeline-wrapper {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+
+    .timeline-scroll-area {
+      position: relative;
+      min-height: 100%;
+    }
+  }
+
+  // ========== 第一行：月份行 ==========
+  .month-row {
+    position: sticky;
+    top: 0;
+    height: 50px;
+    background: linear-gradient(135deg, #363940 0%, #3e4149 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 10;
+    display: flex;
+
+    .month-cell {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 4px;
+      color: rgba(255, 255, 255, 0.85);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.3s;
+
+      &:hover {
+        background: rgba(64, 158, 255, 0.08);
+      }
+
+      .month-name {
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .month-info {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+
+  // ========== 第二行：日期行 ==========
+  .day-row {
+    position: sticky;
+    top: 50px;
+    height: 80px;
+    background: #2f3238;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 9;
+    display: flex;
+
+    .day-cell {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .day-number {
+        font-size: 18px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .day-weekday {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+        margin-top: 2px;
+      }
+
+      .day-description {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 2px;
+      }
+
+      // 今天高亮
+      &.is-today {
+        background: linear-gradient(135deg, rgba(64, 158, 255, 0.2), rgba(64, 158, 255, 0.12));
+        border-left: 2px solid #409eff;
+        border-right: 2px solid #409eff;
+
+        .day-number {
+          color: #409eff;
+          font-size: 20px;
+          font-weight: 700;
+        }
+
+        .day-weekday {
+          color: rgba(64, 158, 255, 0.85);
+        }
+      }
+
+      // 周末
+      &.is-weekend {
+        background: rgba(255, 255, 255, 0.02);
+        opacity: 0.8;
+      }
+
+      // 节假日
+      &.is-holiday {
+        .day-number,
+        .day-weekday,
+        .day-description {
+          color: #f56c6c;
+        }
+      }
+    }
+  }
+
+  // ========== 泳道区域 ==========
+  .swimlanes-area {
+    padding-top: 20px;
+
+    .swimlane {
+      display: flex;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      position: relative;
+
+      .lane-label {
+        position: sticky;
+        left: 0;
+        width: 120px;
+        padding: 20px;
+        background: linear-gradient(90deg, rgba(42, 45, 53, 0.98), rgba(42, 45, 53, 0.85));
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 5;
+
+        .lane-name {
+          font-size: 14px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.85);
+          margin-bottom: 6px;
+        }
+
+        .lane-role {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.5);
+        }
+      }
+
+      .lane-content {
+        flex: 1;
+        position: relative;
+        padding: 15px 0;
+
+        .flow-node {
+          position: absolute;
+          border-radius: 8px;
+          border: 2px solid;
+          padding: 12px 16px;
+          cursor: pointer;
+          transition: all 0.3s;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+          }
+
+          .node-content {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+
+            .node-icon {
+              font-size: 18px;
+              color: rgba(255, 255, 255, 0.9);
+              flex-shrink: 0;
+            }
+
+            .node-details {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+
+              .node-name {
+                font-size: 14px;
+                font-weight: 600;
+                color: rgba(255, 255, 255, 0.95);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+
+              .node-assignee {
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.6);
+              }
+            }
+          }
+
+          .progress-bar {
+            height: 4px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+
+            .progress-fill {
+              height: 100%;
+              background: linear-gradient(90deg, #409eff, #67c23a);
+              border-radius: 2px;
+              transition: width 0.5s;
+            }
+          }
+
+          // 进行中状态
+          &.status-in_progress {
+            box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+          }
+        }
+      }
+    }
+  }
+}
+</style>
