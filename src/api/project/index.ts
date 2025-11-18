@@ -1,7 +1,3 @@
-/**
- * 项目相关 API
- */
-import type { PageResult } from '@/mock/project'
 import request from '@/utils/request'
 
 // API 接口类型定义
@@ -15,7 +11,6 @@ export interface GetProjectListParams {
  * 获取项目列表（分页）
  */
 export function getProjectList(params: GetProjectListParams) {
-  // TODO: 后续替换为真实 API 调用
   return request.get('/projects/list', params)
 }
 
@@ -32,13 +27,8 @@ export function getProjectDetail(id: number) {
 /**
  * 创建项目
  */
-export function createProject(_data: Partial<any>) {
-  // TODO: 实现真实 API 调用
-  return new Promise<{ id: number }>((resolve) => {
-    setTimeout(() => {
-      resolve({ id: Math.floor(Math.random() * 10000) })
-    }, 500)
-  })
+export function createProject(data: Partial<any>) {
+  return request.post('/projects/addProject', data)
 }
 
 /**
@@ -64,6 +54,3 @@ export function deleteProject(_id: number) {
     }, 500)
   })
 }
-
-// 导出类型
-export type { PageResult }

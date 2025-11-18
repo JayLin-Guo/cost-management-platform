@@ -23,7 +23,7 @@ export default defineConfig(({ command, mode }) => {
       proxy: {
         // 主服务API
         '/api': {
-          target: 'http://localhost:3000',
+          target: 'http://localhost:8200',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },

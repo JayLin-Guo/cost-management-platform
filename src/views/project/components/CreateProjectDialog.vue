@@ -43,12 +43,12 @@
         <el-col :span="12">
           <el-form-item label="项目类型" prop="projectType" required>
             <el-select v-model="formData.projectType" placeholder="请选择" style="width: 100%">
-              <!-- <el-option label="装饰" value="decoration" />
+              <el-option label="装饰" value="decoration" />
               <el-option label="土建" value="civil" />
               <el-option label="安装" value="installation" />
               <el-option label="市政" value="municipal" />
               <el-option label="园林" value="landscape" />
-              <el-option label="其他" value="other" /> -->
+              <el-option label="其他" value="other" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -122,6 +122,7 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
 import { UploadFilled, Upload } from '@element-plus/icons-vue'
+import { createProject } from '@/api/project'
 
 // Props
 interface Props {
@@ -217,13 +218,9 @@ const handleSubmit = async () => {
 
     submitLoading.value = true
     try {
-      // TODO: 调用创建项目的 API
-      // 模拟 API 调用
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      ElMessage.success('项目创建成功！')
-      emit('success')
+      await createProject(formData)
       handleClose()
+      emit('success')
     } catch (error: any) {
       ElMessage.error(error.message || '创建项目失败')
     } finally {

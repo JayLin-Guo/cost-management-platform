@@ -152,7 +152,7 @@ export class HttpService {
     const res = response.data as ApiResponse
 
     // 业务成功判断
-    if (res.code === 200 || res.success) {
+    if (res.code === 200 || res.success || res.code === 201) {
       if (requestOptions?.showSuccessMsg && requestOptions?.successMsg) {
         ElMessage.success(requestOptions.successMsg || res.message || '操作成功')
       }

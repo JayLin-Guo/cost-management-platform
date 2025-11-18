@@ -44,7 +44,7 @@
           fontWeight: '600',
         }"
       >
-        <el-table-column prop="id" label="序号" width="80" align="center" />
+        <el-table-column type="index" label="序号" width="80" align="center" />
         <el-table-column
           prop="projectName"
           label="项目名称"
