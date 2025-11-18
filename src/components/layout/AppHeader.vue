@@ -39,10 +39,6 @@
         </div>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="naming">
-              <el-icon><MagicStick /></el-icon>
-              命名助手
-            </el-dropdown-item>
             <el-dropdown-item divided command="profile">
               <el-icon><User /></el-icon>
               个人信息
@@ -84,10 +80,10 @@ const userStore = useUserStore()
 // 定义页签
 const tabs = [
   {
-    key: 'task-list',
-    label: '任务列表',
+    key: 'project-list',
+    label: '项目列表',
     icon: List,
-    path: '/task',
+    path: '/project',
   },
   {
     key: 'workflow',
@@ -98,7 +94,7 @@ const tabs = [
 ]
 
 // 当前激活的页签
-const activeTab = ref<string>('task-list')
+const activeTab = ref<string>('project-list')
 
 // 监听路由变化更新激活页签
 watch(

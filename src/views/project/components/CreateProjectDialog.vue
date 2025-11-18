@@ -43,12 +43,12 @@
         <el-col :span="12">
           <el-form-item label="项目类型" prop="projectType" required>
             <el-select v-model="formData.projectType" placeholder="请选择" style="width: 100%">
-              <el-option label="装饰" value="decoration" />
+              <!-- <el-option label="装饰" value="decoration" />
               <el-option label="土建" value="civil" />
               <el-option label="安装" value="installation" />
               <el-option label="市政" value="municipal" />
               <el-option label="园林" value="landscape" />
-              <el-option label="其他" value="other" />
+              <el-option label="其他" value="other" /> -->
             </el-select>
           </el-form-item>
         </el-col>

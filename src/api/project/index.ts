@@ -1,13 +1,8 @@
 /**
  * 项目相关 API
  */
-
-import {
-  mockGetProjectList,
-  mockGetProjectDetail,
-  type PageResult,
-  type ProjectItem,
-} from '@/mock/project'
+import type { PageResult } from '@/mock/project'
+import request from '@/utils/request'
 
 // API 接口类型定义
 export interface GetProjectListParams {
@@ -16,17 +11,12 @@ export interface GetProjectListParams {
   keyword?: string
 }
 
-export interface GetProjectListResult extends PageResult<ProjectItem> {}
-
 /**
  * 获取项目列表（分页）
  */
 export function getProjectList(params: GetProjectListParams) {
   // TODO: 后续替换为真实 API 调用
-  // return get<GetProjectListResult>('/project/list', params)
-
-  // 目前使用 Mock 数据
-  return mockGetProjectList(params)
+  return request.get('/projects/list', params)
 }
 
 /**
@@ -35,15 +25,14 @@ export function getProjectList(params: GetProjectListParams) {
 export function getProjectDetail(id: number) {
   // TODO: 后续替换为真实 API 调用
   // return get<ProjectItem>(`/project/${id}`)
-
   // 目前使用 Mock 数据
-  return mockGetProjectDetail(id)
+  // return mockGetProjectDetail(id)
 }
 
 /**
  * 创建项目
  */
-export function createProject(_data: Partial<ProjectItem>) {
+export function createProject(_data: Partial<any>) {
   // TODO: 实现真实 API 调用
   return new Promise<{ id: number }>((resolve) => {
     setTimeout(() => {
@@ -55,7 +44,7 @@ export function createProject(_data: Partial<ProjectItem>) {
 /**
  * 更新项目
  */
-export function updateProject(_id: number, _data: Partial<ProjectItem>) {
+export function updateProject(_id: number, _data: Partial<any>) {
   // TODO: 实现真实 API 调用
   return new Promise<void>((resolve) => {
     setTimeout(() => {
@@ -77,4 +66,4 @@ export function deleteProject(_id: number) {
 }
 
 // 导出类型
-export type { ProjectItem, PageResult }
+export type { PageResult }

@@ -17,12 +17,12 @@ const routes: Array<RouteRecordRaw> = [
     path: '/home',
     name: 'Home',
     component: () => import('../views/home/index.vue'),
-    redirect: '/task',
+    redirect: '/project',
     children: [
       {
-        path: '/task',
-        name: 'Task',
-        component: () => import('../views/task/index.vue'),
+        path: '/project',
+        name: 'Projectask',
+        component: () => import('../views/project/index.vue'),
         meta: {
           title: '任务列表',
           keepAlive: true,

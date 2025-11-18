@@ -52,7 +52,7 @@
           show-overflow-tooltip
         />
         <el-table-column prop="clientUnit" label="委托单位" min-width="200" show-overflow-tooltip />
-        <el-table-column label="任务情况" width="120" align="center">
+        <!-- <el-table-column label="任务情况" width="120" align="center">
           <template #default="{ row }">
             <div class="task-status">
               <el-tooltip content="设计" placement="top">
@@ -67,7 +67,7 @@
               </el-tooltip>
             </div>
           </template>
-        </el-table-column>
+        </el-table-column> -->
         <el-table-column label="操作" width="120" align="center" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleEnter(row)">进入</el-button>
@@ -96,7 +96,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Plus, EditPen, CircleCheck } from '@element-plus/icons-vue'
-import { getProjectList, type ProjectItem } from '@/api/project'
+import { getProjectList } from '@/api/project'
 import CreateProjectDialog from './components/CreateProjectDialog.vue'
 
 const router = useRouter()
@@ -108,7 +108,7 @@ const searchKeyword = ref('')
 const loading = ref(false)
 
 // 表格数据
-const tableData = ref<ProjectItem[]>([])
+const tableData = ref()
 
 // 分页信息
 const pagination = reactive({
@@ -127,8 +127,9 @@ const fetchProjectList = async () => {
       keyword: searchKeyword.value,
     })
 
-    tableData.value = result.list
-    pagination.total = result.total
+    tableData.value = result.data.list
+    pagination.total = result.data.total
+    console.log(result)
   } catch (error: any) {
     ElMessage.error(error.message || '获取项目列表失败')
   } finally {
@@ -164,7 +165,7 @@ const handleCreateSuccess = () => {
 }
 
 // 进入项目详情/流程页面
-const handleEnter = (row: ProjectItem) => {
+const handleEnter = (row: any) => {
   // 跳转到流程页面，并传递项目ID
   router.push({
     path: '/workflow',

@@ -16,15 +16,16 @@ export default defineConfig(({ command, mode }) => {
       },
     },
     server: {
-      port: 3000,
+      port: 8080,
       host: '0.0.0.0',
       open: true,
       cors: true,
       proxy: {
         // 主服务API
         '/api': {
-          target: 'http://localhost:8055',
+          target: 'http://localhost:3000',
           changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },
     },
