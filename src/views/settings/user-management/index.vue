@@ -127,7 +127,8 @@
               <el-form-item label="角色" prop="role">
                 <el-select v-model="userForm.role" placeholder="请选择角色" style="width: 100%">
                   <el-option label="管理员" value="ADMIN" />
-                  <el-option label="经理" value="MANAGER" />
+                  <el-option label="造价工程师" value="COST_ENGINEER" />
+                  <el-option label="SUPERVISOR" value="SUPERVISOR" />
                   <el-option label="员工" value="STAFF" />
                 </el-select>
               </el-form-item>
@@ -270,7 +271,8 @@ const getRoleTagType = (role: string): 'success' | 'warning' | 'info' | 'primary
 const getRoleLabel = (role: string) => {
   const labelMap: Record<string, string> = {
     ADMIN: '管理员',
-    MANAGER: '经理',
+    COST_ENGINEER: '造价工程师',
+    SUPERVISOR: '项目主管',
     STAFF: '员工',
   }
   return labelMap[role] || '未知'
@@ -388,7 +390,7 @@ const handleSubmit = async () => {
     submitLoading.value = true
     try {
       const formData: any = { ...userForm }
-      delete formData.confirmPassword
+      // delete formData.confirmPassword
 
       if (isEdit.value) {
         // 编辑模式，如果没有输入密码则不更新密码
