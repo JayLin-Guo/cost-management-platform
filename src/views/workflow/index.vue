@@ -69,7 +69,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
-import { getProjectDetail, type ProjectItem } from '@/api/project'
+import { getProjectDetail } from '@/api/project'
 import * as taskAPI from '@/api/task/index'
 import type { TaskItem } from '@/api/task/index'
 import TaskDialog from './components/TaskDialog.vue'
@@ -78,7 +78,7 @@ import WorkflowGrid from './components/WorkflowGrid.vue'
 const router = useRouter()
 const route = useRoute()
 
-const projectInfo = ref<ProjectItem | null>(null)
+const projectInfo = ref()
 const taskList = ref<TaskItem[]>([])
 const selectedTaskId = ref<number | undefined>(undefined)
 const currentTask = ref<TaskItem | null>(null)
@@ -88,6 +88,7 @@ const taskDialogRef = ref<InstanceType<typeof TaskDialog>>()
 // 获取项目详情
 const fetchProjectDetail = async () => {
   const projectId = route.query.projectId as string
+  console.log(projectId, 'projectId')
   if (!projectId) {
     ElMessage.warning('缺少项目ID参数')
     router.push('/task')
@@ -95,18 +96,17 @@ const fetchProjectDetail = async () => {
   }
 
   try {
-    const result = await getProjectDetail(Number(projectId))
+    const result = await getProjectDetail(projectId)
+    console.log(result, 'result')
     if (result) {
-      projectInfo.value = result
+      projectInfo.value = result.data
       // 获取任务列表
       await fetchTaskList(Number(projectId))
     } else {
       ElMessage.error('项目不存在')
-      router.push('/task')
     }
   } catch (error: any) {
     ElMessage.error(error.message || '获取项目详情失败')
-    router.push('/task')
   }
 }
 

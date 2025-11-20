@@ -1,7 +1,12 @@
 <template>
   <div class="task-list-container">
     <!-- 新建项目对话框 -->
-    <CreateProjectDialog v-model="createDialogVisible" @success="handleCreateSuccess" />
+    <CreateProjectDialog 
+      v-model="createDialogVisible" 
+      :edit-data="editData"
+      :is-edit-mode="isEditMode"
+      @success="handleCreateSuccess" 
+    />
     <!-- 搜索栏 -->
     <div class="search-bar">
       <div class="search-left">
@@ -68,9 +73,11 @@
             </div>
           </template>
         </el-table-column> -->
-        <el-table-column label="操作" width="120" align="center" fixed="right">
+        <el-table-column label="操作" width="200" align="center" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleEnter(row)">进入</el-button>
+            <el-button type="primary" link @click="handleDelete(row)">删除</el-button>
+            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -94,9 +101,9 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, EditPen, CircleCheck } from '@element-plus/icons-vue'
-import { getProjectList } from '@/api/project'
+import { getProjectList, deleteProject, getProjectDetail } from '@/api/project'
 import CreateProjectDialog from './components/CreateProjectDialog.vue'
 
 const router = useRouter()
@@ -129,7 +136,6 @@ const fetchProjectList = async () => {
 
     tableData.value = result.data.list
     pagination.total = result.data.total
-    console.log(result)
   } catch (error: any) {
     ElMessage.error(error.message || '获取项目列表失败')
   } finally {
@@ -153,8 +159,14 @@ const handleClear = () => {
 // 对话框显示状态
 const createDialogVisible = ref(false)
 
+// 编辑相关状态
+const isEditMode = ref(false)
+const editData = ref(null)
+
 // 新建项目
 const handleCreate = () => {
+  isEditMode.value = false
+  editData.value = null
   createDialogVisible.value = true
 }
 
@@ -166,6 +178,7 @@ const handleCreateSuccess = () => {
 
 // 进入项目详情/流程页面
 const handleEnter = (row: any) => {
+  console.log(row.id.toString(), 'row')
   // 跳转到流程页面，并传递项目ID
   router.push({
     path: '/workflow',
@@ -173,6 +186,40 @@ const handleEnter = (row: any) => {
       projectId: row.id.toString(),
     },
   })
+}
+
+const handleEdit = async (row: any) => {
+  try {
+    const res = await getProjectDetail(row.id)
+    editData.value = res.data
+    isEditMode.value = true
+    createDialogVisible.value = true
+  } catch (error: any) {
+    ElMessage.error(error.message || '获取项目详情失败')
+  }
+}
+
+const handleDelete = (row: any) => {
+  ElMessageBox.confirm('是否确定删除?', 'Warning', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(async () => {
+      await deleteProject(row.id)
+      ElMessage({
+        type: 'success',
+        message: '删除成功',
+      })
+      // 刷新列表
+      fetchProjectList()
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '已取消删除',
+      })
+    })
 }
 
 // 每页条数改变

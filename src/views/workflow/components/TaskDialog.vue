@@ -273,7 +273,7 @@ const fetchUserList = async () => {
   userListLoading.value = true
   try {
     const users = await getUserList()
-    userList.value = users
+    userList.value = users.data.list
   } catch (error: any) {
     ElMessage.error(error.message || '获取人员列表失败')
   } finally {

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="新建项目"
+    :title="isEditMode ? '编辑项目' : '新建项目'"
     width="900px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -112,24 +112,34 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleSubmit"> 保存 </el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+          {{ isEditMode ? '更新' : '保存' }}
+        </el-button>
       </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch, nextTick, computed, withDefaults } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
 import { UploadFilled, Upload } from '@element-plus/icons-vue'
-import { createProject } from '@/api/project'
+import { createProject, updateProject } from '@/api/project'
 
 // Props
 interface Props {
   modelValue: boolean
+  editData?: any
+  isEditMode?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  editData: null,
+  isEditMode: false,
+})
+
+// Computed properties
+const isEditMode = computed(() => props.isEditMode)
 
 // Emits
 const emit = defineEmits<{
@@ -180,7 +190,24 @@ watch(
   () => props.modelValue,
   (val) => {
     dialogVisible.value = val
+    if (val && props.isEditMode && props.editData) {
+      // 编辑模式下填充表单数据
+      nextTick(() => {
+        fillFormData(props.editData)
+      })
+    }
   },
+)
+
+// 监听编辑数据变化
+watch(
+  () => props.editData,
+  (data) => {
+    if (data && props.isEditMode && dialogVisible.value) {
+      fillFormData(data)
+    }
+  },
+  { deep: true },
 )
 
 // 监听 dialogVisible 变化
@@ -200,11 +227,36 @@ const handleAttachmentChange = (_file: UploadFile, fileList: UploadFile[]) => {
   attachmentFileList.value = fileList
 }
 
+// 填充表单数据（编辑模式）
+const fillFormData = (data: any) => {
+  Object.assign(formData, {
+    projectName: data.projectName || '',
+    projectType: data.projectType || '',
+    clientUnit: data.clientUnit || '',
+    projectSource: data.projectSource || '',
+    contractAmount: data.contractAmount || '',
+    description: data.description || '',
+  })
+}
+
+// 重置表单数据
+const resetFormData = () => {
+  Object.assign(formData, {
+    projectName: '',
+    projectType: '',
+    clientUnit: '',
+    projectSource: '',
+    contractAmount: '',
+    description: '',
+  })
+}
+
 // 关闭对话框
 const handleClose = () => {
   dialogVisible.value = false
   // 重置表单
   formRef.value?.resetFields()
+  resetFormData()
   projectFileList.value = []
   attachmentFileList.value = []
 }
@@ -218,22 +270,27 @@ const handleSubmit = async () => {
 
     submitLoading.value = true
     try {
-      await createProject(formData)
+      if (props.isEditMode && props.editData?.id) {
+        // 编辑模式
+        const params = {
+          id: props.editData.id,
+          ...formData,
+        }
+        await updateProject(params)
+        ElMessage.success('项目更新成功')
+      } else {
+        // 新建模式
+        await createProject(formData)
+        ElMessage.success('项目创建成功')
+      }
       handleClose()
       emit('success')
     } catch (error: any) {
-      ElMessage.error(error.message || '创建项目失败')
+      ElMessage.error(error.message || (props.isEditMode ? '更新项目失败' : '创建项目失败'))
     } finally {
       submitLoading.value = false
     }
   })
-}
-</script>
-
-<script lang="ts">
-import { watch } from 'vue'
-export default {
-  name: 'CreateProjectDialog',
 }
 </script>
 
