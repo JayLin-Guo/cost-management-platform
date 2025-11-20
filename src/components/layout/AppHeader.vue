@@ -15,7 +15,7 @@
     <div class="header-center">
       <div class="tabs">
         <div
-          v-for="tab in tabs"
+          v-for="tab in visibleTabs"
           :key="tab.key"
           :class="['tab-item', { active: activeTab === tab.key }]"
           @click="handleTabClick(tab.key)"
@@ -39,10 +39,11 @@
         </div>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item divided command="profile">
+            <el-dropdown-item command="profile">
               <el-icon><User /></el-icon>
               个人信息
             </el-dropdown-item>
+
             <el-dropdown-item command="settings">
               <el-icon><Setting /></el-icon>
               系统设置
@@ -59,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -69,7 +70,7 @@ import {
   User,
   Setting,
   SwitchButton,
-  MagicStick,
+  UserFilled,
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
@@ -96,13 +97,21 @@ const tabs = [
 // 当前激活的页签
 const activeTab = ref<string>('project-list')
 
+// 所有标签页都可见
+const visibleTabs = computed(() => {
+  return tabs
+})
+
 // 监听路由变化更新激活页签
 watch(
   () => route.path,
   (path) => {
-    const tab = tabs.find((t) => t.path === path)
+    const tab = visibleTabs.value.find((t) => t.path === path)
     if (tab) {
       activeTab.value = tab.key
+    } else {
+      // 如果当前路径不在可见标签页中，清除激活状态
+      activeTab.value = ''
     }
   },
   { immediate: true },
@@ -110,7 +119,7 @@ watch(
 
 // 页签点击
 const handleTabClick = (key: string) => {
-  const tab = tabs.find((t) => t.key === key)
+  const tab = visibleTabs.value.find((t) => t.key === key)
   if (tab) {
     activeTab.value = key
     router.push(tab.path)
@@ -123,8 +132,11 @@ const handleCommand = async (command: string) => {
     case 'profile':
       ElMessage.info('个人信息功能开发中...')
       break
+    case 'user-management':
+      router.push('/settings/user-management')
+      break
     case 'settings':
-      ElMessage.info('系统设置功能开发中...')
+      router.push('/settings')
       break
     case 'logout':
       try {

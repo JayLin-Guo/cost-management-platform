@@ -14,6 +14,27 @@ export function getUserList(params?: any) {
 }
 
 /**
+ * 创建用户
+ */
+export function createUser(data: any) {
+  return request.post('/user/createUser', data)
+}
+
+/**
+ * 更新用户
+ */
+export function updateUser(id: string, data: any) {
+  return request.put(`/user/updateUser/${id}`, data)
+}
+
+/**
+ * 删除用户
+ */
+export function deleteUser(id: string) {
+  return request.delete(`/user/deleteUser/${id}`)
+}
+
+/**
  * 获取审核人员列表
  */
 export function getReviewerList() {

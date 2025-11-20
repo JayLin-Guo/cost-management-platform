@@ -1,0 +1,149 @@
+<template>
+  <div class="settings-container">
+    <!-- 左侧菜单 -->
+    <div class="settings-sidebar">
+      <div class="sidebar-header">
+        <h3>系统设置</h3>
+      </div>
+      <el-menu :default-active="activeMenu" class="settings-menu" @select="handleMenuSelect">
+        <el-sub-menu index="user">
+          <template #title>
+            <el-icon><UserFilled /></el-icon>
+            <span>用户管理</span>
+          </template>
+          <el-menu-item index="/settings/user-management">
+            <el-icon><User /></el-icon>
+            <span>用户列表</span>
+          </el-menu-item>
+          <el-menu-item index="/settings/role-management">
+            <el-icon><Avatar /></el-icon>
+            <span>角色管理</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="system">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span>系统配置</span>
+          </template>
+          <el-menu-item index="/settings/system-config">
+            <el-icon><Tools /></el-icon>
+            <span>基础配置</span>
+          </el-menu-item>
+        </el-sub-menu>
+      </el-menu>
+    </div>
+
+    <!-- 右侧内容区 -->
+    <div class="settings-content">
+      <router-view />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { UserFilled, User, Avatar, Setting, Tools } from '@element-plus/icons-vue'
+
+const router = useRouter()
+const route = useRoute()
+
+const activeMenu = ref('')
+
+// 监听路由变化更新激活菜单
+watch(
+  () => route.path,
+  (path) => {
+    activeMenu.value = path
+  },
+  { immediate: true },
+)
+
+// 菜单选择处理
+const handleMenuSelect = (index: string) => {
+  router.push(index)
+}
+</script>
+
+<style scoped lang="scss">
+.settings-container {
+  display: flex;
+  height: calc(100vh - 64px); // 减去header高度
+  background: var(--body-background);
+
+  .settings-sidebar {
+    width: 260px;
+    background: var(--component-background);
+    border-right: 1px solid var(--border-color-light);
+    box-shadow: var(--shadow-1);
+    display: flex;
+    flex-direction: column;
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color-light);
+      flex-shrink: 0;
+
+      h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-color);
+      }
+    }
+
+    .settings-menu {
+      border: none;
+      background: transparent;
+      flex: 1;
+      overflow-y: auto;
+
+      :deep(.el-sub-menu__title) {
+        height: 48px;
+        line-height: 48px;
+        padding-left: 20px !important;
+        font-weight: 500;
+        color: var(--text-color);
+
+        &:hover {
+          background: var(--hover-background);
+        }
+      }
+
+      :deep(.el-menu-item) {
+        height: 44px;
+        line-height: 44px;
+        padding-left: 50px !important;
+        color: var(--text-color-secondary);
+
+        &:hover {
+          background: var(--hover-background);
+          color: var(--primary-color);
+        }
+
+        &.is-active {
+          background: var(--primary-color-light);
+          color: var(--primary-color);
+          border-right: 3px solid var(--primary-color);
+        }
+      }
+
+      :deep(.el-sub-menu.is-active .el-sub-menu__title) {
+        color: var(--primary-color);
+      }
+
+      :deep(.el-icon) {
+        margin-right: 8px;
+        font-size: 16px;
+      }
+    }
+  }
+
+  .settings-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+</style>

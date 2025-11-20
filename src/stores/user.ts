@@ -6,8 +6,6 @@ interface UserInfo {
   username?: string
   nickname?: string
   avatar?: string
-  role?: string
-  permissions?: string[]
 }
 
 interface LoginParams {
@@ -27,14 +25,30 @@ export const useUserStore = defineStore(
       // 实际项目中这里应该调用API
       return new Promise<void>((resolve, reject) => {
         if (params.username === 'admin' && params.password === '123456') {
-          token.value = 'mock_token_' + Math.random().toString(36).substr(2)
+          token.value = 'mock_token_' + Math.random().toString(36).substring(2)
           userInfo.value = {
             id: 1,
             username: params.username,
             nickname: 'Admin',
             avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-            role: 'admin',
-            permissions: ['*'],
+          }
+          resolve()
+        } else if (params.username === 'user' && params.password === '123456') {
+          token.value = 'mock_token_' + Math.random().toString(36).substring(2)
+          userInfo.value = {
+            id: 2,
+            username: params.username,
+            nickname: '普通用户',
+            avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
+          }
+          resolve()
+        } else if (params.username === 'manager' && params.password === '123456') {
+          token.value = 'mock_token_' + Math.random().toString(36).substring(2)
+          userInfo.value = {
+            id: 3,
+            username: params.username,
+            nickname: '项目经理',
+            avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
           }
           resolve()
         } else {

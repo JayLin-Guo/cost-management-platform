@@ -39,6 +39,49 @@ const routes: Array<RouteRecordRaw> = [
           requireAuth: false,
         },
       },
+      {
+        path: '/settings',
+        name: 'Settings',
+        component: () => import('../views/settings/index.vue'),
+        redirect: '/settings/user-management',
+        meta: {
+          title: '系统设置',
+          keepAlive: true,
+          requireAuth: false,
+        },
+        children: [
+          {
+            path: 'user-management',
+            name: 'SettingsUserManagement',
+            component: () => import('../views/settings/user-management/index.vue'),
+            meta: {
+              title: '用户管理',
+              keepAlive: true,
+              requireAuth: false,
+            },
+          },
+          {
+            path: 'system-config',
+            name: 'SettingsSystemConfig',
+            component: () => import('../views/settings/system-config/index.vue'),
+            meta: {
+              title: '系统配置',
+              keepAlive: true,
+              requireAuth: false,
+            },
+          },
+          {
+            path: 'role-management',
+            name: 'SettingsRoleManagement',
+            component: () => import('../views/settings/role-management/index.vue'),
+            meta: {
+              title: '角色管理',
+              keepAlive: true,
+              requireAuth: false,
+            },
+          },
+        ],
+      },
     ],
   },
   {
@@ -89,6 +132,17 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
   // 设置页面标题
   document.title = `${to.meta.title} | 业务管理平台`
+
+  // 权限检查
+  if (to.meta.requireAuth !== false) {
+    // 这里可以添加登录检查逻辑
+    // const userStore = useUserStore()
+    // if (!userStore.token) {
+    //   next('/login')
+    //   return
+    // }
+  }
+
   next()
 })
 
