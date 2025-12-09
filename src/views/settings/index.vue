@@ -19,6 +19,18 @@
             <el-icon><Avatar /></el-icon>
             <span>角色管理</span>
           </el-menu-item>
+          <el-menu-item index="/settings/department-management">
+            <el-icon><OfficeBuilding /></el-icon>
+            <span>部门管理</span>
+          </el-menu-item>
+          <el-menu-item index="/settings/reviewer-management">
+            <el-icon><UserFilled /></el-icon>
+            <span>审核人员配置</span>
+          </el-menu-item>
+          <el-menu-item index="/settings/task-category-management">
+            <el-icon><List /></el-icon>
+            <span>任务分类管理</span>
+          </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="system">
@@ -44,7 +56,15 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { UserFilled, User, Avatar, Setting, Tools } from '@element-plus/icons-vue'
+import {
+  UserFilled,
+  User,
+  Avatar,
+  Setting,
+  Tools,
+  OfficeBuilding,
+  List,
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()

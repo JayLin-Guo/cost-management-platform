@@ -80,6 +80,36 @@ const routes: Array<RouteRecordRaw> = [
               requireAuth: false,
             },
           },
+          {
+            path: 'department-management',
+            name: 'SettingsDepartmentManagement',
+            component: () => import('../views/settings/department-management/index.vue'),
+            meta: {
+              title: '部门管理',
+              keepAlive: true,
+              requireAuth: false,
+            },
+          },
+          {
+            path: 'reviewer-management',
+            name: 'SettingsReviewerManagement',
+            component: () => import('../views/settings/reviewer-management/index.vue'),
+            meta: {
+              title: '审核人员配置',
+              keepAlive: true,
+              requireAuth: false,
+            },
+          },
+          {
+            path: 'task-category-management',
+            name: 'SettingsTaskCategoryManagement',
+            component: () => import('../views/settings/task-category-management/index.vue'),
+            meta: {
+              title: '任务分类管理',
+              keepAlive: true,
+              requireAuth: false,
+            },
+          },
         ],
       },
     ],

@@ -1,10 +1,10 @@
 <template>
-  <div class="role-management">
+  <div class="task-category-management">
     <div class="search-section">
       <div class="search-left">
         <el-input
           v-model="searchForm.code"
-          placeholder="输入角色编码搜索"
+          placeholder="输入任务编码搜索"
           clearable
           style="width: 200px"
           @keyup.enter="handleSearch"
@@ -15,7 +15,7 @@
         </el-input>
         <el-input
           v-model="searchForm.name"
-          placeholder="输入角色分类名称搜索"
+          placeholder="输入任务分类名称搜索"
           clearable
           style="width: 200px"
           @keyup.enter="handleSearch"
@@ -28,23 +28,24 @@
         <el-button @click="handleReset">重置</el-button>
       </div>
       <div class="search-right">
-        <el-button type="primary" @click="handleAddRole">
+        <el-button type="primary" @click="handleAddTaskCategory">
           <el-icon><Plus /></el-icon>
-          新增角色分类
+          新增任务分类
         </el-button>
       </div>
     </div>
 
     <div class="table-section">
-      <el-table :data="roleList" v-loading="loading" stripe style="width: 100%">
+      <el-table :data="taskCategoryList" v-loading="loading" stripe style="width: 100%">
         <el-table-column type="index" label="序号" width="60" />
-        <el-table-column prop="code" label="角色编码" width="120" />
-        <el-table-column prop="name" label="角色分类名称" min-width="150" />
+        <el-table-column prop="code" label="任务编码" width="120" />
+        <el-table-column prop="name" label="任务分类名称" min-width="150" />
         <el-table-column prop="description" label="描述" min-width="200">
           <template #default="{ row }">
             <span>{{ row.description || '-' }}</span>
           </template>
         </el-table-column>
+        <el-table-column prop="sort" label="排序" width="100" />
         <el-table-column prop="createdAt" label="创建时间" width="160">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
@@ -76,27 +77,41 @@
       </div>
     </div>
 
-    <!-- 新增/编辑角色分类对话框 -->
+    <!-- 新增/编辑任务分类对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑角色分类' : '新增角色分类'"
+      :title="isEdit ? '编辑任务分类' : '新增任务分类'"
       width="500px"
       @close="handleDialogClose"
     >
       <div class="dialog-content">
-        <el-form ref="roleFormRef" :model="roleForm" :rules="roleFormRules" label-width="100px">
-          <el-form-item label="角色编码" prop="code">
-            <el-input v-model="roleForm.code" placeholder="请输入角色编码" />
+        <el-form
+          ref="taskCategoryFormRef"
+          :model="taskCategoryForm"
+          :rules="taskCategoryFormRules"
+          label-width="100px"
+        >
+          <el-form-item label="任务编码" prop="code">
+            <el-input v-model="taskCategoryForm.code" placeholder="请输入任务编码" />
           </el-form-item>
           <el-form-item label="分类名称" prop="name">
-            <el-input v-model="roleForm.name" placeholder="请输入角色分类名称" />
+            <el-input v-model="taskCategoryForm.name" placeholder="请输入任务分类名称" />
           </el-form-item>
           <el-form-item label="描述" prop="description">
             <el-input
-              v-model="roleForm.description"
+              v-model="taskCategoryForm.description"
               type="textarea"
               :rows="3"
-              placeholder="请输入角色分类描述（可选）"
+              placeholder="请输入任务分类描述（可选）"
+            />
+          </el-form-item>
+          <el-form-item label="排序" prop="sort">
+            <el-input-number
+              v-model="taskCategoryForm.sort"
+              :min="0"
+              :max="9999"
+              placeholder="请输入排序值"
+              style="width: 100%"
             />
           </el-form-item>
         </el-form>
@@ -118,15 +133,15 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import {
-  getRoleCategoryList,
-  createRoleCategory,
-  updateRoleCategory,
-  deleteRoleCategory,
-  type CreateRoleCategoryDto,
-  type UpdateRoleCategoryDto,
-  type RoleCategoryEntity,
-  type RoleCategoryPaginationDto,
-} from '@/api/role-category'
+  getTaskCategoryList,
+  createTaskCategory,
+  updateTaskCategory,
+  deleteTaskCategory,
+  type CreateTaskCategoryDto,
+  type UpdateTaskCategoryDto,
+  type TaskCategoryEntity,
+  type TaskCategoryPaginationDto,
+} from '@/api/task-category'
 
 // 搜索表单
 const searchForm = reactive({
@@ -142,18 +157,18 @@ const pagination = reactive({
   total: 0,
 })
 
-// 角色分类列表
-const roleList = ref<RoleCategoryEntity[]>([])
+// 任务分类列表
+const taskCategoryList = ref<TaskCategoryEntity[]>([])
 const loading = ref(false)
 
 // 对话框相关
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitLoading = ref(false)
-const roleFormRef = ref<FormInstance>()
+const taskCategoryFormRef = ref<FormInstance>()
 
-// 角色分类表单
-const roleForm = reactive({
+// 任务分类表单
+const taskCategoryForm = reactive({
   id: '',
   code: '',
   name: '',
@@ -162,17 +177,18 @@ const roleForm = reactive({
 })
 
 // 表单验证规则
-const roleFormRules: FormRules = {
-  name: [
-    { required: true, message: '请输入角色分类名称', trigger: 'blur' },
-    { min: 1, max: 50, message: '角色分类名称长度在 1 到 50 个字符', trigger: 'blur' },
-  ],
+const taskCategoryFormRules: FormRules = {
   code: [
-    { required: true, message: '请输入角色编码', trigger: 'blur' },
-    { min: 1, max: 20, message: '角色编码长度在 1 到 20 个字符', trigger: 'blur' },
-    { pattern: /^[A-Z0-9_]+$/, message: '角色编码只能包含大写字母、数字和下划线', trigger: 'blur' },
+    { required: true, message: '请输入任务编码', trigger: 'blur' },
+    { min: 1, max: 20, message: '任务编码长度在 1 到 20 个字符', trigger: 'blur' },
+    { pattern: /^[A-Z0-9_]+$/, message: '任务编码只能包含大写字母、数字和下划线', trigger: 'blur' },
+  ],
+  name: [
+    { required: true, message: '请输入任务分类名称', trigger: 'blur' },
+    { min: 1, max: 50, message: '任务分类名称长度在 1 到 50 个字符', trigger: 'blur' },
   ],
   description: [{ max: 200, message: '描述长度不能超过 200 个字符', trigger: 'blur' }],
+  sort: [{ type: 'number', message: '排序必须是数字', trigger: 'blur' }],
 }
 
 // 格式化日期
@@ -188,11 +204,11 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// 加载角色分类列表
-const loadRoleList = async () => {
+// 加载任务分类列表
+const loadTaskCategoryList = async () => {
   loading.value = true
   try {
-    const params: RoleCategoryPaginationDto = {
+    const params: TaskCategoryPaginationDto = {
       pageNum: pagination.current,
       pageSize: pagination.size,
       code: searchForm.code || undefined,
@@ -200,25 +216,25 @@ const loadRoleList = async () => {
       description: searchForm.description || undefined,
     }
 
-    const result = await getRoleCategoryList(params)
+    const result = await getTaskCategoryList(params)
 
     if (result && result.data) {
       // 处理分页数据
       if (result.data.list) {
-        roleList.value = result.data.list
+        taskCategoryList.value = result.data.list
         pagination.total = result.data.total || 0
       } else {
         // 处理非分页数据
-        roleList.value = Array.isArray(result.data) ? result.data : []
-        pagination.total = roleList.value.length
+        taskCategoryList.value = Array.isArray(result.data) ? result.data : []
+        pagination.total = taskCategoryList.value.length
       }
     } else {
-      roleList.value = []
+      taskCategoryList.value = []
       pagination.total = 0
     }
   } catch (error: any) {
-    ElMessage.error(error.message || '加载角色分类列表失败')
-    roleList.value = []
+    ElMessage.error(error.message || '加载任务分类列表失败')
+    taskCategoryList.value = []
     pagination.total = 0
   } finally {
     loading.value = false
@@ -228,7 +244,7 @@ const loadRoleList = async () => {
 // 搜索
 const handleSearch = () => {
   pagination.current = 1
-  loadRoleList()
+  loadTaskCategoryList()
 }
 
 // 重置
@@ -241,7 +257,7 @@ const handleReset = () => {
 
 // 重置表单
 const resetForm = () => {
-  Object.assign(roleForm, {
+  Object.assign(taskCategoryForm, {
     id: '',
     code: '',
     name: '',
@@ -250,62 +266,65 @@ const resetForm = () => {
   })
 }
 
-// 新增角色分类
-const handleAddRole = () => {
+// 新增任务分类
+const handleAddTaskCategory = () => {
   isEdit.value = false
   resetForm()
   dialogVisible.value = true
 }
 
-// 编辑角色分类
-const handleEdit = (row: RoleCategoryEntity) => {
+// 编辑任务分类
+const handleEdit = (row: TaskCategoryEntity) => {
   isEdit.value = true
-  Object.assign(roleForm, {
+  Object.assign(taskCategoryForm, {
     id: row.id,
     code: row.code,
     name: row.name,
     description: row.description || '',
+    sort: row.sort || 0,
   })
   dialogVisible.value = true
 }
 
 // 对话框关闭
 const handleDialogClose = () => {
-  roleFormRef.value?.resetFields()
+  taskCategoryFormRef.value?.resetFields()
   resetForm()
 }
 
 // 提交表单
 const handleSubmit = async () => {
-  if (!roleFormRef.value) return
+  if (!taskCategoryFormRef.value) return
 
-  await roleFormRef.value.validate(async (valid) => {
+  await taskCategoryFormRef.value.validate(async (valid) => {
     if (!valid) return
 
     submitLoading.value = true
     try {
       if (isEdit.value) {
         // 编辑模式
-        const updateData: UpdateRoleCategoryDto = {
-          code: roleForm.code,
-          name: roleForm.name,
-          description: roleForm.description || undefined,
+        const updateData: UpdateTaskCategoryDto = {
+          code: taskCategoryForm.code,
+          name: taskCategoryForm.name,
+          description: taskCategoryForm.description || undefined,
+          sort: taskCategoryForm.sort,
         }
-        await updateRoleCategory(roleForm.id, updateData)
+        await updateTaskCategory(taskCategoryForm.id, updateData)
         ElMessage.success('更新成功')
       } else {
         // 新增模式
-        const createData: CreateRoleCategoryDto = {
-          code: roleForm.code,
-          name: roleForm.name,
-          description: roleForm.description || undefined,
+        const createData: CreateTaskCategoryDto = {
+          code: taskCategoryForm.code,
+          name: taskCategoryForm.name,
+          description: taskCategoryForm.description || undefined,
+          sort: taskCategoryForm.sort,
         }
-        await createRoleCategory(createData)
+        await createTaskCategory(createData)
         ElMessage.success('创建成功')
       }
 
       dialogVisible.value = false
-      loadRoleList()
+      loadTaskCategoryList()
     } catch (error: any) {
       ElMessage.error(error.message || '操作失败')
     } finally {
@@ -314,18 +333,18 @@ const handleSubmit = async () => {
   })
 }
 
-// 删除角色分类
-const handleDelete = async (row: RoleCategoryEntity) => {
+// 删除任务分类
+const handleDelete = async (row: TaskCategoryEntity) => {
   try {
-    await ElMessageBox.confirm(`确定要删除角色分类 "${row.name}" 吗？`, '提示', {
+    await ElMessageBox.confirm(`确定要删除任务分类 "${row.name}" 吗？`, '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
     })
 
-    await deleteRoleCategory(row.id)
+    await deleteTaskCategory(row.id)
     ElMessage.success('删除成功')
-    loadRoleList()
+    loadTaskCategoryList()
   } catch (error: any) {
     if (error !== 'cancel') {
       ElMessage.error(error.message || '删除失败')
@@ -336,22 +355,22 @@ const handleDelete = async (row: RoleCategoryEntity) => {
 // 分页大小改变
 const handleSizeChange = (size: number) => {
   pagination.size = size
-  loadRoleList()
+  loadTaskCategoryList()
 }
 
 // 当前页改变
 const handleCurrentChange = (current: number) => {
   pagination.current = current
-  loadRoleList()
+  loadTaskCategoryList()
 }
 
 onMounted(() => {
-  loadRoleList()
+  loadTaskCategoryList()
 })
 </script>
 
 <style scoped lang="scss">
-.role-management {
+.task-category-management {
   padding: 24px;
   background: var(--body-background);
 
