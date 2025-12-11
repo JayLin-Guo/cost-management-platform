@@ -1,0 +1,438 @@
+<template>
+  <div class="role-management">
+    <div class="search-section">
+      <div class="search-left">
+        <el-input
+          v-model="searchForm.code"
+          placeholder="输入角色编码搜索"
+          clearable
+          style="width: 200px"
+          @keyup.enter="handleSearch"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-input
+          v-model="searchForm.name"
+          placeholder="输入角色分类名称搜索"
+          clearable
+          style="width: 200px"
+          @keyup.enter="handleSearch"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </div>
+      <div class="search-right">
+        <el-button type="primary" @click="handleAddRole">
+          <el-icon><Plus /></el-icon>
+          新增角色分类
+        </el-button>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <el-table :data="roleList" v-loading="loading" stripe style="width: 100%">
+        <el-table-column type="index" label="序号" width="60" />
+        <el-table-column prop="code" label="角色编码" width="120" />
+        <el-table-column prop="name" label="角色分类名称" min-width="150" />
+        <el-table-column prop="description" label="描述" min-width="200">
+          <template #default="{ row }">
+            <span>{{ row.description || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="创建时间" width="160">
+          <template #default="{ row }">
+            {{ formatDate(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="updatedAt" label="更新时间" width="160">
+          <template #default="{ row }">
+            {{ formatDate(row.updatedAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination" v-if="pagination.total > 0">
+        <el-pagination
+          v-model:current-page="pagination.current"
+          v-model:page-size="pagination.size"
+          :total="pagination.total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </div>
+
+    <!-- 新增/编辑角色分类对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="isEdit ? '编辑角色分类' : '新增角色分类'"
+      width="500px"
+      @close="handleDialogClose"
+    >
+      <div class="dialog-content">
+        <el-form ref="roleFormRef" :model="roleForm" :rules="roleFormRules" label-width="100px">
+          <el-form-item label="角色编码" prop="code">
+            <el-input v-model="roleForm.code" placeholder="请输入角色编码" />
+          </el-form-item>
+          <el-form-item label="分类名称" prop="name">
+            <el-input v-model="roleForm.name" placeholder="请输入角色分类名称" />
+          </el-form-item>
+          <el-form-item label="描述" prop="description">
+            <el-input
+              v-model="roleForm.description"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入角色分类描述（可选）"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
+            {{ isEdit ? '更新' : '创建' }}
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { Plus, Search } from '@element-plus/icons-vue'
+import {
+  getRoleCategoryList,
+  createRoleCategory,
+  updateRoleCategory,
+  deleteRoleCategory,
+  type CreateRoleCategoryDto,
+  type UpdateRoleCategoryDto,
+  type RoleCategoryEntity,
+  type RoleCategoryPaginationDto,
+} from '@/api/role-category'
+
+// 搜索表单
+const searchForm = reactive({
+  code: '',
+  name: '',
+  description: '',
+})
+
+// 分页信息
+const pagination = reactive({
+  current: 1,
+  size: 20,
+  total: 0,
+})
+
+// 角色分类列表
+const roleList = ref<RoleCategoryEntity[]>([])
+const loading = ref(false)
+
+// 对话框相关
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const submitLoading = ref(false)
+const roleFormRef = ref<FormInstance>()
+
+// 角色分类表单
+const roleForm = reactive({
+  id: '',
+  code: '',
+  name: '',
+  description: '',
+  sort: 0,
+})
+
+// 表单验证规则
+const roleFormRules: FormRules = {
+  name: [
+    { required: true, message: '请输入角色分类名称', trigger: 'blur' },
+    { min: 1, max: 50, message: '角色分类名称长度在 1 到 50 个字符', trigger: 'blur' },
+  ],
+  code: [
+    { required: true, message: '请输入角色编码', trigger: 'blur' },
+    { min: 1, max: 20, message: '角色编码长度在 1 到 20 个字符', trigger: 'blur' },
+    { pattern: /^[A-Z0-9_]+$/, message: '角色编码只能包含大写字母、数字和下划线', trigger: 'blur' },
+  ],
+  description: [{ max: 200, message: '描述长度不能超过 200 个字符', trigger: 'blur' }],
+}
+
+// 格式化日期
+const formatDate = (dateString: string) => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+// 加载角色分类列表
+const loadRoleList = async () => {
+  loading.value = true
+  try {
+    const params: RoleCategoryPaginationDto = {
+      pageNum: pagination.current,
+      pageSize: pagination.size,
+      code: searchForm.code || undefined,
+      name: searchForm.name || undefined,
+      description: searchForm.description || undefined,
+    }
+
+    const result = await getRoleCategoryList(params)
+
+    if (result && result.data) {
+      // 处理分页数据
+      if (result.data.list) {
+        roleList.value = result.data.list
+        pagination.total = result.data.total || 0
+      } else {
+        // 处理非分页数据
+        roleList.value = Array.isArray(result.data) ? result.data : []
+        pagination.total = roleList.value.length
+      }
+    } else {
+      roleList.value = []
+      pagination.total = 0
+    }
+  } catch (error: any) {
+    ElMessage.error(error.message || '加载角色分类列表失败')
+    roleList.value = []
+    pagination.total = 0
+  } finally {
+    loading.value = false
+  }
+}
+
+// 搜索
+const handleSearch = () => {
+  pagination.current = 1
+  loadRoleList()
+}
+
+// 重置
+const handleReset = () => {
+  searchForm.code = ''
+  searchForm.name = ''
+  searchForm.description = ''
+  handleSearch()
+}
+
+// 重置表单
+const resetForm = () => {
+  Object.assign(roleForm, {
+    id: '',
+    code: '',
+    name: '',
+    description: '',
+    sort: 0,
+  })
+}
+
+// 新增角色分类
+const handleAddRole = () => {
+  isEdit.value = false
+  resetForm()
+  dialogVisible.value = true
+}
+
+// 编辑角色分类
+const handleEdit = (row: RoleCategoryEntity) => {
+  isEdit.value = true
+  Object.assign(roleForm, {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    description: row.description || '',
+  })
+  dialogVisible.value = true
+}
+
+// 对话框关闭
+const handleDialogClose = () => {
+  roleFormRef.value?.resetFields()
+  resetForm()
+}
+
+// 提交表单
+const handleSubmit = async () => {
+  if (!roleFormRef.value) return
+
+  await roleFormRef.value.validate(async (valid) => {
+    if (!valid) return
+
+    submitLoading.value = true
+    try {
+      if (isEdit.value) {
+        // 编辑模式
+        const updateData: UpdateRoleCategoryDto = {
+          code: roleForm.code,
+          name: roleForm.name,
+          description: roleForm.description || undefined,
+        }
+        await updateRoleCategory(roleForm.id, updateData)
+        ElMessage.success('更新成功')
+      } else {
+        // 新增模式
+        const createData: CreateRoleCategoryDto = {
+          code: roleForm.code,
+          name: roleForm.name,
+          description: roleForm.description || undefined,
+        }
+        await createRoleCategory(createData)
+        ElMessage.success('创建成功')
+      }
+
+      dialogVisible.value = false
+      loadRoleList()
+    } catch (error: any) {
+      ElMessage.error(error.message || '操作失败')
+    } finally {
+      submitLoading.value = false
+    }
+  })
+}
+
+// 删除角色分类
+const handleDelete = async (row: RoleCategoryEntity) => {
+  try {
+    await ElMessageBox.confirm(`确定要删除角色分类 "${row.name}" 吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+
+    await deleteRoleCategory(row.id)
+    ElMessage.success('删除成功')
+    loadRoleList()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '删除失败')
+    }
+  }
+}
+
+// 分页大小改变
+const handleSizeChange = (size: number) => {
+  pagination.size = size
+  loadRoleList()
+}
+
+// 当前页改变
+const handleCurrentChange = (current: number) => {
+  pagination.current = current
+  loadRoleList()
+}
+
+onMounted(() => {
+  loadRoleList()
+})
+</script>
+
+<style scoped lang="scss">
+.role-management {
+  padding: 24px;
+  background: var(--body-background);
+
+  .search-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: var(--component-background);
+    border-radius: 8px;
+    box-shadow: var(--shadow-1);
+
+    .search-left {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .search-right {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .table-section {
+    background: var(--component-background);
+    border-radius: 8px;
+    box-shadow: var(--shadow-1);
+    overflow: hidden;
+
+    .el-table {
+      border-radius: 8px 8px 0 0;
+    }
+
+    .pagination {
+      padding: 20px;
+      display: flex;
+      justify-content: flex-end;
+      border-top: 1px solid var(--border-color-light);
+    }
+  }
+
+  // 对话框样式
+  :deep(.el-dialog__body) {
+    padding: 0;
+  }
+
+  .dialog-content {
+    padding: 20px;
+  }
+
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  // 表格样式优化
+  :deep(.el-table) {
+    .el-table__header-wrapper {
+      th {
+        background-color: var(--fill-color-lighter);
+        color: var(--text-color-primary);
+        font-weight: 600;
+      }
+    }
+
+    .el-table__row {
+      &:hover {
+        background-color: var(--fill-color-light);
+      }
+    }
+  }
+
+  // 按钮样式优化
+  .el-button {
+    &.el-button--small {
+      padding: 5px 11px;
+      font-size: 12px;
+    }
+  }
+}
+</style>

@@ -31,10 +31,6 @@
             <el-icon><List /></el-icon>
             <span>任务分类管理</span>
           </el-menu-item>
-          <el-menu-item index="/settings/review-step-template-management">
-            <el-icon><Document /></el-icon>
-            <span>审核步骤模板管理</span>
-          </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="system">
@@ -68,7 +64,6 @@ import {
   Tools,
   OfficeBuilding,
   List,
-  Document,
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -98,17 +93,17 @@ const handleMenuSelect = (index: string) => {
   background: var(--body-background);
 
   .settings-sidebar {
-    display: flex;
-    flex-direction: column;
     width: 260px;
     background: var(--component-background);
     border-right: 1px solid var(--border-color-light);
     box-shadow: var(--shadow-1);
+    display: flex;
+    flex-direction: column;
 
     .sidebar-header {
-      flex-shrink: 0;
       padding: 20px;
       border-bottom: 1px solid var(--border-color-light);
+      flex-shrink: 0;
 
       h3 {
         margin: 0;
@@ -119,16 +114,16 @@ const handleMenuSelect = (index: string) => {
     }
 
     .settings-menu {
+      border: none;
+      background: transparent;
       flex: 1;
       overflow-y: auto;
-      background: transparent;
-      border: none;
 
       :deep(.el-sub-menu__title) {
         height: 48px;
+        line-height: 48px;
         padding-left: 20px !important;
         font-weight: 500;
-        line-height: 48px;
         color: var(--text-color);
 
         &:hover {
@@ -138,18 +133,18 @@ const handleMenuSelect = (index: string) => {
 
       :deep(.el-menu-item) {
         height: 44px;
-        padding-left: 50px !important;
         line-height: 44px;
+        padding-left: 50px !important;
         color: var(--text-color-secondary);
 
         &:hover {
-          color: var(--primary-color);
           background: var(--hover-background);
+          color: var(--primary-color);
         }
 
         &.is-active {
-          color: var(--primary-color);
           background: var(--primary-color-light);
+          color: var(--primary-color);
           border-right: 3px solid var(--primary-color);
         }
       }
@@ -167,7 +162,8 @@ const handleMenuSelect = (index: string) => {
 
   .settings-content {
     flex: 1;
-    overflow: hidden auto;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 }
 </style>

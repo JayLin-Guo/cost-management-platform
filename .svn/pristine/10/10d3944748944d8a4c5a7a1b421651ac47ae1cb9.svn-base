@@ -110,16 +110,6 @@ const routes: Array<RouteRecordRaw> = [
               requireAuth: false,
             },
           },
-          {
-            path: 'review-step-template-management',
-            name: 'SettingsReviewStepTemplateManagement',
-            component: () => import('../views/settings/review-step-template-management/index.vue'),
-            meta: {
-              title: '审核步骤模板管理',
-              keepAlive: true,
-              requireAuth: false,
-            },
-          },
         ],
       },
     ],
