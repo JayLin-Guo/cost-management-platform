@@ -35,6 +35,10 @@
             <el-icon><Document /></el-icon>
             <span>审核步骤模板管理</span>
           </el-menu-item>
+          <el-menu-item index="/settings/review-config-management">
+            <el-icon><Setting /></el-icon>
+            <span>审核配置管理</span>
+          </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="system">

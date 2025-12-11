@@ -120,6 +120,26 @@ const routes: Array<RouteRecordRaw> = [
               requireAuth: false,
             },
           },
+          {
+            path: 'review-config-management',
+            name: 'SettingsReviewConfigManagement',
+            component: () => import('../views/settings/review-config-management/index.vue'),
+            meta: {
+              title: '审核配置管理',
+              keepAlive: true,
+              requireAuth: false,
+            },
+          },
+          {
+            path: 'review-config-management/:id/steps',
+            name: 'SettingsReviewConfigSteps',
+            component: () => import('../views/settings/review-config-management/steps/index.vue'),
+            meta: {
+              title: '配置步骤模板',
+              keepAlive: true,
+              requireAuth: false,
+            },
+          },
         ],
       },
     ],
