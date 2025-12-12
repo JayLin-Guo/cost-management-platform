@@ -157,3 +157,10 @@ export function configureReviewSteps(id: string, data: ConfigureReviewStepsDto) 
 export function getReviewStepsConfig(id: string) {
   return request.get(`/review-config/steps/${id}`)
 }
+
+/**
+ * 根据任务分类ID获取审核配置
+ */
+export function getReviewConfigByTaskCategory(taskCategoryId: string) {
+  return request.get(`/review-config/getReviewConfigByTaskCategory/${taskCategoryId}`)
+}

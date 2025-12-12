@@ -17,18 +17,19 @@
 
         <!-- 任务分类 -->
         <el-col :span="12">
-          <el-form-item label="任务分类" prop="taskCategory" required>
+          <el-form-item label="任务分类" prop="taskCategoryId" required>
             <el-select
-              v-model="formData.taskCategory"
+              v-model="formData.taskCategoryId"
               placeholder="请选择任务分类"
               style="width: 100%"
+              :loading="taskCategoryLoading"
             >
-              <el-option label="拟定控制价" value="拟定控制价" />
-              <el-option label="拟案" value="拟案" />
-              <el-option label="会签" value="会签" />
-              <el-option label="洽商变更" value="洽商变更" />
-              <el-option label="拟汉比" value="拟汉比" />
-              <el-option label="其他" value="其他" />
+              <el-option
+                v-for="category in taskCategoryList"
+                :key="category.id"
+                :label="category.name"
+                :value="category.id"
+              />
             </el-select>
           </el-form-item>
         </el-col>
@@ -57,9 +58,9 @@
 
         <!-- 任务负责人 -->
         <el-col :span="12">
-          <el-form-item label="任务负责人" prop="assignee">
+          <el-form-item label="任务负责人" prop="assigneeId">
             <el-select
-              v-model="formData.assignee"
+              v-model="formData.assigneeId"
               placeholder="请选择负责人"
               style="width: 100%"
               :loading="userListLoading"
@@ -76,77 +77,47 @@
       </el-row>
 
       <!-- 是否审核 -->
-      <el-form-item label="是否审核" prop="reviewType" required>
-        <el-select v-model="formData.reviewType" placeholder="请选择" style="width: 100%">
-          <el-option label="二审" value="二审" />
-          <el-option label="一审" value="一审" />
-          <el-option label="三审" value="三审" />
-          <el-option label="不审核" value="不审核" />
-        </el-select>
+      <el-form-item label="是否审核" prop="needReview" required>
+        <el-radio-group v-model="formData.needReview" :disabled="!formData.taskCategoryId">
+          <el-radio :value="false">否</el-radio>
+          <el-radio :value="true" :disabled="!hasReviewConfig">是</el-radio>
+        </el-radio-group>
+        <span v-if="formData.taskCategoryId && !hasReviewConfig" class="no-config-tip">
+          （该分类未配置审核流程）
+        </span>
       </el-form-item>
 
-      <!-- 审核人员（动态显示） -->
-      <div v-if="formData.reviewType !== '不审核'" class="reviewer-section">
-        <el-form-item label="审核人员">
-          <div class="reviewer-container">
-            <!-- 一审 -->
-            <div v-if="needReviewer1" class="reviewer-item">
-              <span class="reviewer-label">一审：</span>
+      <!-- 审核步骤配置 -->
+      <div v-if="formData.needReview && reviewSteps.length > 0" class="review-steps-section">
+        <div
+          v-for="(step, index) in reviewSteps"
+          :key="step.reviewStepTemplateId"
+          class="review-step-row"
+        >
+          <el-form-item
+            :label="`${step.reviewStepTemplateName}`"
+            :prop="`reviewers.${step.reviewStepTemplateId}`"
+            required
+          >
+            <div class="step-reviewer-select">
+              <el-tag size="small" type="info" class="step-tag">
+                第{{ index + 1 }}步 · {{ step.roleName }}
+              </el-tag>
               <el-select
-                v-model="formData.reviewer1"
-                placeholder="请选择"
+                v-model="formData.reviewers[step.reviewStepTemplateId]"
+                placeholder="请选择审核人"
                 style="flex: 1"
-                :loading="reviewerListLoading"
               >
                 <el-option
-                  v-for="user in reviewerList"
-                  :key="user.id"
-                  :label="user.name"
-                  :value="user.id"
+                  v-for="person in step.reviewPersonnel"
+                  :key="person.id"
+                  :label="person.name"
+                  :value="person.id"
                 />
               </el-select>
-              <el-link type="primary" :underline="false" style="margin-left: 8px">选择</el-link>
             </div>
-
-            <!-- 二审 -->
-            <div v-if="needReviewer2" class="reviewer-item">
-              <span class="reviewer-label">二审：</span>
-              <el-select
-                v-model="formData.reviewer2"
-                placeholder="请选择"
-                style="flex: 1"
-                :loading="reviewerListLoading"
-              >
-                <el-option
-                  v-for="user in reviewerList"
-                  :key="user.id"
-                  :label="user.name"
-                  :value="user.id"
-                />
-              </el-select>
-              <el-link type="primary" :underline="false" style="margin-left: 8px">选择</el-link>
-            </div>
-
-            <!-- 三审 -->
-            <div v-if="needReviewer3" class="reviewer-item">
-              <span class="reviewer-label">三审：</span>
-              <el-select
-                v-model="formData.reviewer3"
-                placeholder="请选择"
-                style="flex: 1"
-                :loading="reviewerListLoading"
-              >
-                <el-option
-                  v-for="user in reviewerList"
-                  :key="user.id"
-                  :label="user.name"
-                  :value="user.id"
-                />
-              </el-select>
-              <el-link type="primary" :underline="false" style="margin-left: 8px">选择</el-link>
-            </div>
-          </div>
-        </el-form-item>
+          </el-form-item>
+        </div>
       </div>
 
       <!-- 任务说明 -->
@@ -189,7 +160,29 @@
 import { ref, reactive, watch, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadUserFile } from 'element-plus'
 import type { TaskItem } from '@/mock/task'
-import { getUserList, getReviewerList, type UserItem } from '@/api/user'
+import { getUserList, type UserItem } from '@/api/user'
+import { getTaskCategoryList, type TaskCategoryEntity } from '@/api/task-category'
+import { getReviewConfigByTaskCategory } from '@/api/review-config'
+
+// 审核人员类型
+interface ReviewPersonnel {
+  id: string
+  name: string
+  username: string
+}
+
+// 审核步骤数据类型
+interface ReviewStepData {
+  reviewStepTemplateId: string
+  reviewConfigId: string
+  reviewStepTemplateName: string
+  reviewStepTemplateCode: string
+  reviewStepTemplateStepId: string
+  roleType: string
+  roleId: string
+  roleName: string
+  reviewPersonnel: ReviewPersonnel[]
+}
 
 // Props
 interface Props {
@@ -224,9 +217,16 @@ const isEdit = ref(false)
 const userList = ref<UserItem[]>([])
 const userListLoading = ref(false)
 
-// 审核人员列表
-const reviewerList = ref<UserItem[]>([])
-const reviewerListLoading = ref(false)
+// 任务分类列表
+const taskCategoryList = ref<TaskCategoryEntity[]>([])
+const taskCategoryLoading = ref(false)
+
+// 审核配置相关
+const reviewSteps = ref<ReviewStepData[]>([])
+const reviewConfigLoading = ref(false)
+
+// 是否有审核配置
+const hasReviewConfig = ref(false)
 
 // 文件列表
 const fileList = ref<UploadUserFile[]>([])
@@ -234,73 +234,119 @@ const fileList = ref<UploadUserFile[]>([])
 // 表单数据
 const formData = reactive({
   taskName: '',
-  taskCategory: '拟定控制价',
-  participants: [] as number[],
-  assignee: undefined as number | undefined,
-  reviewType: '不审核',
-  reviewer1: undefined as number | undefined,
-  reviewer2: undefined as number | undefined,
-  reviewer3: undefined as number | undefined,
+  taskCategoryId: '' as string,
+  participants: [] as string[],
+  assigneeId: undefined as string | undefined,
+  needReview: false, // 是否需要审核
+  reviewers: {} as Record<string, string>, // 审核人员 { stepTemplateId: userId }
   description: '',
   status: 'pending' as 'pending' | 'in_progress' | 'completed',
 })
 
-// 表单验证规则
-const formRules: FormRules = {
-  taskName: [
-    { required: true, message: '请输入任务名称', trigger: 'blur' },
-    { min: 2, max: 100, message: '任务名称长度在 2 到 100 个字符', trigger: 'blur' },
-  ],
-  taskCategory: [{ required: true, message: '请选择任务分类', trigger: 'change' }],
-  reviewType: [{ required: true, message: '请选择是否审核', trigger: 'change' }],
-}
+// 动态表单验证规则
+const formRules = computed<FormRules>(() => {
+  const rules: FormRules = {
+    taskName: [
+      { required: true, message: '请输入任务名称', trigger: 'blur' },
+      { min: 2, max: 100, message: '任务名称长度在 2 到 100 个字符', trigger: 'blur' },
+    ],
+    taskCategoryId: [{ required: true, message: '请选择任务分类', trigger: 'change' }],
+    needReview: [{ required: true, message: '请选择是否审核', trigger: 'change' }],
+  }
 
-// 计算是否需要显示审核人员
-const needReviewer1 = computed(() => {
-  return ['一审', '二审', '三审'].includes(formData.reviewType)
-})
+  // 如果需要审核，为每个审核步骤添加验证规则
+  if (formData.needReview && reviewSteps.value.length > 0) {
+    reviewSteps.value.forEach((step) => {
+      rules[`reviewers.${step.reviewStepTemplateId}`] = [
+        {
+          required: true,
+          message: `请选择${step.reviewStepTemplateName}的审核人`,
+          trigger: 'change',
+        },
+      ]
+    })
+  }
 
-const needReviewer2 = computed(() => {
-  return ['二审', '三审'].includes(formData.reviewType)
-})
-
-const needReviewer3 = computed(() => {
-  return formData.reviewType === '三审'
+  return rules
 })
 
 // 获取人员列表
 const fetchUserList = async () => {
   userListLoading.value = true
   try {
-    const users = await getUserList()
-    userList.value = users.data.list
-  } catch (error: any) {
-    ElMessage.error(error.message || '获取人员列表失败')
+    const result = await getUserList()
+    if (result && result.data) {
+      userList.value = result.data.list || result.data || []
+    }
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : '获取人员列表失败'
+    ElMessage.error(errorMessage)
   } finally {
     userListLoading.value = false
   }
 }
 
-// 获取审核人员列表
-const fetchReviewerList = async () => {
-  reviewerListLoading.value = true
+// 获取任务分类列表
+const fetchTaskCategoryList = async () => {
+  taskCategoryLoading.value = true
   try {
-    const reviewers = await getReviewerList()
-    reviewerList.value = reviewers
-  } catch (error: any) {
-    ElMessage.error(error.message || '获取审核人员列表失败')
+    const result = await getTaskCategoryList()
+    if (result && result.data) {
+      taskCategoryList.value = result.data.list || result.data || []
+    }
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : '获取任务分类失败'
+    ElMessage.error(errorMessage)
   } finally {
-    reviewerListLoading.value = false
+    taskCategoryLoading.value = false
+  }
+}
+
+// 根据任务分类获取审核配置
+const fetchReviewConfig = async (taskCategoryId: string) => {
+  if (!taskCategoryId) {
+    hasReviewConfig.value = false
+    reviewSteps.value = []
+    formData.reviewers = {}
+    return
+  }
+
+  reviewConfigLoading.value = true
+  try {
+    const result = await getReviewConfigByTaskCategory(taskCategoryId)
+    // 返回的是数组，直接判断是否有数据
+    if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
+      hasReviewConfig.value = true
+      reviewSteps.value = result.data
+      // 初始化审核人员选择（如果只有一个人，自动选中）
+      formData.reviewers = {}
+      result.data.forEach((step: ReviewStepData) => {
+        if (step.reviewPersonnel && step.reviewPersonnel.length === 1) {
+          formData.reviewers[step.reviewStepTemplateId] = step.reviewPersonnel[0].id
+        }
+      })
+    } else {
+      hasReviewConfig.value = false
+      reviewSteps.value = []
+      formData.reviewers = {}
+    }
+  } catch (error: unknown) {
+    hasReviewConfig.value = false
+    reviewSteps.value = []
+    formData.reviewers = {}
+    // 没有关联审核配置时不报错
+  } finally {
+    reviewConfigLoading.value = false
   }
 }
 
 // 文件变化
-const handleFileChange = (file: any) => {
+const handleFileChange = (file: UploadUserFile) => {
   console.log('文件变化:', file)
 }
 
 // 文件移除
-const handleFileRemove = (file: any) => {
+const handleFileRemove = (file: UploadUserFile) => {
   console.log('文件移除:', file)
 }
 
@@ -313,17 +359,15 @@ watch(
       if (props.taskData) {
         // 编辑模式，填充数据
         isEdit.value = true
+        const taskData = props.taskData as unknown as Record<string, unknown>
         Object.assign(formData, {
-          taskName: props.taskData.taskName,
-          taskCategory: props.taskData.taskCategory,
-          participants: props.taskData.participants || [],
-          assignee: props.taskData.assignee,
-          reviewType: props.taskData.reviewType,
-          reviewer1: props.taskData.reviewer1,
-          reviewer2: props.taskData.reviewer2,
-          reviewer3: props.taskData.reviewer3,
-          description: props.taskData.description || '',
-          status: props.taskData.status,
+          taskName: taskData.taskName || '',
+          taskCategoryId: (taskData.taskCategoryId as string) || '',
+          participants: (taskData.participants as string[]) || [],
+          assigneeId: taskData.assigneeId as string | undefined,
+          needReview: (taskData.needReview as boolean) || false,
+          description: (taskData.description as string) || '',
+          status: (taskData.status as string) || 'pending',
         })
       } else {
         // 新建模式，重置表单
@@ -338,19 +382,29 @@ watch(dialogVisible, (val) => {
   emit('update:modelValue', val)
 })
 
-// 监听审核类型变化，清空不需要的审核人员
+// 监听任务分类变化，获取关联的审核配置
 watch(
-  () => formData.reviewType,
+  () => formData.taskCategoryId,
+  async (val) => {
+    // 重置审核相关数据
+    formData.needReview = false
+    hasReviewConfig.value = false
+    reviewSteps.value = []
+    formData.reviewers = {}
+
+    if (val) {
+      await fetchReviewConfig(val)
+    }
+  },
+)
+
+// 监听是否审核变化
+watch(
+  () => formData.needReview,
   (val) => {
-    if (val === '不审核') {
-      formData.reviewer1 = undefined
-      formData.reviewer2 = undefined
-      formData.reviewer3 = undefined
-    } else if (val === '一审') {
-      formData.reviewer2 = undefined
-      formData.reviewer3 = undefined
-    } else if (val === '二审') {
-      formData.reviewer3 = undefined
+    if (!val) {
+      // 不审核时清空已选审核人
+      formData.reviewers = {}
     }
   },
 )
@@ -362,33 +416,38 @@ const handleClose = () => {
   formRef.value?.resetFields()
   Object.assign(formData, {
     taskName: '',
-    taskCategory: '拟定控制价',
+    taskCategoryId: '',
     participants: [],
-    assignee: undefined,
-    reviewType: '不审核',
-    reviewer1: undefined,
-    reviewer2: undefined,
-    reviewer3: undefined,
+    assigneeId: undefined,
+    needReview: false,
+    reviewers: {},
     description: '',
     status: 'pending',
   })
+  hasReviewConfig.value = false
+  reviewSteps.value = []
   fileList.value = []
 }
 
 // 提交表单
 const handleSubmit = async () => {
-  if (!formRef.value) return
+  if (!formRef.value) {
+    return
+  }
 
   await formRef.value.validate(async (valid) => {
-    if (!valid) return
+    if (!valid) {
+      return
+    }
 
     submitLoading.value = true
     try {
       // 这里通过 emit 把数据传给父组件处理
       emit('success')
       handleClose()
-    } catch (error: any) {
-      ElMessage.error(error.message || '保存失败')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '保存失败'
+      ElMessage.error(errorMessage)
     } finally {
       submitLoading.value = false
     }
@@ -403,7 +462,7 @@ defineExpose({
 // 组件挂载时获取数据
 onMounted(() => {
   fetchUserList()
-  fetchReviewerList()
+  fetchTaskCategoryList()
 })
 </script>
 
@@ -420,25 +479,28 @@ export default {
   gap: 12px;
 }
 
-.reviewer-section {
-  .reviewer-container {
-    width: 100%;
+.no-config-tip {
+  font-size: 12px;
+  color: var(--el-color-warning);
+  margin-left: 8px;
+}
 
-    .reviewer-item {
+.review-steps-section {
+  .review-step-row {
+    margin-bottom: 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-reviewer-select {
       display: flex;
       align-items: center;
-      margin-bottom: 12px;
+      gap: 12px;
+      width: 100%;
 
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      .reviewer-label {
-        font-size: 14px;
-        color: var(--text-color-secondary);
-        white-space: nowrap;
-        margin-right: 8px;
-        min-width: 50px;
+      .step-tag {
+        flex-shrink: 0;
       }
     }
   }
