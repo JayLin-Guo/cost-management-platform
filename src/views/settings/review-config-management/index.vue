@@ -106,7 +106,7 @@
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
             <el-button type="info" size="small" @click="handleConfigSteps(row)">配置步骤</el-button>
@@ -158,19 +158,18 @@
           </el-form-item>
           <el-form-item label="任务分类" prop="taskCategoryIds">
             <el-select
-              v-model="configForm.taskCategoryIds"
-              multiple
+              v-model="configForm.taskCategoryIds[0]"
               placeholder="请选择关联的任务分类"
               style="width: 100%"
               clearable
-              collapse-tags
-              collapse-tags-tooltip
+              @change="handleTaskCategoryChange"
             >
               <el-option
                 v-for="category in taskCategoryList"
                 :key="category.id"
                 :label="`${category.name} (${category.code})`"
                 :value="category.id"
+                :disabled="category.isRelevance === true"
               />
             </el-select>
           </el-form-item>
@@ -198,6 +197,7 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Plus, Search } from '@element-plus/icons-vue'
 import {
   getReviewConfigList,
+  getReviewConfigDetail,
   createReviewConfig,
   updateReviewConfig,
   type CreateReviewConfigDto,
@@ -205,7 +205,7 @@ import {
   type ReviewConfigEntity,
   type ReviewConfigPaginationDto,
 } from '@/api/review-config'
-import { getTaskCategoryList, type TaskCategoryEntity } from '@/api/task-category'
+import { getTaskCategoryListByTaskCategory, type TaskCategoryEntity } from '@/api/task-category'
 
 const router = useRouter()
 
@@ -329,7 +329,7 @@ const handleReset = () => {
 const loadTaskCategoryList = async () => {
   categoryLoading.value = true
   try {
-    const result = await getTaskCategoryList()
+    const result = await getTaskCategoryListByTaskCategory()
     if (result && result.data) {
       // 处理分页或非分页数据
       if (result.data.list) {
@@ -361,27 +361,60 @@ const resetForm = () => {
   })
 }
 
+// 处理任务分类选择变化（单选模式）
+const handleTaskCategoryChange = (val: string | undefined) => {
+  if (val) {
+    configForm.taskCategoryIds = [val]
+  } else {
+    configForm.taskCategoryIds = []
+  }
+}
+
 // 新增审核配置
-const handleAddConfig = () => {
+const handleAddConfig = async () => {
   isEdit.value = false
   resetForm()
+  await loadTaskCategoryList()
   dialogVisible.value = true
 }
 
 // 编辑审核配置
-const handleEdit = (row: ReviewConfigEntity) => {
-  isEdit.value = true
-  // 从 taskCategories 中提取 taskCategoryIds
-  const taskCategoryIds = row.taskCategories?.map((category) => category.id) || []
-  Object.assign(configForm, {
-    id: row.id,
-    name: row.name,
-    code: row.code,
-    description: row.description || '',
-    isActive: row.isActive,
-    taskCategoryIds: taskCategoryIds,
-  })
-  dialogVisible.value = true
+const handleEdit = async (row: ReviewConfigEntity) => {
+  try {
+    await loadTaskCategoryList()
+    isEdit.value = true
+    submitLoading.value = true
+
+    // 调用详情接口获取完整数据
+    const result = await getReviewConfigDetail(row.id)
+
+    if (result && result.data) {
+      const detailData = result.data
+      // 从 taskCategories 中提取 taskCategoryIds（单选但保持数组形式）
+      const taskCategoryIds =
+        detailData.taskCategories && detailData.taskCategories.length > 0
+          ? [detailData.taskCategories[0].id]
+          : []
+
+      Object.assign(configForm, {
+        id: detailData.id,
+        name: detailData.name,
+        code: detailData.code,
+        description: detailData.description || '',
+        isActive: detailData.isActive,
+        taskCategoryIds: taskCategoryIds,
+      })
+
+      dialogVisible.value = true
+    } else {
+      ElMessage.error('获取审核配置详情失败')
+    }
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : '获取详情失败'
+    ElMessage.error(errorMessage)
+  } finally {
+    submitLoading.value = false
+  }
 }
 
 // 对话框关闭
@@ -410,7 +443,7 @@ const handleSubmit = async () => {
           code: configForm.code,
           description: configForm.description || undefined,
           isActive: configForm.isActive,
-          taskCategoryIds: configForm.taskCategoryIds,
+          taskCategoryIds: configForm.taskCategoryIds.filter(Boolean),
         }
         await updateReviewConfig(configForm.id, updateData)
         ElMessage.success('更新成功')
@@ -421,7 +454,7 @@ const handleSubmit = async () => {
           code: configForm.code,
           description: configForm.description || undefined,
           isActive: configForm.isActive,
-          taskCategoryIds: configForm.taskCategoryIds,
+          taskCategoryIds: configForm.taskCategoryIds.filter(Boolean),
         }
         await createReviewConfig(createData)
         ElMessage.success('创建成功')
@@ -480,7 +513,6 @@ const handleCurrentChange = (current: number) => {
 
 onMounted(() => {
   loadConfigList()
-  loadTaskCategoryList()
 })
 </script>
 

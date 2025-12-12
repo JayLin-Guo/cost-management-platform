@@ -46,6 +46,7 @@ export interface TaskCategoryEntity {
   sort?: number
   createdAt: string
   updatedAt: string
+  isRelevance?: boolean // 是否已被关联（用于下拉禁用）
 }
 
 /**
@@ -60,6 +61,13 @@ export function createTaskCategory(data: CreateTaskCategoryDto) {
  */
 export function getTaskCategoryList(params?: TaskCategoryPaginationDto) {
   return request.get('/task-category', params)
+}
+
+/**
+ * 获取任务分类列表（不分页）
+ */
+export function getTaskCategoryListByTaskCategory() {
+  return request.get('/task-category/getRelevanceListByTaskCategory')
 }
 
 /**
