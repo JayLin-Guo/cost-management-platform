@@ -109,3 +109,51 @@ export function getReviewConfigDetail(id: string) {
 export function updateReviewConfig(id: string, data: UpdateReviewConfigDto) {
   return request.post(`/review-config/update/${id}`, data)
 }
+
+/**
+ * 审核步骤配置项
+ */
+export interface ReviewStepConfigItem {
+  reviewStepTemplateId: string
+  stepOrder: number
+  isRequired?: boolean
+}
+
+/**
+ * 配置审核步骤 DTO
+ */
+export interface ConfigureReviewStepsDto {
+  steps: ReviewStepConfigItem[]
+}
+
+/**
+ * 审核步骤配置实体
+ */
+export interface ReviewStepConfigEntity {
+  id: string
+  reviewConfigId: string
+  reviewStepTemplateId: string
+  stepOrder: number
+  createdAt: string
+  updatedAt: string
+  reviewStepTemplate: {
+    id: string
+    name: string
+    code: string
+    stepType: string
+  }
+}
+
+/**
+ * 配置审核步骤（覆盖模式）
+ */
+export function configureReviewSteps(id: string, data: ConfigureReviewStepsDto) {
+  return request.post(`/review-config/configure-steps/${id}`, data)
+}
+
+/**
+ * 获取审核步骤配置
+ */
+export function getReviewStepsConfig(id: string) {
+  return request.get(`/review-config/steps/${id}`)
+}
