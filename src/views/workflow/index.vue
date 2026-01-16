@@ -57,7 +57,7 @@
     <TaskDialog
       ref="taskDialogRef"
       v-model="taskDialogVisible"
-      :project-id="Number(route.query.projectId)"
+      :project-id="route.query.projectId as string"
       :task-data="currentTask"
       @success="handleTaskSuccess"
     />
@@ -80,7 +80,7 @@ const route = useRoute()
 
 const projectInfo = ref()
 const taskList = ref<TaskItem[]>([])
-const selectedTaskId = ref<number | undefined>(undefined)
+const selectedTaskId = ref<string | undefined>(undefined)
 const currentTask = ref<TaskItem | null>(null)
 const taskDialogVisible = ref(false)
 const taskDialogRef = ref<InstanceType<typeof TaskDialog>>()
@@ -101,7 +101,7 @@ const fetchProjectDetail = async () => {
     if (result) {
       projectInfo.value = result.data
       // 获取任务列表
-      await fetchTaskList(Number(projectId))
+      await fetchTaskList(projectId)
     } else {
       ElMessage.error('项目不存在')
     }
@@ -111,13 +111,14 @@ const fetchProjectDetail = async () => {
 }
 
 // 获取任务列表
-const fetchTaskList = async (projectId: number) => {
+const fetchTaskList = async (projectId: string) => {
+  console.log(projectId, 'projectId==>>')
   try {
-    const tasks = await taskAPI.getProjectTasks(projectId)
-    taskList.value = tasks
+    const tasks = await taskAPI.getProjectTaskSimpleList(projectId)
+    taskList.value = tasks.data
     // 如果有任务，默认选中第一个
-    if (tasks.length > 0) {
-      selectedTaskId.value = tasks[0].id
+    if (tasks.data.length > 0) {
+      selectedTaskId.value = tasks.data[0].id
     }
   } catch (error: any) {
     ElMessage.error(error.message || '获取任务列表失败')
@@ -125,7 +126,7 @@ const fetchTaskList = async (projectId: number) => {
 }
 
 // 任务切换
-const handleTaskChange = (taskId: number) => {
+const handleTaskChange = (taskId: string) => {
   selectedTaskId.value = taskId
   // TODO: 加载对应任务的工作流程
 }
@@ -137,11 +138,31 @@ const handleCreateTask = () => {
 }
 
 // 编辑任务
-const handleEditTask = () => {
-  const task = taskList.value.find((t) => t.id === selectedTaskId.value)
-  if (task) {
-    currentTask.value = task
+const handleEditTask = async () => {
+  if (!selectedTaskId.value) return
+
+  try {
+    const result = await taskAPI.getTaskDetail(selectedTaskId.value)
+    const taskDetail: any = result.data
+
+    // 转换数据格式以适配 TaskDialog
+    const transformedTask = {
+      ...taskDetail,
+      assigneeId: taskDetail.taskLeaderId, // 任务负责人
+      participants: taskDetail.participants?.map((p: any) => p.userId) || [], // 参与人员ID数组
+      needReview: taskDetail.isReviewRequired, // 是否需要审核
+      reviewers:
+        taskDetail.reviewConfig?.reviewStages?.reduce((acc: Record<string, string>, stage: any) => {
+          acc[stage.stepConfigId] = stage.reviewerId
+          return acc
+        }, {}) || {}, // 审核人员映射
+    }
+
+    currentTask.value = transformedTask as any
+
     taskDialogVisible.value = true
+  } catch (error: any) {
+    ElMessage.error(error.message || '获取任务详情失败')
   }
 }
 
@@ -160,7 +181,7 @@ const handleDeleteTask = async () => {
     await taskAPI.deleteTask(task.id)
     ElMessage.success('删除成功')
     // 刷新任务列表
-    await fetchTaskList(Number(route.query.projectId))
+    await fetchTaskList(route.query.projectId as string)
     selectedTaskId.value = taskList.value.length > 0 ? taskList.value[0].id : undefined
   } catch (error: any) {
     if (error !== 'cancel') {
@@ -178,21 +199,36 @@ const handleTaskSuccess = async () => {
     if (currentTask.value) {
       // 编辑
       await taskAPI.updateTask(currentTask.value.id, {
-        ...formData,
-        projectId: Number(route.query.projectId),
+        id: currentTask.value.id,
+        taskName: formData.taskName,
+        description: formData.description,
+        attachments: formData.attachments,
       })
       ElMessage.success('更新成功')
     } else {
       // 新建
       const newTask = await taskAPI.createTask({
-        ...formData,
-        projectId: Number(route.query.projectId),
+        taskName: formData.taskName,
+        projectId: route.query.projectId as string,
+        taskCategoryId: formData.taskCategoryId,
+        taskLeaderId: formData.assigneeId || '',
+        participantIds: formData.participants,
+        isReviewRequired: formData.needReview,
+        reviewStageAssignments: formData.needReview
+          ? Object.entries(formData.reviewers).map(([stepConfigId, reviewerId]) => ({
+              stepConfigId,
+              stepName: '', // 这里需要从审核步骤中获取
+              reviewerId,
+            }))
+          : undefined,
+        description: formData.description,
+        attachments: formData.attachments,
       })
       ElMessage.success('创建成功')
-      selectedTaskId.value = newTask.id
+      selectedTaskId.value = newTask.data.id
     }
     // 刷新任务列表
-    await fetchTaskList(Number(route.query.projectId))
+    await fetchTaskList(route.query.projectId as string)
   } catch (error: any) {
     ElMessage.error(error.message || '操作失败')
   }

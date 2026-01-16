@@ -1339,7 +1339,7 @@ export const mockWorkflowData: TaskWorkflowData = {
  * @param taskId 任务ID
  * @returns 包含时间轴、泳道、节点、连线等完整数据的 Promise
  */
-export function mockGetWorkflowTimeline(taskId: number): Promise<TaskWorkflowData> {
+export function mockGetWorkflowTimeline(taskId: string): Promise<TaskWorkflowData> {
   return new Promise((resolve) => {
     setTimeout(() => {
       const data = mockWorkflowData

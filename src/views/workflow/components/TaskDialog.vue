@@ -23,6 +23,7 @@
               placeholder="请选择任务分类"
               style="width: 100%"
               :loading="taskCategoryLoading"
+              @change="handleTaskCategoryChange"
             >
               <el-option
                 v-for="category in taskCategoryList"
@@ -159,7 +160,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadUserFile } from 'element-plus'
-import type { TaskItem } from '@/mock/task'
+import type { TaskItem } from '@/api/task/index'
 import { getUserList, type UserItem } from '@/api/user'
 import { getTaskCategoryList, type TaskCategoryEntity } from '@/api/task-category'
 import { getReviewConfigByTaskCategory } from '@/api/review-config'
@@ -187,7 +188,7 @@ interface ReviewStepData {
 // Props
 interface Props {
   modelValue: boolean
-  projectId: number
+  projectId: string
   taskData?: TaskItem | null
 }
 
@@ -240,6 +241,7 @@ const formData = reactive({
   needReview: false, // 是否需要审核
   reviewers: {} as Record<string, string>, // 审核人员 { stepTemplateId: userId }
   description: '',
+  attachments: undefined as any, // 添加 attachments 字段
   status: 'pending' as 'pending' | 'in_progress' | 'completed',
 })
 
@@ -340,6 +342,19 @@ const fetchReviewConfig = async (taskCategoryId: string) => {
   }
 }
 
+// 任务分类变化处理
+const handleTaskCategoryChange = async (val: string) => {
+  // 重置审核相关数据
+  formData.needReview = false
+  hasReviewConfig.value = false
+  reviewSteps.value = []
+  formData.reviewers = {}
+
+  if (val) {
+    await fetchReviewConfig(val)
+  }
+}
+
 // 文件变化
 const handleFileChange = (file: UploadUserFile) => {
   console.log('文件变化:', file)
@@ -365,7 +380,8 @@ watch(
           taskCategoryId: (taskData.taskCategoryId as string) || '',
           participants: (taskData.participants as string[]) || [],
           assigneeId: taskData.assigneeId as string | undefined,
-          needReview: (taskData.needReview as boolean) || false,
+          needReview: taskData.needReview !== undefined ? (taskData.needReview as boolean) : false,
+          reviewers: (taskData.reviewers as Record<string, string>) || {},
           description: (taskData.description as string) || '',
           status: (taskData.status as string) || 'pending',
         })
@@ -380,23 +396,11 @@ watch(
 // 监听 dialogVisible 变化
 watch(dialogVisible, (val) => {
   emit('update:modelValue', val)
+  // 对话框打开时，如果是编辑模式且有任务分类，获取审核配置
+  if (val && isEdit.value && formData.taskCategoryId) {
+    fetchReviewConfig(formData.taskCategoryId)
+  }
 })
-
-// 监听任务分类变化，获取关联的审核配置
-watch(
-  () => formData.taskCategoryId,
-  async (val) => {
-    // 重置审核相关数据
-    formData.needReview = false
-    hasReviewConfig.value = false
-    reviewSteps.value = []
-    formData.reviewers = {}
-
-    if (val) {
-      await fetchReviewConfig(val)
-    }
-  },
-)
 
 // 监听是否审核变化
 watch(
@@ -422,6 +426,7 @@ const handleClose = () => {
     needReview: false,
     reviewers: {},
     description: '',
+    attachments: undefined,
     status: 'pending',
   })
   hasReviewConfig.value = false

@@ -142,7 +142,7 @@ import { useGridCalculator, type CalculatedNode } from '../composables/useGridCa
 import { GRID_CONFIG } from '../config/grid.config'
 
 interface Props {
-  taskId: number
+  taskId: string
 }
 
 const props = defineProps<Props>()

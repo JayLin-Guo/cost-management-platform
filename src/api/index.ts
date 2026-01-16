@@ -14,6 +14,9 @@ export * from './role-category'
 // 导出任务分类相关API
 export * from './task-category'
 
+// 导出任务相关API
+export * from './task'
+
 // 后续可以添加其他模块的API，如:
 // export * from './cost'
 // export * from './budget'
